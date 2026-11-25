@@ -13,6 +13,7 @@ typedef struct {
   int tempo; /* 0..16: Ignore, then the note values 1 .. 1/32 triplet */
   int width; /* 1..100 % */
   int phase_reverse; /* 0 Off, 1 On */
+  int mix; /* 0..100 % */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_trichorus_setup_raw;
 

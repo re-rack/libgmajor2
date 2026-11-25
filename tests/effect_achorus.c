@@ -4,12 +4,13 @@
 #include "gm2_achorus_setup.h"
 #include "gm2_effect.h"
 
-#define ACHORUS_KNOBS 7u
+#define ACHORUS_KNOBS 8u
 
 static const gm2_knob k_knobs[ACHORUS_KNOBS] = {
-    {"CHO Speed", 0, 208, 31, 0}, {"CHO Depth", 0, 100, 50, 0},  {"CHO Tempo", 0, 16, 0, 0},
-    {"CHO HiCut", 0, 60, 58, 0},  {"CHO Delay", 1, 500, 140, 0}, {"CHO Gold", 0, 1, 1, 0},
-    {"CHO PhaRev", 0, 1, 1, 0},
+    {"CHO Speed", 0, 208, 31, 0},  {"CHO Depth", 0, 100, 50, 0},
+    {"CHO Tempo", 0, 16, 0, 0},    {"CHO HiCut", 0, 60, 58, 0},
+    {"CHO Delay", 1, 500, 140, 0}, {"CHO Gold", 0, 1, 1, 0},
+    {"CHO PhaRev", 0, 1, 1, 0},    {"CHO " GM2_MIX_GLYPHS, 0, 100, 50, 0},
 };
 
 static void achorus_raw(const int32_t *values, gm2_achorus_setup_raw *raw) {
@@ -21,9 +22,15 @@ static void achorus_raw(const int32_t *values, gm2_achorus_setup_raw *raw) {
       .delay = (int)values[4],
       .golden_ratio = (int)values[5],
       .phase_reverse = (int)values[6],
+      .mix = (int)values[7],
       .beat_ms = (double)GM2_EFFECT_BEAT_MS,
   };
 }
 
-GM2_EFFECT_DEFINE_LFO(achorus, achorus, k_knobs, achorus_raw, gm2_effect_moddelay_words,
-                      GM2_EFFECT_MODDELAY_WORDS)
+static void achorus_mix(const gm2_achorus_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
+}
+
+GM2_EFFECT_DEFINE_LFO_MIX(achorus, achorus, k_knobs, achorus_raw, gm2_effect_moddelay_words,
+                          achorus_mix, GM2_EFFECT_MODDELAY_WORDS)

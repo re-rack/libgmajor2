@@ -20,6 +20,7 @@ int gm2_cflanger_setup_config(const gm2_context *context, const gm2_cflanger_set
       .hi_cut = raw->hi_cut,
       .feedback = raw->feedback,
       .fb_cut = raw->fb_cut,
+      .mix = raw->mix,
       .beat_ms = raw->beat_ms,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_CFLANGER, &design, config);

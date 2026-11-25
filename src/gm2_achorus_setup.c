@@ -21,6 +21,7 @@ int gm2_achorus_setup_config(const gm2_context *context, const gm2_achorus_setup
       .delay = raw->delay,
       .golden_ratio = raw->golden_ratio,
       .phase_reverse = raw->phase_reverse,
+      .mix = raw->mix,
       .beat_ms = raw->beat_ms,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_ACHORUS, &design, config);

@@ -43,6 +43,7 @@
 
 #include "gm2_dsp_math.h"
 #include "gm2_lfo.h"
+#include "gm2_mix.h"
 #include "gm2_swf.h"
 #include "gm2_tables.h"
 
@@ -300,4 +301,7 @@ void gm2_moddelay_design(const gm2_rate_words *rate, gm2_moddelay_design_subtype
                         ? GM2_MODDELAY_CORE_LFO_TRICHORUS_ASYM
                         : GM2_MODDELAY_CORE_LFO_UNIFORM;
   config->note = (unsigned)tempo;
+  /* P:0x093FC0 pins the mix word at full on the three subtypes with no Mix knob. */
+  const int no_mix = tz_flanger || subtype == GM2_MODDELAY_DESIGN_VIBRATO;
+  gm2_mix_words(no_mix ? 100 : raw->mix, &config->wet, &config->dry);
 }

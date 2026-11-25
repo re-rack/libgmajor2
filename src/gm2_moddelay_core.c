@@ -41,16 +41,19 @@ static const int32_t *moddelay_lfo_table(gm2_moddelay_core_lfo_set lfo_set, unsi
  * it. */
 static inline int64_t moddelay_mul(int32_t s1, int32_t s2) { return 2 * (int64_t)s1 * (int64_t)s2; }
 
-/* The chunk's job run: the thirty words ride one-pole jobs, and each voice's
- * offset moves by its tap crossfade, behind the settled check P:0x00033C. A word
- * already on its target stays there — the one-pole lands on it exactly — and a
- * crossfade whose both taps already read their target leaves the record alone. */
+/* The chunk's job run: the thirty words ride one-pole jobs, the Mix pair rides the
+ * level record's, and each voice's offset moves by its tap crossfade, behind the
+ * settled check P:0x00033C. A word already on its target stays there — the
+ * one-pole lands on it exactly — and a crossfade whose both taps already read
+ * their target leaves the record alone. */
 static void moddelay_jobs(gm2_moddelay_core_state *state, const gm2_moddelay_core_config *config) {
   for (unsigned i = 0; i < GM2_MODDELAY_CORE_COEFS; i++) {
     if (state->coef[i] != config->coef[i]) {
       state->coef[i] = gm2_job_smooth(state->coef[i], config->coef[i], GM2_JOB_SMOOTH_STEP);
     }
   }
+  state->wet = gm2_job_smooth(state->wet, config->wet, GM2_JOB_SMOOTH_STEP);
+  state->dry = gm2_job_smooth(state->dry, config->dry, GM2_JOB_SMOOTH_STEP);
   for (unsigned v = 0; v < GM2_MODDELAY_CORE_VOICES; v++) {
     if (state->tap_fade[v].step == 0 && state->tap_offset[v][0] == config->tap_offset[v] &&
         state->tap_offset[v][1] == config->tap_offset[v]) {
@@ -71,10 +74,10 @@ void gm2_moddelay_core_process_frame(gm2_moddelay_core_state *state,
 
   /* Y:0x04F6's gain reaches the input with the accumulator's sign flipped, and the
    * two Hi-Cut low-passes take it from there. */
-  const int32_t x_in_l =
-      gm2_store24(gm2_round24(moddelay_mul(-GM2_LEVEL_INPUT, gm2_s24((uint32_t)in[0]))));
-  const int32_t x_in_r =
-      gm2_store24(gm2_round24(moddelay_mul(-gm2_s24((uint32_t)in[1]), GM2_LEVEL_INPUT)));
+  const int32_t in_l = gm2_s24((uint32_t)in[0]);
+  const int32_t in_r = gm2_s24((uint32_t)in[1]);
+  const int32_t x_in_l = gm2_store24(gm2_round24(moddelay_mul(-GM2_LEVEL_INPUT, in_l)));
+  const int32_t x_in_r = gm2_store24(gm2_round24(moddelay_mul(-in_r, GM2_LEVEL_INPUT)));
   const int32_t hi_cut_l =
       gm2_store24(gm2_round24(moddelay_mul(x_in_l, c[GM2_MODDELAY_CORE_HI_CUT + 0]) +
                               moddelay_mul(c[GM2_MODDELAY_CORE_HI_CUT + 1], state->hi_cut[0])));
@@ -197,7 +200,12 @@ void gm2_moddelay_core_process_frame(gm2_moddelay_core_state *state,
   state->sum[0] = sum_l;
   state->sum[1] = sum_r;
 
-  /* The output biquad, one per channel at X:0x006C..X:0x0073. */
+  /* The output biquad, one per channel at X:0x006C..X:0x0073, then Y:0x04F7's
+   * pair: the wet word on the biquad's output and the dry word on the frame's
+   * input, the two products rounded together once. */
+  const int32_t wet = state->wet;
+  const int32_t dry = state->dry;
+  const int32_t dry_in[GM2_CHANNELS] = {in_l, in_r};
   for (unsigned channel = 0; channel < GM2_CHANNELS; channel++) {
     int32_t *last = state->out_in[channel];
     int32_t x[3] = {last[0], last[1], state->sum[channel]};
@@ -205,8 +213,8 @@ void gm2_moddelay_core_process_frame(gm2_moddelay_core_state *state,
     last[0] = x[2];
     (void)gm2_biquad_step(&state->out_biquad[channel],
                           &c[GM2_MODDELAY_CORE_OUT_BIQUAD + GM2_BIQUAD_COEFS * channel], x);
-    /* The wet word; the zero dry term's MACR still rounds. */
-    out[channel] = gm2_store24(gm2_round24(moddelay_mul(GM2_LEVEL_WET, x[2])));
+    out[channel] =
+        gm2_store24(gm2_round24(moddelay_mul(wet, x[2]) + moddelay_mul(dry_in[channel], dry)));
   }
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
@@ -228,6 +236,8 @@ void gm2_moddelay_core_state_init(gm2_moddelay_core_state *state,
     state->tap_offset[v][1] = config->tap_offset[v];
     gm2_job_fade_init(&state->tap_fade[v], state->tap_gain[v]);
   }
+  state->wet = config->wet;
+  state->dry = config->dry;
 }
 
 void gm2_moddelay_core_align(gm2_moddelay_core_state *state, const gm2_moddelay_core_config *config,

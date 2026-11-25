@@ -18,6 +18,7 @@ typedef struct {
   int delay; /* 1..500: 0.1..50.0 ms */
   int golden_ratio; /* 0 Off, 1 On */
   int phase_reverse; /* 0 Off, 1 On */
+  int mix; /* 0..100 % */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_aflanger_setup_raw;
 

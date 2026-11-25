@@ -14,6 +14,7 @@ typedef struct {
   int hi_cut; /* 0..60: 20 Hz..20 kHz, 20 steps a decade */
   int feedback; /* -100..100 % */
   int fb_cut; /* 0..60: 20 Hz..20 kHz, 20 steps a decade */
+  int mix; /* 0..100 % */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_cflanger_setup_raw;
 

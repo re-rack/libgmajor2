@@ -20,6 +20,7 @@ int gm2_trichorus_asym_setup_config(const gm2_context *context,
       .tempo = raw->tempo,
       .width = raw->width,
       .phase_reverse = raw->phase_reverse,
+      .mix = raw->mix,
       .beat_ms = raw->beat_ms,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_TRICHORUS_ASYM, &design, config);

@@ -254,7 +254,7 @@ below its input gain:
 | Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 always: `P:0x093565` pins the mix word, and the Mix knob sets `Y:0x487..0x48A` instead |
-| Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB, or `0x7FFFFE` / 0 for the Through-Zero Flangers and Vibrato, whose tables have no Mix entry and whose callback pins the word |
 | Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 
@@ -284,9 +284,13 @@ univibe objects carry a Mix of their own that does not reach this pair: their
 callback `P:0x093565` pins the mix word at `0x7FFFFF` and re-stages the pair, and
 stages the output weights `Y:0x487..0x48A` from the knob instead. Their
 first activation leaves the out level at 0, and the next one sets it from Out
-Level. The init table's
-power-on words differ: the Gate & EQ block's wet word is `0x7FFFFF` until
-activation.
+Level. The Modulation object takes its Mix from index 13 of the subtype tables,
+which the setup chain `P:0x093A46` hands to `P:0x093FC0`: that callback stages the
+mix word and then runs `P:0x08F763`. The entry is a Dummy on the Through-Zero
+Flangers (subtypes 6, 7) and the Vibrato (8), and the callback pins their mix word
+at `0x7FFFFF` whatever the bank holds, so `gm2_moddelay_design()` passes 100 % for
+those three. The init table's power-on words differ: the Gate & EQ block's wet
+word is `0x7FFFFF` until activation.
 
 `gm2_mix_words()` (`src/gm2_mix.c`) is that curve: `to_q23(from_int(mix) * 0.01)`
 into `sin(word * pi/2)` twice, once for each half, each MPYR'd by the Out Level
@@ -1113,7 +1117,7 @@ one audio continuation (`P:0x001117..0x0011F8`) and one setup chain (`P:0x0938BE
 | Circular buffers | Left `X:0x080000..0x080FFF`, right `X:0x081000..0x081FFF` (4,096 words each, `m0 = m3 = 0x0FFF`); write pointers `Y:0x4A1` and `Y:0x4A2` decrement by 1 each frame |
 | State (`X:0x2F0..0x30A`, `L:0x06C..0x073`) | `x[0..1]` input Hi-Cut LP states; `x[2]` LFO phase `[0, 0x7FFFFF]`; `x[3..8]` six voice LFO sine outputs; `x[9..20]` six voice tap pairs (`x[20]` overwritten by left output biquad); `x[21..22]` left and right voice sums; `x[23..26]` left and right feedback LP and 200 Hz HP states; `X:0x06C..0x06D` and `X:0x070..0x071` output biquad input delays, `L:0x06E` and `L:0x072` 48-bit `y[n-1]` states, `X:0x06F` and `X:0x073` 24-bit `y[n-2]` high words |
 | Staged and live words | 30 words staged at `X:0x098BD1..0x098BEE` (`S+0..29`), published to `Y:0x4AD..0x4B9, 0x4E4..0x4F4` by five jobs `X:0x098C53..0x098C66` (`P:0x0001FD` on `S+0..11`, `S+12` and `S+13`; `P:0x00026F` on `S+14..23` and `S+24..29`); six voice delay blocks `Y:0x4BA..0x4D7` (`{depth_staged, depth_latched, tap0_off, 0x0960, tap1_off}`) and six tap crossfade records `X:0x098C01..0x098C42` (`Y:0x4D8..0x4E3` tap gains, driven by `X:0x098C67..0x098C7E`) |
-| Input, wet, dry | `Y:0x4F6..0x4F8`, staged at `X:0x098D19..0x098D1B` by `P:0x08F763` from `UI+135` (`X:0x098D06`) |
+| Input, wet, dry | `Y:0x4F6..0x4F8`, staged at `X:0x098D19..0x098D1B` by `P:0x08F763` from `UI+135` (`X:0x098D06`). The output tail `P:0x0011EC..0x0011F7` reads the task record as the wet and dry pair at `Y:0x4F7` with the input and output buffers, then runs `mpy wet,sum` and `macr dry,input` on each channel, so the dry operand is the frame's input sample, not a tap on the voice sum |
 | UI object and tables | `X:0x098C7F`; dispatcher `P:0x0936C3`, activation `P:0x0938BE`, sub-record `P:0x085EAD`, subtype tables `P:0x08581D, 0x08590D, 0x0859FD, 0x085AED, 0x085BDD, 0x085CCD, 0x085DBD` (`X:0x098DEB..0x098DF3`), LFO phase offsets `X:0x098D1F..0x098D30`, voice gains `X:0x098D37..0x098D54`, Depth tables `X:0x098D55, 0x098D71, 0x098D8D`, Width tables `X:0x098DA2, 0x098DB7` |
 
 Updaters (`gm2_moddelay_design.c`):
@@ -1401,7 +1405,7 @@ Which words a knob turn moves, briefly:
 | Pitch | the ratio pair (step `0x020DC6`), the feedback pair and the pan/level quad glide; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD`; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Univibes | Depth on `P:0x0001B9`, the other twenty words on `P:0x0001FD` |
-| Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps |
+| Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps; a Mix turn restages the wet and dry pair, which the level record glides with them |
 | Delays | the twenty matrix and filter words and the Mix pair glide, and a moved tap offset starts a crossfade |
 | Reverb | eighty words glide in six jobs; tap offsets, tank signs and early tap weights land at once; a Mix turn restages the level pair, which glides on the level record with them |
 
