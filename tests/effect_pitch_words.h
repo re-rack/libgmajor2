@@ -2,14 +2,15 @@
  * and pan gains X:0x0987C6..X:0x0987CB, the delays X:0x0412/X:0x0414, the ratios
  * X:0x041D/X:0x041E, each curve's gain Y:0x0228/Y:0x022A, the curves Y:0x022B and
  * Y:0x0250, the rate factor, the mode word and the reference offset
- * X:0x0416..X:0x0424, and the period window X:0x0566..X:0x0568.
+ * X:0x0416..X:0x0424, the period window X:0x0566..X:0x0568, and the Mix knob's
+ * wet and dry words X:0x09884E/X:0x09884F.
  */
 #ifndef GM2_EFFECT_PITCH_WORDS_H
 #define GM2_EFFECT_PITCH_WORDS_H
 
 #include "gm2_pitch_core.h"
 
-#define GM2_EFFECT_PITCH_WORDS 92u
+#define GM2_EFFECT_PITCH_WORDS 94u
 
 /* X:0x0423 once P:0x0910BD has run, on the Intelligent Pitch Shifter. */
 #define GM2_EFFECT_PITCH_HARMONIZE 3
@@ -42,6 +43,8 @@ static inline void gm2_effect_pitch_words(const gm2_pitch_core_config *config, i
   words[at++] = config->min_period;
   words[at++] = config->max_period;
   words[at++] = config->lag_count;
+  words[at++] = config->wet;
+  words[at++] = config->dry;
 }
 
 #endif /* GM2_EFFECT_PITCH_WORDS_H */

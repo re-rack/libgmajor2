@@ -7,6 +7,7 @@
 
 #include "gm2.h"
 #include "gm2_effects.h"
+#include "gm2_process.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -29,6 +30,10 @@ typedef struct {
   uint32_t max_frames; /* frames its max segment holds; 0 for GM2_EFFECT_SEGMENT */
 } gm2_knob;
 
+/* The Mix knob's descriptor name ends in the three glyph codes its icon shows as;
+ * the name compare keeps only the 7-bit codes. */
+#define GM2_MIX_GLYPHS "\x01\x02\x03"
+
 typedef struct {
   const char *name; /* fixture stem */
   unsigned knobs;
@@ -38,6 +43,9 @@ typedef struct {
   int (*setup)(const int32_t *values, int32_t *words);
   /* 0 when the setup refuses each NULL pointer and a context without a rate. */
   int (*rejects)(void);
+  /* The block's level words for one knob vector: the input word and, for an effect
+   * with a Mix knob, the wet and dry words its level code stages. 0 on success. */
+  int (*levels)(const int32_t *values, int32_t level[3]);
   /* An instance set up from one knob vector, NULL on failure. */
   void *(*open)(const int32_t *values);
   int (*set_knob)(void *instance, unsigned knob, int value);
@@ -65,18 +73,35 @@ typedef struct {
  *   void words(const gm2_<module>_config *config, int32_t *words)
  *       the config's setup words, in the order the firmware adapter reads them
  *
- * GM2_EFFECT_DEFINE_LFO is the same for a module with an align call. */
+ * GM2_EFFECT_DEFINE_LFO is the same for a module with an align call and
+ * GM2_EFFECT_DEFINE_MIX for one whose Mix knob sets its level words;
+ * GM2_EFFECT_DEFINE_LFO_MIX takes both. The two Mix variants name the pair with
+ * one more function:
+ *
+ *   void mix(const gm2_<module>_config *config, int32_t *wet, int32_t *dry)
+ *       where the config keeps it, in its own fields or in its core's
+ */
 #define GM2_EFFECT_DEFINE(fixture, module, knob_table, raw, words, word_count)                     \
   GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
-  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, NULL)
+  GM2_EFFECT_LEVELS_FIXED_(fixture)                                                                \
+  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, NULL, fixture##_levels_fixed)
 
 #define GM2_EFFECT_DEFINE_LFO(fixture, module, knob_table, raw, words, word_count)                 \
   GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
-  static void fixture##_align(void *instance, double beats) {                                      \
-    fixture##_native *self = instance;                                                             \
-    gm2_##module##_align(&self->state, &self->config, beats);                                      \
-  }                                                                                                \
-  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, fixture##_align)
+  GM2_EFFECT_ALIGN_(fixture, module)                                                               \
+  GM2_EFFECT_LEVELS_FIXED_(fixture)                                                                \
+  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, fixture##_align, fixture##_levels_fixed)
+
+#define GM2_EFFECT_DEFINE_MIX(fixture, module, knob_table, raw, words, mix, word_count)            \
+  GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
+  GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                                     \
+  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, NULL, fixture##_levels_mix)
+
+#define GM2_EFFECT_DEFINE_LFO_MIX(fixture, module, knob_table, raw, words, mix, word_count)        \
+  GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
+  GM2_EFFECT_ALIGN_(fixture, module)                                                               \
+  GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                                     \
+  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, fixture##_align, fixture##_levels_mix)
 
 #define GM2_EFFECT_KNOBS_(knob_table) (sizeof(knob_table) / sizeof(knob_table)[0])
 
@@ -185,7 +210,38 @@ typedef struct {
                                                                                                    \
   static void fixture##_close(void *instance) { free(instance); }
 
-#define GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, align_call)                            \
+#define GM2_EFFECT_ALIGN_(fixture, module)                                                         \
+  static void fixture##_align(void *instance, double beats) {                                      \
+    fixture##_native *self = instance;                                                             \
+    gm2_##module##_align(&self->state, &self->config, beats);                                      \
+  }
+
+/* An effect without a Mix knob: the same three words for every knob vector. */
+#define GM2_EFFECT_LEVELS_FIXED_(fixture)                                                          \
+  static int fixture##_levels_fixed(const int32_t *values, int32_t level[3]) {                     \
+    (void)values;                                                                                  \
+    level[0] = GM2_LEVEL_INPUT;                                                                    \
+    level[1] = GM2_LEVEL_WET;                                                                      \
+    level[2] = 0;                                                                                  \
+    return 0;                                                                                      \
+  }
+
+/* An effect whose Mix knob sets its level words: the effect names the pair, and a
+ * setup that refuses is a broken adapter, never a fall back to a full mix. */
+#define GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                               \
+  static int fixture##_levels_mix(const int32_t *values, int32_t level[3]) {                       \
+    gm2_context context;                                                                           \
+    gm2_##module##_config config;                                                                  \
+    if (gm2_context_init(&context, GM2_EFFECT_RATE) != 0 ||                                        \
+        fixture##_config(values, &context, &config) != 0) {                                        \
+      return -1;                                                                                   \
+    }                                                                                              \
+    level[0] = GM2_LEVEL_INPUT;                                                                    \
+    mix(&config, &level[1], &level[2]);                                                            \
+    return 0;                                                                                      \
+  }
+
+#define GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, align_call, levels_call)               \
   const gm2_effect gm2_effect_##fixture = {                                                        \
       .name = #fixture,                                                                            \
       .knobs = (unsigned)GM2_EFFECT_KNOBS_(knob_table),                                            \
@@ -193,6 +249,7 @@ typedef struct {
       .setup_words = (word_count),                                                                 \
       .setup = fixture##_setup,                                                                    \
       .rejects = fixture##_rejects,                                                                \
+      .levels = levels_call,                                                                       \
       .open = fixture##_open,                                                                      \
       .set_knob = fixture##_set_knob,                                                              \
       .split = fixture##_split,                                                                    \
@@ -329,14 +386,19 @@ static inline unsigned gm2_effect_segments(const gm2_effect *effect, gm2_segment
   return n;
 }
 
+/* Every knob at its default, the setting a fixture's level words describe. */
+static inline void gm2_effect_defaults(const gm2_effect *effect, int32_t *values) {
+  for (unsigned knob = 0; knob < effect->knobs; knob++) {
+    values[knob] = effect->knob[knob].def;
+  }
+}
+
 /* The knob vector a segment runs with: its own value with the others carried
  * over from the segment before, or every knob at its default for GM2_ALL. */
 static inline void gm2_effect_values(const gm2_effect *effect, const gm2_segment *segment,
                                      int32_t *values) {
   if (segment->knob == GM2_ALL) {
-    for (unsigned knob = 0; knob < effect->knobs; knob++) {
-      values[knob] = effect->knob[knob].def;
-    }
+    gm2_effect_defaults(effect, values);
   } else {
     values[segment->knob] = segment->value;
   }

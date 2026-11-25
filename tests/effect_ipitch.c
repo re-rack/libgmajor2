@@ -4,7 +4,7 @@
 #include "gm2_ipitch.h"
 #include "gm2_ipitch_setup.h"
 
-#define IPITCH_KNOBS 10u
+#define IPITCH_KNOBS 11u
 
 /* Voice 2's default -15 lies outside the descriptor's -12..12, which the
  * accessor clamps to -12. */
@@ -19,6 +19,7 @@ static const gm2_knob k_knobs[IPITCH_KNOBS] = {
     {"Scale", 0, 17, 0, 0},
     {"PIT Level1", -100, 0, 0, 0},
     {"PIT Level2", -100, 0, 0, 0},
+    {"PIT " GM2_MIX_GLYPHS, 0, 100, 25, 0},
 };
 
 static void ipitch_raw(const int32_t *values, gm2_ipitch_setup_raw *raw) {
@@ -33,8 +34,14 @@ static void ipitch_raw(const int32_t *values, gm2_ipitch_setup_raw *raw) {
       .scale = (int)values[7],
       .level_1 = (int)values[8],
       .level_2 = (int)values[9],
+      .mix = (int)values[10],
   };
 }
 
-GM2_EFFECT_DEFINE(ipitch, ipitch, k_knobs, ipitch_raw, gm2_effect_pitch_words,
-                  GM2_EFFECT_PITCH_WORDS)
+static void ipitch_mix(const gm2_ipitch_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
+}
+
+GM2_EFFECT_DEFINE_MIX(ipitch, ipitch, k_knobs, ipitch_raw, gm2_effect_pitch_words, ipitch_mix,
+                      GM2_EFFECT_PITCH_WORDS)

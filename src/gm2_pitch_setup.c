@@ -19,6 +19,7 @@ int gm2_pitch_setup_config(const gm2_context *context, const gm2_pitch_setup_raw
       .delay = {raw->delay_1, raw->delay_2},
       .feedback = {raw->feedback_1, raw->feedback_2},
       .level = {raw->level_1, raw->level_2},
+      .mix = raw->mix,
   };
   gm2_pitch_design(&rate_words, GM2_PITCH_DESIGN_PITCH, &design, config);
   return 0;

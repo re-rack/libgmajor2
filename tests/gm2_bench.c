@@ -38,12 +38,12 @@ static const int32_t k_tremolo[] = {208, 100, 0, 0, 33, 58};
 static const int32_t k_panner[] = {116, 100, 0};
 /* Threshold at its minimum holds the gain computer on the attack side. */
 static const int32_t k_comp[] = {-40, 11, 3, 15, 0};
-static const int32_t k_detune[] = {9, -9, 50, 50};
+static const int32_t k_detune[] = {9, -9, 50, 50, 66};
 static const int32_t k_whammy[] = {33, 0, 2};
-static const int32_t k_octaver[] = {0, 2};
+static const int32_t k_octaver[] = {0, 2, 66};
 /* Voice 1 at its minimum exercises the negative-ratio wrap. */
-static const int32_t k_pitch[] = {-2400, -15, -50, 50, 350, 350, 100, 100, 0, 0};
-static const int32_t k_ipitch[] = {10, -12, -50, 50, 350, 350, 0, 0, 0, 0};
+static const int32_t k_pitch[] = {-2400, -15, -50, 50, 350, 350, 100, 100, 0, 0, 66};
+static const int32_t k_ipitch[] = {10, -12, -50, 50, 350, 350, 0, 0, 0, 0, 66};
 static const int32_t k_cchorus[] = {69, 50, 0, 58};
 static const int32_t k_achorus[] = {69, 50, 0, 58, 500, 1, 1};
 static const int32_t k_trichorus[] = {69, 50, 0, 50, 1};

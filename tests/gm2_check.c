@@ -91,8 +91,9 @@ static int check_knobs(const gm2_effect *effect, const gm2_fixture *fixture) {
   return ok;
 }
 
-/* The level words the firmware's block staged are the ones every kernel fixes. */
-static int check_levels(const gm2_fixture *fixture) {
+/* The level words the firmware's block staged at the defaults are the ones the
+ * effect's knobs fix. */
+static int check_levels(const gm2_effect *effect, const gm2_fixture *fixture) {
   uint32_t count = 0;
   uint32_t size = 0;
   const void *records = gm2_fixture_records(fixture, GM2_FIX_LEVELS, &count, &size);
@@ -101,13 +102,26 @@ static int check_levels(const gm2_fixture *fixture) {
     failed();
     return 0;
   }
-  static const int32_t k_levels[3] = {GM2_LEVEL_INPUT, GM2_LEVEL_WET, 0};
+  int32_t *values = malloc((size_t)effect->knobs * sizeof *values);
+  int32_t want[3] = {0, 0, 0};
   int32_t words[3] = {0, 0, 0};
-  gm2_fixture_get_i32(records, 3, words);
+  if (values == NULL) {
+    detail("out of memory");
+    failed();
+    return 0;
+  }
+  gm2_effect_defaults(effect, values);
   int ok = 1;
+  if (effect->levels(values, want) != 0) {
+    detail("the level words do not build from the defaults");
+    failed();
+    ok = 0;
+  }
+  free(values);
+  gm2_fixture_get_i32(records, 3, words);
   for (unsigned i = 0; i < 3u; i++) {
-    if (words[i] != k_levels[i]) {
-      detail("level word %u is %d, the kernels fix %d", i, (int)words[i], (int)k_levels[i]);
+    if (words[i] != want[i]) {
+      detail("level word %u is %d, the effect fixes %d", i, (int)words[i], (int)want[i]);
       failed();
       ok = 0;
     }
@@ -450,7 +464,7 @@ static unsigned check_effect(const gm2_effect *effect) {
   if (knobs_ok == 0) {
     failed();
   }
-  check_levels(&fixture);
+  check_levels(effect, &fixture);
   if (effect->rejects() != 0) {
     detail("the setup accepts a NULL pointer or a context without a rate");
     failed();

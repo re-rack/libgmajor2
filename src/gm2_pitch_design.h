@@ -8,6 +8,7 @@
  *   P:0x090C89  Voice, or Pitch, Direction and Range: the two pitch ratios
  *   P:0x090D7F  Delay: the two voices' delays
  *   P:0x090E51  Feedback, Pan, Level: the feedbacks and the pan gains
+ *   P:0x08F763  Mix: the wet and dry words the output stage multiplies by
  *
  * The window and the reference depend on the device's Tuner Ref and Tuner Range,
  * X:0x099A61 and X:0x099A63, which are globals, not Pitch parameters: the setup
@@ -43,6 +44,7 @@ typedef struct {
   int pitch;                           /* 0..100 % of the Whammy's range */
   int direction;                       /* 0 Down, 1 Up */
   int range;                           /* 1..2 octaves */
+  int mix;                             /* 0..100 %: the Whammy has none, it stays fully wet */
 } gm2_pitch_design_raw;
 
 void gm2_pitch_design(const gm2_rate_words *rate, gm2_pitch_design_subtype subtype,

@@ -1,6 +1,6 @@
-/* Voice, Pan, Delay and Level of both voices, Key and Scale to the Intelligent Pitch Shifter's
- * words: the Pitch block's updaters for subtype 4 (gm2_pitch_design.h), descriptor table
- * P:0x084A81.
+/* Voice, Pan, Delay and Level of both voices, Key, Scale and Mix to the
+ * Intelligent Pitch Shifter's words: the Pitch block's updaters for subtype 4
+ * (gm2_pitch_design.h), descriptor table P:0x084A81.
  */
 #ifndef GM2_IPITCH_SETUP_H
 #define GM2_IPITCH_SETUP_H
@@ -19,6 +19,7 @@ typedef struct {
   int scale;   /* 0..17: Ionian .. Phrygian Major, the rows of gm2_pitch_scale_table */
   int level_1; /* -100..0 dB */
   int level_2; /* -100..0 dB */
+  int mix;     /* 0..100 % wet */
 } gm2_ipitch_setup_raw;
 
 int gm2_ipitch_setup_config(const gm2_context *context, const gm2_ipitch_setup_raw *raw,

@@ -19,8 +19,6 @@ static const gm2_firmware_ops *const k_firmware[] = {
 
 #define FIRMWARE_COUNT (sizeof k_firmware / sizeof k_firmware[0])
 
-static const int32_t k_levels[3] = {GM2_LEVEL_INPUT, GM2_LEVEL_WET, 0};
-
 static int vector_present(const int32_t *vectors, unsigned count, unsigned knobs,
                           const int32_t *candidate) {
   for (unsigned vector = 0; vector < count; vector++) {
@@ -143,13 +141,6 @@ int gm2_record_effect(const gm2_firmware_ops *ops, const char *path) {
   if (ops->levels(firmware, levels) != 0) {
     goto fail;
   }
-  for (unsigned i = 0; i < 3u; i++) {
-    if (levels[i] != k_levels[i]) {
-      fprintf(stderr, "%s: level word %u is %06X, the kernels fix %06X\n", effect->name, i,
-              (uint32_t)levels[i] & 0xFFFFFFu, (uint32_t)k_levels[i] & 0xFFFFFFu);
-      goto fail;
-    }
-  }
 
   unsigned max_vectors = 1u + knobs * 64u;
   values = malloc((knobs + effect->setup_words) * sizeof *values);
@@ -185,6 +176,19 @@ int gm2_record_effect(const gm2_firmware_ops *ops, const char *path) {
   }
 
   {
+    int32_t want[3] = {0, 0, 0};
+    gm2_effect_defaults(effect, values);
+    if (effect->levels(values, want) != 0) {
+      fprintf(stderr, "%s: the level words do not build from the defaults\n", effect->name);
+      goto fail;
+    }
+    for (unsigned i = 0; i < 3u; i++) {
+      if (levels[i] != want[i]) {
+        fprintf(stderr, "%s: level word %u is %06X, the effect fixes %06X\n", effect->name, i,
+                (uint32_t)levels[i] & 0xFFFFFFu, (uint32_t)want[i] & 0xFFFFFFu);
+        goto fail;
+      }
+    }
     unsigned char bytes[GM2_FIX_LEVELS_SIZE];
     gm2_fixture_put_i32(bytes, 3, levels);
     if (gm2_fixture_writer_add(&writer, GM2_FIX_LEVELS, sizeof bytes, bytes) != 0) {

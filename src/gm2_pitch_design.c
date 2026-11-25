@@ -22,10 +22,16 @@
  *               Whammy and the Octaver
  *   P:0x090E51  the feedback pair on the Pitch Shifter, the four pan gains from
  *               Pan and Level, and the fixed Detune, Whammy and Octaver routing
+ *
+ * Mix is not one of them: the level code P:0x08F763 stages the pair the output
+ * stage multiplies the voice sum and the input by, at Out Level 0 dB. The Mix
+ * callback P:0x091287 reaches P:0x0912C7 on the Whammy, which pins its mix word
+ * at 0x7FFFFF.
  */
 #include "gm2_pitch_design.h"
 
 #include "gm2_dsp_math.h"
+#include "gm2_mix.h"
 #include "gm2_swf.h"
 #include "gm2_tables.h"
 
@@ -321,4 +327,5 @@ void gm2_pitch_design(const gm2_rate_words *rate, gm2_pitch_design_subtype subty
   }
   pitch_delays(rate, subtype, raw, config);
   pitch_levels(subtype, raw, config);
+  gm2_mix_words(subtype == GM2_PITCH_DESIGN_WHAMMY ? 100 : raw->mix, &config->wet, &config->dry);
 }

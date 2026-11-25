@@ -1,6 +1,6 @@
-/* Voice, Pan, Delay, Feedback and Level of both voices to the Pitch Shifter's words: the Pitch
- * block's updaters for subtype 3 (gm2_pitch_design.h), descriptor table
- * P:0x084991.
+/* Voice, Pan, Delay, Feedback and Level of both voices, and Mix, to the Pitch
+ * Shifter's words: the Pitch block's updaters for subtype 3 (gm2_pitch_design.h),
+ * descriptor table P:0x084991.
  */
 #ifndef GM2_PITCH_SETUP_H
 #define GM2_PITCH_SETUP_H
@@ -19,6 +19,7 @@ typedef struct {
   int feedback_2; /* 0..100 % */
   int level_1;    /* -100..0 dB */
   int level_2;    /* -100..0 dB */
+  int mix;        /* 0..100 % wet */
 } gm2_pitch_setup_raw;
 
 int gm2_pitch_setup_config(const gm2_context *context, const gm2_pitch_setup_raw *raw,

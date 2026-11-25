@@ -1,4 +1,4 @@
-/* Voice L, Voice R, Delay L and Delay R to the Detune's words: the Pitch
+/* Voice L, Voice R, Delay L, Delay R and Mix to the Detune's words: the Pitch
  * block's updaters for subtype 0 (gm2_pitch_design.h), descriptor table
  * P:0x0846C1.
  */
@@ -13,6 +13,7 @@ typedef struct {
   int voice_r; /* -100..100 cents */
   int delay_l; /* 0..50 ms */
   int delay_r; /* 0..50 ms */
+  int mix;     /* 0..100 % wet */
 } gm2_detune_setup_raw;
 
 int gm2_detune_setup_config(const gm2_context *context, const gm2_detune_setup_raw *raw,

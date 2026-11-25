@@ -937,8 +937,8 @@ static void pitch_chunk(gm2_pitch_core_state *state, const gm2_pitch_core_config
 
 /* The chunk's job run. P:0x0001E4 solves the coarse search once its scan is over
  * and takes the strongest peak's period when it lies in the window; the ratios,
- * the feedbacks and the pan gains ride one-pole jobs, the ratios towards the
- * harmonizer's where it runs. */
+ * the feedbacks, the pan gains and the Mix words ride one-pole jobs, the ratios
+ * towards the harmonizer's where it runs. */
 static void pitch_jobs(gm2_pitch_core_state *state, const gm2_pitch_core_config *config) {
   if (state->coarse_state == PITCH_COARSE_SOLVE) {
     pitch_coarse_solve(state, config);
@@ -956,6 +956,8 @@ static void pitch_jobs(gm2_pitch_core_state *state, const gm2_pitch_core_config 
   for (unsigned i = 0; i < 2u * GM2_PITCH_CORE_VOICES; i++) {
     state->pan[i] = gm2_job_smooth(state->pan[i], config->pan[i], GM2_JOB_SMOOTH_STEP);
   }
+  state->wet = gm2_job_smooth(state->wet, config->wet, GM2_JOB_SMOOTH_STEP);
+  state->dry = gm2_job_smooth(state->dry, config->dry, GM2_JOB_SMOOTH_STEP);
 }
 
 /* One stereo frame, P:0x000D15, then the chunk's job run once its last frame is
@@ -984,15 +986,21 @@ void gm2_pitch_core_process_frame(gm2_pitch_core_state *state, const gm2_pitch_c
     pitch_voice(state, &state->voice[i], &limit);
   }
 
-  /* The pan matrix, then the wet word; the zero dry term's MACR still rounds. */
+  /* The pan matrix, then each channel's wet and dry products, rounded together
+   * once. Every operand is a 24-bit word, so each doubled product is at most 2^47
+   * and their sum stays inside the 56-bit accumulator: no wrap can act. */
   const int32_t one = state->voice[0].out;
   const int32_t two = state->voice[1].out;
+  const int32_t wet = state->wet;
+  const int32_t dry = state->dry;
   int64_t right_sum = 2 * (int64_t)state->pan[0] * two;
   int64_t left_sum = 2 * (int64_t)two * state->pan[1];
   left_sum += 2 * (int64_t)one * state->pan[2];
   right_sum += 2 * (int64_t)state->pan[3] * one;
-  out[0] = gm2_store24(gm2_round24(2 * (int64_t)GM2_LEVEL_WET * gm2_store24(left_sum)));
-  out[1] = gm2_store24(gm2_round24(2 * (int64_t)gm2_store24(right_sum) * GM2_LEVEL_WET));
+  const int64_t wet_l = 2 * (int64_t)wet * gm2_store24(left_sum);
+  const int64_t wet_r = 2 * (int64_t)wet * gm2_store24(right_sum);
+  out[0] = gm2_store24(gm2_round24(wet_l + 2 * (int64_t)left * dry));
+  out[1] = gm2_store24(gm2_round24(wet_r + 2 * (int64_t)right * dry));
 
   if (state->chunk_pos == 0u) {
     pitch_chunk(state, config);
@@ -1031,5 +1039,7 @@ void gm2_pitch_core_state_init(gm2_pitch_core_state *state, const gm2_pitch_core
   for (unsigned i = 0; i < 2u * GM2_PITCH_CORE_VOICES; i++) {
     state->pan[i] = config->pan[i];
   }
+  state->wet = config->wet;
+  state->dry = config->dry;
   pitch_rates(state, config);
 }

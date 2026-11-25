@@ -20,6 +20,7 @@ int gm2_ipitch_setup_config(const gm2_context *context, const gm2_ipitch_setup_r
       .level = {raw->level_1, raw->level_2},
       .key = raw->key,
       .scale = raw->scale,
+      .mix = raw->mix,
   };
   gm2_pitch_design(&rate_words, GM2_PITCH_DESIGN_IPITCH, &design, config);
   return 0;

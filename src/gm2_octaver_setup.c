@@ -16,6 +16,7 @@ int gm2_octaver_setup_config(const gm2_context *context, const gm2_octaver_setup
   const gm2_pitch_design_raw design = {
       .direction = raw->direction,
       .range = raw->range,
+      .mix = raw->mix,
   };
   gm2_pitch_design(&rate_words, GM2_PITCH_DESIGN_OCTAVER, &design, config);
   return 0;

@@ -4,7 +4,7 @@
 #include "gm2_pitch.h"
 #include "gm2_pitch_setup.h"
 
-#define PITCH_KNOBS 10u
+#define PITCH_KNOBS 11u
 
 /* Delay 1 and Delay 2 reach 350 ms, more than a 4,096-frame segment holds. */
 static const gm2_knob k_knobs[PITCH_KNOBS] = {
@@ -18,6 +18,7 @@ static const gm2_knob k_knobs[PITCH_KNOBS] = {
     {"PIT FB2", 0, 100, 0, 0},
     {"PIT Level1", -100, 0, 0, 0},
     {"PIT Level2", -100, 0, 0, 0},
+    {"PIT " GM2_MIX_GLYPHS, 0, 100, 25, 0},
 };
 
 static void pitch_raw(const int32_t *values, gm2_pitch_setup_raw *raw) {
@@ -32,7 +33,14 @@ static void pitch_raw(const int32_t *values, gm2_pitch_setup_raw *raw) {
       .feedback_2 = (int)values[7],
       .level_1 = (int)values[8],
       .level_2 = (int)values[9],
+      .mix = (int)values[10],
   };
 }
 
-GM2_EFFECT_DEFINE(pitch, pitch, k_knobs, pitch_raw, gm2_effect_pitch_words, GM2_EFFECT_PITCH_WORDS)
+static void pitch_mix(const gm2_pitch_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
+}
+
+GM2_EFFECT_DEFINE_MIX(pitch, pitch, k_knobs, pitch_raw, gm2_effect_pitch_words, pitch_mix,
+                      GM2_EFFECT_PITCH_WORDS)

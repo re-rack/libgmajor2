@@ -76,6 +76,7 @@ through the library and needs no emulator.
 | `src/gm2_tables.c`, `src/gm2_tables.h` | Firmware lookup tables word for word, and the log2/exp2/decay and waveform readers |
 | `src/gm2_dsp_math.h` | DSP56300 24/48/56-bit arithmetic primitives, header-only and inline |
 | `src/gm2_swf.c`, `src/gm2_swf.h` | Native software-float arithmetic and transcendental helpers, plus the dB and frequency unit maps |
+| `src/gm2_mix.c`, `src/gm2_mix.h` | A Mix knob's wet and dry level words, the equal-power curve `P:0x08F763` stages at Out Level 0 dB |
 | `src/gm2_process.h` | Fixed block level words and the four process entry points every effect shares |
 | `src/gm2_job.c`, `src/gm2_job.h` | One-pole coefficient smoothing, parameter ramps and delay-tap crossfades |
 | `src/gm2_biquad.h` | The firmware's double-precision biquad step and state |
@@ -250,7 +251,7 @@ below its input gain:
 | Tremolo/Panner | `X:0x0988CE` | `P:0x09172F` | UI+36 | `Y:0x3C1` | `0x7FFFFF` / `0x7FFFFE` / 0 at Out Level 0 dB |
 | Wahs | `X:0x0989B4` | `P:0x09233B` | UI+60 | `Y:0x419` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
-| Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
@@ -259,10 +260,20 @@ below its input gain:
 
 The Gate & EQ and compressor activations set `S+4..S+7` to `0x7FFFFF`. The
 Tremolo/Panner object fixes its mix at `0x7FFFFF`; the two filter objects set it
-from their Mix parameter (index 13) times 0.01. Their first activation leaves the
-out level at 0, and the next one sets it from Out Level. The init table's
+from their Mix parameter (index 13) times 0.01, and the Pitch object from its Mix
+parameter (index 12), whose callback `P:0x091287` restages the pair through
+`P:0x08F763`. The Whammy has no Mix of its own: its descriptors leave the word
+blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
+word at `0x7FFFFF` for that subtype, so `gm2_pitch_design()` passes 100 %. Their
+first activation leaves the out level at 0, and the next one sets it from Out
+Level. The init table's
 power-on words differ: the Gate & EQ block's wet word is `0x7FFFFF` until
 activation.
+
+`gm2_mix_words()` (`src/gm2_mix.c`) is that curve: `to_q23(from_int(mix) * 0.01)`
+into `sin(word * pi/2)` twice, once for each half, each MPYR'd by the Out Level
+word. The pair is not one minus the other: each sine is evaluated on its own, so
+a Mix of 50 % stages `0x5A827A` / `0x5A8278`.
 
 The level code builds its record inside the struct too: the payload at
 `X:(S+13)` is `{src = X:(S+19), dst = X:(S+8), count, snap 1, step 0x008371}`,
@@ -274,7 +285,9 @@ own, and
 their struct at UI+6; the other recorders read the staged words after the
 activation and let the block's own level job settle the live ones (the Reverb's
 payload is `X:0x099040`, delivering `Y:0x5DA`). The checker requires both to
-match the words each kernel fixes.
+match the words the effect's own knobs fix: each effect's test adapter names its
+input word and its settled pair, so a Mix knob's words come out of that effect's
+setup rather than a library-wide constant.
 
 ### Instruction semantics
 
@@ -1112,7 +1125,7 @@ tables via `X:0x098853..0x098857` (`P:0x0846C1, 0x0847B1, 0x0848A1, 0x084991,
 | Voice and splice state | `X:0x03FE..0x0401` stereo input and voice outputs; `X:0x0402` chunk buffer pointer (`Y:0x0200..0x0207`); `X:0x0403` 32-chunk phase counter (`1..32`); `X:0x0410` valid pitch period; `X:0x0412..0x0415` target and slewed voice delays; `X:0x0416` crossfade rate factor; `X:0x0417..0x041C` two 3-word voice splice records `{weight, pos, span}`; `Y:0x0208..0x0211` two 5-word splice control blocks `{step, span, min, max, 0}`; `Y:0x021A..0x021B` period-ring tap offsets; `Y:0x021E..0x021F` voice pitch steps |
 | Detector state | `Y:0x0275..0x0278` mono chunk scratch; `Y:0x0279..0x027D` (`gm2_pitch_det_biquad`) and `X:0x0425..0x0428` input biquad; `X:0x0429..0x042A` `-0.5` LP pole and state; `X:0x042B..0x042E` coarse template steps `{5, 7, 17, 31}`; `Y:0x027E..0x02BD` 64-word coarse template; `X:0x0430..0x0435` coarse AMDF pointers, state PC (`0x0604, 0x059A, 0x05D2`), 48-bit energy and norm shift; `X:0x0464..0x0564` 257-word coarse AMDF window; `X:0x0588..0x05A7` peak table; `X:0x0569..0x0572`, `Y:0x02BE..0x02D4` fine AMDF state PC (`0x0606, 0x062B, 0x0656, 0x06B4`), 7 lag scores and 16-word template; `X:0x0436..0x043E`, `X:0x0575..0x0587` tracked coarse/fine periods, confidence, log2 pitch (`X:0x043A`, via `X:0x0440..0x0445` `gm2_pitch_log2_poly`) and hysteresis state |
 | Staged and live words | `X:0x041D..0x041E` target pitch ratios -> `Y:0x0224..0x0225` (payload `X:0x0987CC`, handler `P:0x000212`, a branch into `P:0x0001FD`, step `0x020DC6`); `X:0x0987C6..0x0987C7` feedback gains -> `Y:0x021C..0x021D` (`X:0x0987D2`, step `0x008371`); `X:0x0987C8..0x0987CB` voice pan/level gains -> `Y:0x0220..0x0223` (`X:0x0987D8`, step `0x008371`) |
-| Input, wet, dry | `Y:0x03A0..0x03A2`, staged at `X:0x09884D..0x09884F` by `P:0x08F763` from `UI+80` (`X:0x09883A`) |
+| Input, wet, dry | `Y:0x03A0..0x03A2`, staged at `X:0x09884D..0x09884F` by `P:0x08F763` from `UI+80` (`X:0x09883A`). The output stage `P:0x000D70..0x000D7D` takes the task record `Y:0x0398` as `{wet and dry pair at 0x03A1 in Y, input buffer, output buffer}`, then runs `mpy wet,voice` and `macr dry,input` on each channel, so the dry operand is the frame's input sample, not a tap on the voice sum |
 
 Updaters (`gm2_pitch_design.c`):
 
@@ -1333,7 +1346,7 @@ Which words a knob turn moves, briefly:
 | Tremolo, Panner | pulse, step, rise and fall ride ramps armed by a Speed, Tempo or Pwidth turn, depth one armed by a Depth or Width turn; the Hi-Cut words only glide and the lag is fixed |
 | Wahs | the staged frequency and LFO step glide |
 | Resonance filters | the twenty coefficient words glide as one group |
-| Pitch | the ratio pair (step `0x020DC6`), the feedback pair and the pan/level quad glide |
+| Pitch | the ratio pair (step `0x020DC6`), the feedback pair and the pan/level quad glide; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD` |
 | Univibes | Depth on `P:0x0001B9`, the other seventeen words on `P:0x0001FD` |
 | Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps |

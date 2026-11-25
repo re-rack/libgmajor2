@@ -6,8 +6,8 @@
  * to a 20,000-word delay line. Each of the two voices reads the line through two
  * interpolated taps a splice apart. The taps drift at the voice's pitch ratio,
  * and when the first one leaves the voice's delay window a crossfade moves the
- * voice onto the second one, a splice further in. The pan matrix and the block's
- * wet word turn the two voices into left and right.
+ * voice onto the second one, a splice further in. The pan matrix and the Mix
+ * knob's wet and dry words turn the two voices and the input into left and right.
  *
  * On the first frame of each chunk the detector takes in the chunk's four mono
  * words, through a biquad and a one-pole, and runs one step of each of its two
@@ -49,6 +49,8 @@ typedef struct {
   int32_t min_period;                   /* X:0x0566: the detector's period window */
   int32_t max_period;                   /* X:0x0567 */
   int32_t lag_count;                    /* X:0x0568: the lags its coarse search scans */
+  int32_t wet;                          /* X:0x09884E: the Mix knob's wet word */
+  int32_t dry;                          /* X:0x09884F: its dry word */
 
   /* The Intelligent Pitch Shifter's words. */
   int harmonize;      /* X:0x0423: 1 when the ratios follow the detected pitch */
@@ -82,6 +84,8 @@ typedef struct {
   int32_t feedback[GM2_PITCH_CORE_VOICES]; /* the live words, gliding to the config's */
   int32_t pan[2u * GM2_PITCH_CORE_VOICES]; /* the same */
   int32_t ratio[GM2_PITCH_CORE_VOICES]; /* Y:0x0224/0x0225: the live ratios */
+  int32_t wet; /* Y:0x03A1: the live pair, Y:0x03A2 the dry one */
+  int32_t dry;
   int32_t harmony[GM2_PITCH_CORE_VOICES]; /* X:0x041D/0x041E as the harmonizer left them */
   int32_t period_ring[GM2_PITCH_CORE_RING_WORDS]; /* X:0x0800..0x08FF, m3 = 0xFF */
   uint32_t ring_at; /* Y:0x0219: its write index */

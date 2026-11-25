@@ -16,6 +16,7 @@ int gm2_detune_setup_config(const gm2_context *context, const gm2_detune_setup_r
   const gm2_pitch_design_raw design = {
       .voice = {raw->voice_l, raw->voice_r},
       .delay = {raw->delay_l, raw->delay_r},
+      .mix = raw->mix,
   };
   gm2_pitch_design(&rate_words, GM2_PITCH_DESIGN_DETUNE, &design, config);
   return 0;
