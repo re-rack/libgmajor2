@@ -258,58 +258,66 @@ below its input gain:
 | Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 
-The Gate & EQ and compressor activations set `S+4..S+7` to `0x7FFFFF`. The
-Tremolo/Panner object fixes its mix at `0x7FFFFF`. The two filter objects stage
-their mix word from Mix parameter (index 13) through `P:0x09277A` (wahs, which
-reaches `P:0x0926BF`) and `P:0x09220C` (resonance filters, which reaches
-`P:0x09217E`); the phasers through `P:0x092FEA` → `P:0x092F41`; the Delay object
-through `P:0x094B88`, which then reruns the output matrix `P:0x094643` that scales
-by the wet word, so one turn restages the pair and the matrix that scales by it,
-whichever order the Mix and the Width, Pan or Delay knobs turn in; the Pitch
-object from its Mix parameter (index 12), whose callback `P:0x091287` restages the
-pair through `P:0x08F763`; and the Reverb object from its Mix parameter (index
-12), in the activation `P:0x095099` itself and in the callback `P:0x095BE8`, both
-of which recompute `X:(S+7)` and restage the trio.
+**Who fills the mix word.** The Gate & EQ and compressor activations set
+`S+4..S+7` to `0x7FFFFF`. The Tremolo/Panner object fixes its mix at `0x7FFFFF`.
+The two filter objects stage their mix word from Mix (index 13) through
+`P:0x09277A` (wahs, which reaches `P:0x0926BF`) and `P:0x09220C` (resonance
+filters, which reaches `P:0x09217E`); the phasers through `P:0x092FEA` →
+`P:0x092F41`; the Delay object through `P:0x094B88`, which then reruns the output
+matrix `P:0x094643` that scales by the wet word, so one turn restages the pair and
+the matrix that scales by it, whichever order the Mix and the Width, Pan or Delay
+knobs turn in; the Pitch object from Mix (index 12), whose callback `P:0x091287`
+restages the pair through `P:0x08F763`; and the Reverb object from Mix (index 12),
+in the activation `P:0x095099` itself and in the callback `P:0x095BE8`, both of
+which recompute `X:(S+7)` and restage the trio. The Reverb's subtype banks are
+what a preset load leaves in the out level and mix words, so each of its four
+algorithms starts at Mix 20, 25, 25 or 16 %.
 
-Both filter callbacks store the mix word at `X:(UI+67)` (wahs) or `X:(UI+61)`
-(resonance filters) and then run the level code `P:0x08F763` on the struct at
-UI+60 or UI+54, but only while the block's word `X:(UI+3)` is clear. Nothing in
-either activation writes that word, so it keeps its power-on value and the
-recorded firmware keeps the activation's words: the recorders call the level code
-themselves, on the struct and the value the callback hands it, which is what the
-device does once the word is clear. The Whammy has no Mix of its own: its descriptors leave the word
+**The filters' gate word.** Both filter callbacks store the mix word at `X:(UI+67)`
+(wahs) or `X:(UI+61)` (resonance filters) and then run the level code `P:0x08F763`
+on the struct at UI+60 or UI+54, but only while the block's gate word `X:(UI+3)` is
+clear. Neither activation pass writes that word and it holds `0xFFFFFF` where a
+fresh object leaves it, as on the Tremolo/Panner, phaser and univibe objects too,
+whereas the Pitch, Delay and Reverb objects hold 0 and the Modulation one 1. So on
+the device a Mix turn stages the new value without ever staging its pair. The
+recorders reproduce what the turn should do: before activating, they clear the
+word on the phasers and univibes, whose own callbacks then run the level code, and
+for the two filter objects they run it themselves, on the struct and the value the
+callback hands it, and let its record publish onto `Y:0x419` / `Y:0x3EE`.
+
+**Blocks with no Mix of their own.** The Whammy's descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
 word at `0x7FFFFF` for that subtype, so `gm2_pitch_design()` passes 100 %. The
-univibe objects carry a Mix of their own that does not reach this pair: their
-callback `P:0x093565` pins the mix word at `0x7FFFFF` and re-stages the pair, and
-stages the output weights `Y:0x487..0x48A` from the knob instead. Their
-first activation leaves the out level at 0, and the next one sets it from Out
-Level. The Modulation object takes its Mix from index 13 of the subtype tables,
-which the setup chain `P:0x093A46` hands to `P:0x093FC0`: that callback stages the
-mix word and then runs `P:0x08F763`. The entry is a Dummy on the Through-Zero
-Flangers (subtypes 6, 7) and the Vibrato (8), and the callback pins their mix word
-at `0x7FFFFF` whatever the bank holds, so `gm2_moddelay_design()` passes 100 % for
-those three. The init table's power-on words differ: the Gate & EQ block's wet
-word is `0x7FFFFF` until activation.
+Modulation object takes its Mix from index 13 of the subtype tables, which the
+setup chain `P:0x093A46` hands to `P:0x093FC0`: that callback stages the mix word
+and then runs `P:0x08F763`. The entry is a Dummy on the Through-Zero Flangers
+(subtypes 6, 7) and the Vibrato (8), and the callback pins their mix word at
+`0x7FFFFF` whatever the bank holds, so `gm2_moddelay_design()` passes 100 % for
+those three. The univibe objects carry a Mix knob that never reaches this pair:
+their callback `P:0x093565` pins the mix word at `0x7FFFFF` and stages the output
+weights `Y:0x487..0x48A` from the knob instead, and their first activation leaves
+the out level at 0, which is why the pair is `0x7FFFFF` / `0x7FFFFE` / 0 whatever
+Mix reads.
 
-`gm2_mix_words()` (`src/gm2_mix.c`) is that curve: `to_q23(from_int(mix) * 0.01)`
-into `sin(word * pi/2)` twice, once for each half, each MPYR'd by the Out Level
-word. The pair is not one minus the other: each sine is evaluated on its own, so
-a Mix of 50 % stages `0x5A827A` / `0x5A8278`.
+**The curve.** `gm2_mix_words()` (`src/gm2_mix.c`) is that curve:
+`to_q23(from_int(mix) * 0.01)` into `sin(word * pi/2)` twice, once for each half,
+each MPYR'd by the Out Level word. The pair is not one minus the other: each sine
+is evaluated on its own, so a Mix of 50 % stages `0x5A827A` / `0x5A8278`.
+`gm2_mix_curve()` is the sine half alone, which the Univibe's own output weights
+share.
 
-The level code builds its record inside the struct too: the payload at
-`X:(S+13)` is `{src = X:(S+19), dst = X:(S+8), count, snap 1, step 0x008371}`,
-`count` 3 once both addresses are set and 0 before, and the `P:0x0001FD` record
-sits at `X:(S+22)`, its params word at `S+24` pointing at that payload, queued
-through `P:0x096175`. So every block's list carries a level record next to its
-own, and
-`gm2_block_levels()` returns the staged words only for the two blocks that keep
-their struct at UI+6; the other recorders read the staged words after the
-activation and let the block's own level job settle the live ones (the Reverb's
-payload is `X:0x099040`, delivering `Y:0x5DA`). The checker requires both to
-match the words the effect's own knobs fix: each effect's test adapter names its
-input word and its settled pair, so a Mix knob's words come out of that effect's
-setup rather than a library-wide constant.
+**The record.** The level code builds its record inside the struct too: the
+payload at `X:(S+13)` is `{src = X:(S+19), dst = X:(S+8), count, snap 1,
+step 0x008371}`, `count` 3 once both addresses are set and 0 before, and the
+`P:0x0001FD` record sits at `X:(S+22)`, its params word at `S+24` pointing at that
+payload, queued through `P:0x096175`. So every block's list carries a level record
+next to its own, and `gm2_block_levels()` returns the staged words only for the
+two blocks that keep their struct at UI+6; the other recorders read the staged
+words after the activation and let the block's own level job settle the live ones
+(the Reverb's payload is `X:0x099040`, delivering `Y:0x5DA`). The checker requires
+both to match the words the effect's own knobs fix: each effect's test adapter
+names its input word and its settled pair, so a Mix knob's words come out of that
+effect's setup rather than a library-wide constant.
 
 ### Instruction semantics
 

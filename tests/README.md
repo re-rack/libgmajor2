@@ -32,7 +32,7 @@ with, which must match the effect's.
 | Part | Contents | What it proves |
 |---|---|---|
 | Setup words | the coefficient words the firmware's setup stages, for each knob on its own at every position (or 32 spread positions for wide knobs), and for four multi-knob presets walked one knob at a time | the setup math, including its clamps and the ways knobs interact |
-| Level words | the input, wet and dry words the firmware's block code stages at full mix | the fixed level words each effect carries are the device's |
+| Level words | the input, wet and dry words the firmware's block code stages at Out Level 0 dB, the pair at the knob table's default Mix | the level words each effect builds from its own knobs are the device's |
 | Audio | one long scripted run on the generated signal, with every output sample | the audio kernel, the parameter glides and ramps, and the control tick |
 
 The audio script moves each knob through its minimum, 33 %, 66 %, maximum and
