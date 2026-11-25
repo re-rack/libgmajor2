@@ -4,10 +4,10 @@
 #include "gm2_revdelay.h"
 #include "gm2_revdelay_setup.h"
 
-#define REVDELAY_KNOBS 5u
-/* X+0..19 and the grain length Y+26; the grain period in chunks follows from the
- * length and the rate, so it is not a word. */
-#define REVDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 1u)
+#define REVDELAY_KNOBS 6u
+/* X+0..19, the grain length Y+26 and the Mix pair; the grain period in chunks
+ * follows from the length and the rate, so it is not a word. */
+#define REVDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 1u + 2u)
 
 static const gm2_knob k_knobs[REVDELAY_KNOBS] = {
     {"DLY Dly", 50, 1000, 160, GM2_EFFECT_HOLD},
@@ -15,6 +15,7 @@ static const gm2_knob k_knobs[REVDELAY_KNOBS] = {
     {"DLY FB", 0, 100, 30, 0},
     {"DLY FBHcut", 40, 60, 54, 0},
     {"DLY FBLcut", 0, 40, 10, 0},
+    {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
 };
 
 static void revdelay_raw(const int32_t *values, gm2_revdelay_setup_raw *raw) {
@@ -24,8 +25,14 @@ static void revdelay_raw(const int32_t *values, gm2_revdelay_setup_raw *raw) {
       .feedback = (int)values[2],
       .fb_hi_cut = (int)values[3],
       .fb_lo_cut = (int)values[4],
+      .mix = (int)values[5],
       .beat_ms = (double)GM2_EFFECT_BEAT_MS,
   };
+}
+
+static void revdelay_mix(const gm2_revdelay_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
 }
 
 static void revdelay_words(const gm2_revdelay_config *config, int32_t *words) {
@@ -33,6 +40,9 @@ static void revdelay_words(const gm2_revdelay_config *config, int32_t *words) {
     words[word] = config->coef[word];
   }
   words[GM2_DELAY_CORE_COEFS] = config->delay_ms;
+  words[GM2_DELAY_CORE_COEFS + 1u] = config->wet;
+  words[GM2_DELAY_CORE_COEFS + 2u] = config->dry;
 }
 
-GM2_EFFECT_DEFINE(revdelay, revdelay, k_knobs, revdelay_raw, revdelay_words, REVDELAY_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(revdelay, revdelay, k_knobs, revdelay_raw, revdelay_words, revdelay_mix,
+                      REVDELAY_SETUP_WORDS)

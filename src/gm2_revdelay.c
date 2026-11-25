@@ -33,7 +33,8 @@ static void revdelay_frame(gm2_revdelay_state *state, const gm2_revdelay_config 
     state->delay_ms = config->delay_ms;
     state->tick = 0;
   }
-  if (gm2_delay_core_process_frame(&state->core, config->coef, NULL, in, out) == 0) {
+  if (gm2_delay_core_process_frame(&state->core, config->coef, NULL, config->wet, config->dry, in,
+                                   out) == 0) {
     return;
   }
   if (++state->tick < config->grain_chunks) {
@@ -47,7 +48,8 @@ static void revdelay_frame(gm2_revdelay_state *state, const gm2_revdelay_config 
 }
 
 void gm2_revdelay_state_init(gm2_revdelay_state *state, const gm2_revdelay_config *config) {
-  gm2_delay_core_state_init(&state->core, config->coef, k_rest_offset, REVDELAY_STEP);
+  gm2_delay_core_state_init(&state->core, config->coef, k_rest_offset, REVDELAY_STEP, config->wet,
+                            config->dry);
   state->delay_ms = config->delay_ms;
   state->tick = 0;
 }

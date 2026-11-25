@@ -62,12 +62,12 @@ through the library and needs no emulator.
 | `src/gm2_tzflanger_neg.c`, `src/gm2_tzflanger_neg.h`, `src/gm2_tzflanger_neg_setup.c`, `src/gm2_tzflanger_neg_setup.h` | Through-Zero Flanger Negative: Speed, Depth, Tempo, Feedback, Feedback Hi-Cut, and LFO alignment |
 | `src/gm2_tzflanger_pos.c`, `src/gm2_tzflanger_pos.h`, `src/gm2_tzflanger_pos_setup.c`, `src/gm2_tzflanger_pos_setup.h` | Through-Zero Flanger Positive: Speed, Depth, Tempo, Feedback, Feedback Hi-Cut, and LFO alignment |
 | `src/gm2_vibrato.c`, `src/gm2_vibrato.h`, `src/gm2_vibrato_setup.c`, `src/gm2_vibrato_setup.h` | Vibrato: Speed, Depth, Tempo, Hi-Cut, and LFO alignment |
-| `src/gm2_delay_core.c`, `src/gm2_delay_core.h` | Fixed-point delay routine the four delays share: input/feedback matrix, 172,800-word circular buffer, two-tap equal-power crossfade, per-channel LP/HP filters, output matrix, smoothing and crossfade jobs |
+| `src/gm2_delay_core.c`, `src/gm2_delay_core.h` | Fixed-point delay routine the four delays share: input/feedback matrix, 172,800-word circular buffer, two-tap equal-power crossfade, per-channel LP/HP filters, output matrix, the Mix knob's wet and dry words against the frame's input, smoothing and crossfade jobs |
 | `src/gm2_delay_design.c`, `src/gm2_delay_design.h` | The delays' shared matrix, LP/HP filter and tempo/tap-offset setup; the Dynamic Delay owns ducking and the Reverse Delay owns its grain splice |
-| `src/gm2_pingpong.c`, `src/gm2_pingpong.h`, `src/gm2_pingpong_setup.c`, `src/gm2_pingpong_setup.h` | Ping Pong Delay: Delay, Tempo, Width, Feedback, Feedback Hi-Cut and Lo-Cut |
-| `src/gm2_dyndelay.c`, `src/gm2_dyndelay.h`, `src/gm2_dyndelay_setup.c`, `src/gm2_dyndelay_setup.h` | Dynamic Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Offset, Sense, Damp and Release, its level detector and ducking tick |
-| `src/gm2_dualdelay.c`, `src/gm2_dualdelay.h`, `src/gm2_dualdelay_setup.c`, `src/gm2_dualdelay_setup.h` | Dual Delay: Delay 1/2, Tempo 1/2, Feedback 1/2, Feedback Hi-Cut and Lo-Cut, Pan 1/2 |
-| `src/gm2_revdelay.c`, `src/gm2_revdelay.h`, `src/gm2_revdelay_setup.c`, `src/gm2_revdelay_setup.h` | Reverse Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, and its grain splice |
+| `src/gm2_pingpong.c`, `src/gm2_pingpong.h`, `src/gm2_pingpong_setup.c`, `src/gm2_pingpong_setup.h` | Ping Pong Delay: Delay, Tempo, Width, Feedback, Feedback Hi-Cut and Lo-Cut, and Mix |
+| `src/gm2_dyndelay.c`, `src/gm2_dyndelay.h`, `src/gm2_dyndelay_setup.c`, `src/gm2_dyndelay_setup.h` | Dynamic Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Offset, Sense, Damp, Release and Mix, its level detector and ducking tick |
+| `src/gm2_dualdelay.c`, `src/gm2_dualdelay.h`, `src/gm2_dualdelay_setup.c`, `src/gm2_dualdelay_setup.h` | Dual Delay: Delay 1/2, Tempo 1/2, Feedback 1/2, Feedback Hi-Cut and Lo-Cut, Pan 1/2 and Mix |
+| `src/gm2_revdelay.c`, `src/gm2_revdelay.h`, `src/gm2_revdelay_setup.c`, `src/gm2_revdelay_setup.h` | Reverse Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Mix, and its grain splice |
 | `src/gm2_reverb.c`, `src/gm2_reverb.h`, `src/gm2_reverb_setup.c`, `src/gm2_reverb_setup.h` | Reverb (Spring, Hall, Room, Plate): 32,768-word circular buffer, input LP and two allpass diffusers, seven tank delay lines with two-band damping filters, eight early reflections and two biquads per channel, and Decay/PreDly/Shape/Size/HiCol/HiFact/LoCol/LoFact/RoomLv/RevLev/Diff setup |
 | `src/gm2_gate_detector.c`, `src/gm2_gate_detector.h` | The Noise Gate's level detector, which the gate, the Touch Res Filter and the Dynamic Delay share |
 | `src/gm2_tick.c`, `src/gm2_tick.h` | The control tick's period, the peak-hold read, and the touch follower, Response and Sense words |
@@ -255,15 +255,18 @@ below its input gain:
 | Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
-| Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 
 The Gate & EQ and compressor activations set `S+4..S+7` to `0x7FFFFF`. The
-Tremolo/Panner object fixes its mix at `0x7FFFFF`; the two filter objects set it
-from their Mix parameter (index 13) times 0.01, as do the phasers through the
-callback `P:0x092FEA` → `P:0x092F41`, and the Pitch object from its Mix
-parameter (index 12), whose callback `P:0x091287` restages the pair through
-`P:0x08F763`. The Reverb object takes its Mix parameter (index 12) in the
+Tremolo/Panner object fixes its mix at `0x7FFFFF`; the two filter objects, the
+phasers through the callback `P:0x092FEA` → `P:0x092F41` and the Delay object set
+it from their Mix parameter (index 13) times 0.01, and the Pitch object from its
+Mix parameter (index 12), whose callback `P:0x091287` restages the pair through
+`P:0x08F763`. The Delay's Mix callback `P:0x094B88` runs `P:0x08F763`
+and then `P:0x094643`, so one turn restages the pair and the output matrix that
+scales by it, whichever order the Mix and the Width, Pan or Delay knobs turn in.
+The Reverb object takes its Mix parameter (index 12) in the
 activation itself and in the callback `P:0x095BE8`, both of which recompute
 `X:(S+7)` and restage the trio. The Whammy has no Mix of its own: its descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
@@ -777,9 +780,9 @@ audio continuation, one UI object and one parameter-banked descriptor layout.
 | Audio continuation | `P:0x001239..0x00125D` calling `P:0x0011F9..0x001238`, task record `Y:0x4F9` |
 | Engines | Engine 0 (`X:0x30B..0x340`, `Y:0x506..0x52F`, buffer `X:0x0AB000..0x0D52FF`, jobs `X:0x098E15..0x098E48`) and Engine 1 (`X:0x341..0x376`, `Y:0x530..0x559`, buffer `X:0x0D5300..0x0FF5FF`, jobs `X:0x098E49..0x098E7C`), swapped by `X:0x098DF4` (`bchg #0` on activation) for preset spillover |
 | Buffer | `0x02A300` words (172,800 words = 86,400 stereo frames = 1.8 s at 48 kHz) per engine; write pointer `Y+37` starts at `base + 0x02A2FF` and steps down two words a frame, wrapping by `+0x02A300` when `write_ptr <= base` |
-| State (`X:0x30B` +) | `+0..19` staged matrix and filter words; `+26..29` Dynamic ducking words; `+30` ducking envelope; `+31..32` filtered channel outputs; `+33..36` channel 0 tap offsets and gains; `+37..40` channel 1 tap offsets and gains; `+41..42` and `+46..47` reverse offsets; `+43..45` and `+48..50` LP/HP filter states `u, v, w`; `+51` wet scale `0x7FFFFE`; `+52` subtype |
+| State (`X:0x30B` +) | `+0..19` staged matrix and filter words; `+26..29` Dynamic ducking words; `+30` ducking envelope; `+31..32` filtered channel outputs; `+33..36` channel 0 tap offsets and gains; `+37..40` channel 1 tap offsets and gains; `+41..42` and `+46..47` reverse offsets; `+43..45` and `+48..50` LP/HP filter states `u, v, w`; `+51` the Mix wet word; `+52` subtype |
 | Live words (`Y:0x506` +) | `+0..3` 2x2 input matrix; `+4..7` 2x2 feedback matrix; `+8..11` 2x2 output matrix; `+12..19` per-channel first-order LP and HP filter coefficients; `+20..25` dead words from `P:0x0948DE`; `+26` Reverse grain ms; `+27` Reverse timer target; `+28..41` engine pointer table (`+40` is `rev_step`: 4 for Reverse, 0 otherwise) |
-| Input, wet, dry | `Y:0x55A..0x55C`, staged by `P:0x08F763` from `UI+63` (`X:0x098EBC`) |
+| Input, wet, dry | staged at `X:0x098ECF..0x098ED1` by `P:0x08F763` from `UI+63` (`X:0x098EBC`) and `UI+70` (the Mix word), the level record carrying them to `Y:0x55A..0x55C` |
 | Jobs per engine | `S+36` (`P:0x0001FD`): 20 words `X+0..19 -> Y+0..19`, snap 1, step `0x008371`; `S+40` (`P:0x00026F`): 6 dead words `X+20..25 -> Y+20..25`; `S+44` and `S+48` (`P:0x000019 -> P:0x000293`, check `P:0x000301`): tap crossfades on `X+33..36` and `X+37..40`, step `0x008312`. Four records an engine, plus the level record the level code adds: nine in all |
 | UI object | `X:0x098E7D`; dispatcher `P:0x09413D`, activation `P:0x09423F`, init `P:0x094336`, subtype tables `P:0x085EB5`, `P:0x085FA5`, `P:0x086095`, `P:0x086185` at `X:0x098ED5..0x098ED8`, active table written to `P:0x08627C` by `P:0x094A03` |
 
@@ -813,9 +816,9 @@ the descriptor tables clamp Feedback to `0..100` and Reverse Delay time to
 ### Kernel, setup, ducking tick and reverse splice
 
 Every frame, `P:0x001239` scales the stereo input by `Y:0x55A` and calls
-`P:0x0011F9` on each engine, summing the two engines' wet outputs before
-`Y:0x55B` and `Y:0x55C`. With the inactive spillover engine silent, one engine
-gives the exact sum. Inside `P:0x0011F9`:
+`P:0x0011F9` on each engine, summing the two engines' wet outputs into the
+accumulators the output stage finishes. With the inactive spillover engine silent,
+one engine gives the exact sum. Inside `P:0x0011F9`:
 
 - `ch0_in = limit24(Y[0]*in_L + Y[2]*in_R + Y[5]*ch0_out + Y[7]*ch1_out)` and
   `ch1_in = limit24(Y[1]*in_L + Y[3]*in_R + Y[4]*ch1_out + Y[6]*ch0_out)` are
@@ -828,17 +831,27 @@ gives the exact sum. Inside `P:0x0011F9`:
 - The output matrix forms `wet_L = limit24(Y[9]*ch0_out + Y[11]*ch1_out)` and
   `wet_R = limit24(Y[8]*ch1_out + Y[10]*ch0_out)`.
 
+The output stage at `P:0x00124D..0x00125D` then adds the dry term and rounds once
+per channel: `out_L = macr(mpy(wet_L, Y[1]), in_L, Y[2])` and
+`out_R = macr(mpy(wet_R, Y[1]), in_R, Y[2])`, the dry operand the frame's own
+input sample rather than a tap on the engine's output. `Y[1]` and `Y[2]` are the
+Mix pair, `X:0x098ED0` and `X:0x098ED1`; the live pair glides towards them on the
+level record's own `P:0x0001FD` run, so a Mix turn is heard as the same glide
+every other word takes.
+
 Updaters (`gm2_delay_design.c`):
 
 - `P:0x094574` sets `X+51 = mpyr(to_q23(sin(Mix * 0.01 * pi/2)), OutLev)`
-  (`0x7FFFFE` at Mix 100 %, OutLev 0 dB) and fills `X+0..7`: Ping Pong sums
+  (`0x7FFFFE` at Mix 100 %, OutLev 0 dB, which is the wet word `P:0x08F763`
+  stages) and fills `X+0..7`: Ping Pong sums
   `0.5*(L+R)` into channel 0 and cross-couples `fb` in `X+6..7`; Dynamic sums
   `0.5*(L+R)` into channel 0, feeds `fb` in `X+5` and copies channel 0 into
   channel 1 via `X+6 = 0x7FFFFF`; Dual and Reverse feed L and R at `0x7FFFFE`
   into channels 0 and 1 with independent feedbacks `X+5 = fb1`, `X+4 = fb2`.
-- `P:0x094643` fills `X+8..11`: Ping Pong sets `(0.5 +- Width * 0.005) * S`;
-  Dynamic leaves `X+8..11` for the ducking tick (`X+10..11 = 0`); Dual and
-  Reverse pan each channel by `(Pan + 50) * 0.01` scaled by `0x7FFFFE`.
+- `P:0x094643` fills `X+8..11`, each word scaled by `S = X+51`: Ping Pong sets
+  `(0.5 +- Width * 0.005) * S`; Dynamic leaves `X+8..11` for the ducking tick
+  (`X+10..11 = 0`); Dual and Reverse pan each channel by `(Pan + 50) * 0.01` scaled
+  by `S`.
 - `P:0x094835` maps `FBHcut` and `FBLcut` through `P:0x08F0DF`, computes
   `t = tan(pi * f / rate)`, `c = to_q23((t - 1)/(t + 1))`,
   `d_hi = macr(0.5 + 0.5*c_hi)` and `d_lo = macr(0.5 - 0.5*c_lo)` into
@@ -1361,7 +1374,7 @@ Which words a knob turn moves, briefly:
 | Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD`; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Univibes | Depth on `P:0x0001B9`, the other seventeen words on `P:0x0001FD` |
 | Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps |
-| Delays | the twenty matrix and filter words glide, and a moved tap offset starts a crossfade |
+| Delays | the twenty matrix and filter words and the Mix pair glide, and a moved tap offset starts a crossfade |
 | Reverb | eighty words glide in six jobs; tap offsets, tank signs and early tap weights land at once; a Mix turn restages the level pair, which glides on the level record with them |
 
 Each LFO effect also has `gm2_<effect>_align(state, config, beats)`, which sets

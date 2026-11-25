@@ -4,9 +4,9 @@
 #include "gm2_pingpong.h"
 #include "gm2_pingpong_setup.h"
 
-#define PINGPONG_KNOBS 6u
-/* The twenty coefficient words, then the two tap offsets. */
-#define PINGPONG_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 2u)
+#define PINGPONG_KNOBS 7u
+/* The twenty coefficient words, the two tap offsets, then the Mix pair. */
+#define PINGPONG_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 2u + 2u)
 
 static const gm2_knob k_knobs[PINGPONG_KNOBS] = {
     {"DLY Dly", 0, 1800, 375, GM2_EFFECT_HOLD},
@@ -15,6 +15,7 @@ static const gm2_knob k_knobs[PINGPONG_KNOBS] = {
     {"DLY FB", 0, 100, 45, 0},
     {"DLY FBHcut", 40, 60, 54, 0},
     {"DLY FBLcut", 0, 40, 10, 0},
+    {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
 };
 
 static void pingpong_raw(const int32_t *values, gm2_pingpong_setup_raw *raw) {
@@ -25,8 +26,14 @@ static void pingpong_raw(const int32_t *values, gm2_pingpong_setup_raw *raw) {
       .feedback = (int)values[3],
       .fb_hi_cut = (int)values[4],
       .fb_lo_cut = (int)values[5],
+      .mix = (int)values[6],
       .beat_ms = (double)GM2_EFFECT_BEAT_MS,
   };
+}
+
+static void pingpong_mix(const gm2_pingpong_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
 }
 
 static void pingpong_words(const gm2_pingpong_config *config, int32_t *words) {
@@ -35,6 +42,9 @@ static void pingpong_words(const gm2_pingpong_config *config, int32_t *words) {
   }
   words[GM2_DELAY_CORE_COEFS] = config->tap_offset[0];
   words[GM2_DELAY_CORE_COEFS + 1u] = config->tap_offset[1];
+  words[GM2_DELAY_CORE_COEFS + 2u] = config->wet;
+  words[GM2_DELAY_CORE_COEFS + 3u] = config->dry;
 }
 
-GM2_EFFECT_DEFINE(pingpong, pingpong, k_knobs, pingpong_raw, pingpong_words, PINGPONG_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(pingpong, pingpong, k_knobs, pingpong_raw, pingpong_words, pingpong_mix,
+                      PINGPONG_SETUP_WORDS)

@@ -1,10 +1,12 @@
 /* Ping Pong Delay setup, Delay block subtype 0: the twenty coefficient words
- * X+0..19 and both tap offsets, from Delay, Tempo, Width, Feedback, Feedback
- * Hi-Cut and Feedback Lo-Cut, all published by the block's activation P:0x09423F.
+ * X+0..19, the Mix pair X:0x098ED0/X:0x098ED1 and both tap offsets, from Delay,
+ * Tempo, Width, Feedback, Feedback Hi-Cut, Feedback Lo-Cut and Mix, all published
+ * by the block's activation P:0x09423F.
  */
 #include "gm2_pingpong_setup.h"
 
 #include "gm2_delay_design.h"
+#include "gm2_mix.h"
 
 /* The descriptor windows P:0x0832CB clamps the raw values into. */
 enum {
@@ -22,9 +24,11 @@ int gm2_pingpong_setup_config(const gm2_context *context, const gm2_pingpong_set
   gm2_rate_words rate_words;
   gm2_rate_words_init(&rate_words, rate);
 
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+
   gm2_delay_design_matrix(GM2_DELAY_DESIGN_PINGPONG, raw->feedback, 0,
                           &config->coef[GM2_DELAY_CORE_INPUT]);
-  gm2_delay_design_output(GM2_DELAY_DESIGN_PINGPONG, raw->width, 0, 0,
+  gm2_delay_design_output(GM2_DELAY_DESIGN_PINGPONG, raw->width, 0, 0, config->wet,
                           &config->coef[GM2_DELAY_CORE_OUTPUT]);
   gm2_delay_design_filters(&rate_words, GM2_DELAY_DESIGN_PINGPONG, raw->fb_hi_cut, raw->fb_lo_cut,
                            &config->coef[GM2_DELAY_CORE_FILTER]);

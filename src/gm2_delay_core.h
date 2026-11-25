@@ -7,11 +7,12 @@
  * of the two lines reads the buffer through two taps, which crossfade when the
  * line's offset changes, and runs their blend through a first-order low-pass and
  * high-pass. The output matrix turns the two lines' outputs into left and right,
- * and the block's wet word follows. In the Reverse Delay each tap also walks away
- * from the write point by a fixed step per frame, which plays the line backwards.
+ * and the Mix knob's wet and dry words blend them with the frame's input. In the
+ * Reverse Delay each tap also walks away from the write point by a fixed step per
+ * frame, which plays the line backwards.
  *
- * The twenty words below ride a one-pole job, and each line's offset moves by a
- * tap crossfade (gm2_job.h).
+ * The twenty words below and the Mix pair ride one-pole jobs, and each line's
+ * offset moves by a tap crossfade (gm2_job.h).
  *
  * The device keeps two such engines and swaps them on a preset change, so that
  * the old preset's echoes ring out. A plugin has no presets, and one engine gives
@@ -55,25 +56,29 @@ typedef struct {
   uint32_t write; /* Y+37, less the buffer's base */
   gm2_delay_core_line line[GM2_DELAY_CORE_LINES];
   int32_t coef[GM2_DELAY_CORE_COEFS]; /* the live words */
+  int32_t wet;       /* Y:0x055B: the live pair, Y:0x055C the dry one */
+  int32_t dry;
   int32_t rev_step; /* Y+40: 0, or the Reverse Delay's 4 */
   unsigned chunk_pos; /* frame within the chunk */
 } gm2_delay_core_state;
 
 /* An empty buffer and silent filters on `coef`, both taps of line n settled on
- * tap_offset[n], and every tap walking `rev_step` words a frame. */
+ * tap_offset[n], every tap walking `rev_step` words a frame, and the Mix pair on
+ * `wet` and `dry`. */
 void gm2_delay_core_state_init(gm2_delay_core_state *state,
                                const int32_t coef[GM2_DELAY_CORE_COEFS],
-                               const int32_t tap_offset[GM2_DELAY_CORE_LINES], int32_t rev_step);
+                               const int32_t tap_offset[GM2_DELAY_CORE_LINES], int32_t rev_step,
+                               int32_t wet, int32_t dry);
 
 /* One stereo frame, then the chunk's job run once its last frame is done: the
- * live words move towards `coef`, the words the updaters staged, and each line's
- * taps crossfade towards tap_offset[n], the offset staged at X:0x098E2A and
- * X:0x098E35. With a NULL `tap_offset` the taps stay where the effect put them.
- * Returns 1 when the frame ended a chunk and 0 otherwise, for an effect that acts
- * between chunks. */
+ * live words move towards `coef` and the Mix pair towards `wet` and `dry`, the
+ * words the level code staged, and each line's taps crossfade towards
+ * tap_offset[n], the offset staged at X:0x098E2A and X:0x098E35. With a NULL
+ * `tap_offset` the taps stay where the effect put them. Returns 1 when the frame
+ * ended a chunk and 0 otherwise, for an effect that acts between chunks. */
 int gm2_delay_core_process_frame(gm2_delay_core_state *state,
                                  const int32_t coef[GM2_DELAY_CORE_COEFS],
-                                 const int32_t *tap_offset, const int32_t in[GM2_CHANNELS],
-                                 int32_t out[GM2_CHANNELS]);
+                                 const int32_t *tap_offset, int32_t wet, int32_t dry,
+                                 const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]);
 
 #endif /* GM2_DELAY_CORE_H */

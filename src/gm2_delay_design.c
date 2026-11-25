@@ -14,12 +14,12 @@
  *               subtype 2, 3: {0x7FFFFE, 0, 0, 0x7FFFFE, fb2, fb1, 0, 0}
  *   P:0x094643  X+8..11:  subtype 0: a = to_q23((0.5 + W * {0x51EB85,0x78}) S),
  *                         b = to_q23((0.5 - W * {0x51EB85,0x78}) S), {a, a, b, b},
- *                         with S = from_q23(X+51) = 0x7FFFFE at Mix 100 %
+ *                         with S = from_q23(X+51), the Mix wet word
  *               subtype 1: {0, 0, 0, 0}; the caller stages the ducking gain in
  *                         X+8 and X+9
  *               subtype 2, 3: r = to_q23((Pan + 50) * {0x51EB85,0x79}),
- *                         {mpyr(r2, 0x7FFFFE), mpyr(0x7FFFFF - r1, 0x7FFFFE),
- *                          mpyr(r1, 0x7FFFFE), mpyr(0x7FFFFF - r2, 0x7FFFFE)}
+ *                         {mpyr(r2, S), mpyr(0x7FFFFF - r1, S),
+ *                          mpyr(r1, S), mpyr(0x7FFFFF - r2, S)}
  *   P:0x094835  X+12..19: t = tan(pi * Hz(cut) / rate),
  *               c = to_q23((t - 1) / (t + 1)), d = macr(0.5, +-c, 0.5),
  *               {c_hi, d_hi, c_lo, d_lo}; X+16..19 are
@@ -90,10 +90,9 @@ void gm2_delay_design_matrix(gm2_delay_design_subtype subtype, int feedback_1, i
 }
 
 void gm2_delay_design_output(gm2_delay_design_subtype subtype, int width, int pan_1, int pan_2,
-                             int32_t coef[4]) {
-  const int32_t wet_scale = GM2_DELAY_DESIGN_WET_SCALE;
+                             int32_t wet, int32_t coef[4]) {
   if (subtype == GM2_DELAY_DESIGN_PINGPONG) {
-    const gm2_swf scale = gm2_swf_from_q23(wet_scale);
+    const gm2_swf scale = gm2_swf_from_q23(wet);
     const gm2_swf width_value = gm2_swf_from_int(gm2_clamp_raw(width, WIDTH_MIN, WIDTH_MAX));
     const int32_t a =
         gm2_swf_to_q23(gm2_swf_mul(gm2_swf_mac(gm2_swf_half, width_value, k_semi), scale));
@@ -114,10 +113,10 @@ void gm2_delay_design_output(gm2_delay_design_subtype subtype, int width, int pa
         gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(pan_2, PAN_MIN, PAN_MAX) + 50), k_cent);
     const int32_t w1 = gm2_swf_to_q23(r1);
     const int32_t w2 = gm2_swf_to_q23(r2);
-    coef[0] = gm2_store24(gm2_mpyr(w2, wet_scale));
-    coef[1] = gm2_store24(gm2_mpyr(0x7FFFFF - w1, wet_scale));
-    coef[2] = gm2_store24(gm2_mpyr(w1, wet_scale));
-    coef[3] = gm2_store24(gm2_mpyr(0x7FFFFF - w2, wet_scale));
+    coef[0] = gm2_store24(gm2_mpyr(w2, wet));
+    coef[1] = gm2_store24(gm2_mpyr(0x7FFFFF - w1, wet));
+    coef[2] = gm2_store24(gm2_mpyr(w1, wet));
+    coef[3] = gm2_store24(gm2_mpyr(0x7FFFFF - w2, wet));
   }
 }
 

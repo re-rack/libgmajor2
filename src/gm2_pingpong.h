@@ -15,6 +15,8 @@
 typedef struct {
   int32_t coef[GM2_DELAY_CORE_COEFS];       /* X+0..19, the words the updaters stage */
   int32_t tap_offset[GM2_DELAY_CORE_LINES]; /* X:0x098E2A and X:0x098E35: each line's offset */
+  int32_t wet;                              /* X:0x098ED0: the Mix pair, X:0x098ED1 the dry one */
+  int32_t dry;
 } gm2_pingpong_config;
 
 typedef gm2_delay_core_state gm2_pingpong_state;

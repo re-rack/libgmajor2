@@ -33,6 +33,8 @@ typedef struct {
    * ducking tick's and stays zero here. */
   int32_t coef[GM2_DELAY_CORE_COEFS];
   int32_t tap_offset[GM2_DELAY_CORE_LINES]; /* X:0x098E2A the Delay's, X:0x098E35 the Offset's */
+  int32_t wet;                              /* X:0x098ED0: the Mix pair, X:0x098ED1 the dry one */
+  int32_t dry;
   int32_t duck[GM2_DYNDELAY_DUCK_WORDS];    /* X+26..29 */
   unsigned tick_chunks;                     /* chunks per tick, gm2_tick_chunks() */
 } gm2_dyndelay_config;

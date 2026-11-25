@@ -1,11 +1,12 @@
 /* Dynamic Delay setup, Delay block subtype 1: the twenty coefficient words
- * X+0..19, both tap offsets, the four ducking words X+26..29 and the control
- * tick's period, from P:0x09423F and P:0x09494E.
+ * X+0..19, both tap offsets, the Mix pair X:0x098ED0/X:0x098ED1, the four ducking
+ * words X+26..29 and the control tick's period, from P:0x09423F and P:0x09494E.
  */
 #include "gm2_dyndelay_setup.h"
 
 #include "gm2_delay_design.h"
 #include "gm2_dsp_math.h"
+#include "gm2_mix.h"
 #include "gm2_swf.h"
 #include "gm2_tables.h"
 #include "gm2_tick.h"
@@ -42,9 +43,12 @@ int gm2_dyndelay_setup_config(const gm2_context *context, const gm2_dyndelay_set
   gm2_rate_words rate_words;
   gm2_rate_words_init(&rate_words, rate);
 
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+
   gm2_delay_design_matrix(GM2_DELAY_DESIGN_DYNDELAY, raw->feedback, 0,
                           &config->coef[GM2_DELAY_CORE_INPUT]);
-  gm2_delay_design_output(GM2_DELAY_DESIGN_DYNDELAY, 0, 0, 0, &config->coef[GM2_DELAY_CORE_OUTPUT]);
+  gm2_delay_design_output(GM2_DELAY_DESIGN_DYNDELAY, 0, 0, 0, config->wet,
+                          &config->coef[GM2_DELAY_CORE_OUTPUT]);
   gm2_delay_design_filters(&rate_words, GM2_DELAY_DESIGN_DYNDELAY, raw->fb_hi_cut, raw->fb_lo_cut,
                            &config->coef[GM2_DELAY_CORE_FILTER]);
 

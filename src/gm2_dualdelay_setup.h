@@ -1,6 +1,6 @@
 /* Dual Delay parameter setup, Delay block subtype 2: Delay 1, Delay 2, Tempo 1,
- * Tempo 2, Feedback 1, Feedback 2, Feedback Hi-Cut, Feedback Lo-Cut, Pan 1 and
- * Pan 2.
+ * Tempo 2, Feedback 1, Feedback 2, Feedback Hi-Cut, Feedback Lo-Cut, Pan 1, Pan 2
+ * and Mix.
  */
 #ifndef GM2_DUALDELAY_SETUP_H
 #define GM2_DUALDELAY_SETUP_H
@@ -19,6 +19,7 @@ typedef struct {
   int fb_lo_cut;  /* 0..40: 20 Hz..2 kHz, 20 steps a decade */
   int pan_1;      /* -50..50: left..right */
   int pan_2;      /* -50..50: left..right */
+  int mix;        /* 0..100 % wet */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_dualdelay_setup_raw;
 

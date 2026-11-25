@@ -50,8 +50,8 @@ static inline void delay_line(gm2_delay_core_state *state, unsigned n) {
 
 int gm2_delay_core_process_frame(gm2_delay_core_state *state,
                                  const int32_t coef[GM2_DELAY_CORE_COEFS],
-                                 const int32_t *tap_offset, const int32_t in[GM2_CHANNELS],
-                                 int32_t out[GM2_CHANNELS]) {
+                                 const int32_t *tap_offset, int32_t wet, int32_t dry,
+                                 const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
   const int32_t *c = state->coef;
   const int32_t in_l = gm2_s24((uint32_t)in[0]);
   const int32_t in_r = gm2_s24((uint32_t)in[1]);
@@ -82,24 +82,29 @@ int gm2_delay_core_process_frame(gm2_delay_core_state *state,
   delay_line(state, 0u);
   delay_line(state, 1u);
 
-  const int32_t wet_l =
-      gm2_store24(2 * ((int64_t)c[GM2_DELAY_CORE_OUTPUT + 1] * state->line[0].out +
-                       (int64_t)state->line[1].out * c[GM2_DELAY_CORE_OUTPUT + 3]));
-  const int32_t wet_r =
-      gm2_store24(2 * ((int64_t)state->line[1].out * c[GM2_DELAY_CORE_OUTPUT + 0] +
-                       (int64_t)c[GM2_DELAY_CORE_OUTPUT + 2] * state->line[0].out));
-  /* The wet word; the zero dry term's MACR still rounds. */
-  out[0] = gm2_store24(gm2_mpyr(GM2_LEVEL_WET, wet_l));
-  out[1] = gm2_store24(gm2_mpyr(wet_r, GM2_LEVEL_WET));
+  /* The wet product against the dry one on the frame's own input, rounded
+   * together once (P:0x00124D..0x00125D). Every operand is a 24-bit word, so each
+   * doubled product is at most 2^47 and their sum stays inside the 56-bit
+   * accumulator: no wrap can act. */
+  const int64_t wet_l = 2 * ((int64_t)c[GM2_DELAY_CORE_OUTPUT + 1] * state->line[0].out +
+                             (int64_t)state->line[1].out * c[GM2_DELAY_CORE_OUTPUT + 3]);
+  const int64_t wet_r = 2 * ((int64_t)state->line[1].out * c[GM2_DELAY_CORE_OUTPUT + 0] +
+                             (int64_t)c[GM2_DELAY_CORE_OUTPUT + 2] * state->line[0].out);
+  out[0] = gm2_store24(
+      gm2_round24(2 * (int64_t)state->wet * gm2_store24(wet_l) + 2 * (int64_t)state->dry * in_l));
+  out[1] = gm2_store24(
+      gm2_round24(2 * (int64_t)state->wet * gm2_store24(wet_r) + 2 * (int64_t)in_r * state->dry));
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
     return 0;
   }
   state->chunk_pos = 0;
-  /* P:0x0001FD on Y+0..19. */
+  /* P:0x0001FD on Y+0..19 and on the level record's two live words. */
   for (unsigned i = 0; i < GM2_DELAY_CORE_COEFS; i++) {
     state->coef[i] = gm2_job_smooth(state->coef[i], coef[i], GM2_JOB_SMOOTH_STEP);
   }
+  state->wet = gm2_job_smooth(state->wet, wet, GM2_JOB_SMOOTH_STEP);
+  state->dry = gm2_job_smooth(state->dry, dry, GM2_JOB_SMOOTH_STEP);
   /* P:0x000301 and P:0x000293 a line: the settled check on the staged offset,
    * then one step of the crossfade. */
   for (unsigned n = 0; n < GM2_DELAY_CORE_LINES; n++) {
@@ -114,12 +119,15 @@ int gm2_delay_core_process_frame(gm2_delay_core_state *state,
 
 void gm2_delay_core_state_init(gm2_delay_core_state *state,
                                const int32_t coef[GM2_DELAY_CORE_COEFS],
-                               const int32_t tap_offset[GM2_DELAY_CORE_LINES], int32_t rev_step) {
+                               const int32_t tap_offset[GM2_DELAY_CORE_LINES], int32_t rev_step,
+                               int32_t wet, int32_t dry) {
   memset(state, 0, sizeof *state);
   state->write = GM2_DELAY_CORE_BUFFER_WORDS - 1u;
   for (unsigned i = 0; i < GM2_DELAY_CORE_COEFS; i++) {
     state->coef[i] = coef[i];
   }
+  state->wet = wet;
+  state->dry = dry;
   state->rev_step = rev_step;
   for (unsigned n = 0; n < GM2_DELAY_CORE_LINES; n++) {
     gm2_delay_core_line *line = &state->line[n];

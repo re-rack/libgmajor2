@@ -22,10 +22,9 @@ static int32_t dyndelay_duck(int32_t duck, int32_t level, const int32_t *words) 
   return b;
 }
 
-/* The gain P:0x0944BE stages in the output matrix for an envelope word. */
-static int32_t dyndelay_gain(int32_t duck) {
-  return gm2_store24(gm2_mpyr(duck, GM2_DELAY_DESIGN_WET_SCALE));
-}
+/* The gain P:0x0944BE stages in the output matrix for an envelope word and the
+ * wet word X+51 the tick reads. */
+static int32_t dyndelay_gain(int32_t duck, int32_t wet) { return gm2_store24(gm2_mpyr(duck, wet)); }
 
 /* The routine's words with the ducking gain as the output matrix's first pair. */
 static void dyndelay_coef(const gm2_dyndelay_state *state, const gm2_dyndelay_config *config,
@@ -45,7 +44,8 @@ static void dyndelay_frame(gm2_dyndelay_state *state, const gm2_dyndelay_config 
   dyndelay_coef(state, config, coef);
 
   gm2_gate_detector_frame(&state->detector, in, state->core.chunk_pos);
-  if (gm2_delay_core_process_frame(&state->core, coef, config->tap_offset, in, out) == 0) {
+  if (gm2_delay_core_process_frame(&state->core, coef, config->tap_offset, config->wet, config->dry,
+                                   in, out) == 0) {
     return;
   }
   if (++state->tick < config->tick_chunks) {
@@ -55,7 +55,9 @@ static void dyndelay_frame(gm2_dyndelay_state *state, const gm2_dyndelay_config 
   /* P:0x090494 reads and resets the gate's peak hold. */
   const int32_t level = gm2_tick_level(&state->detector.peak);
   state->duck = dyndelay_duck(state->duck, level, config->duck);
-  state->duck_gain = dyndelay_gain(state->duck);
+  /* The tick reads X+51, so the gain it stages keeps that wet word until the next
+   * tick stages it again. */
+  state->duck_gain = dyndelay_gain(state->duck, config->wet);
 }
 
 void gm2_dyndelay_state_init(gm2_dyndelay_state *state, const gm2_dyndelay_config *config) {
@@ -69,11 +71,11 @@ void gm2_dyndelay_state_init(gm2_dyndelay_state *state, const gm2_dyndelay_confi
     duck = next;
   }
   state->duck = duck;
-  state->duck_gain = dyndelay_gain(duck);
+  state->duck_gain = dyndelay_gain(duck, config->wet);
 
   int32_t coef[GM2_DELAY_CORE_COEFS];
   dyndelay_coef(state, config, coef);
-  gm2_delay_core_state_init(&state->core, coef, config->tap_offset, 0);
+  gm2_delay_core_state_init(&state->core, coef, config->tap_offset, 0, config->wet, config->dry);
   gm2_gate_detector_init(&state->detector);
   state->tick = 0;
 }

@@ -4,10 +4,10 @@
 #include "gm2_dyndelay_setup.h"
 #include "gm2_effect.h"
 
-#define DYNDELAY_KNOBS 9u
+#define DYNDELAY_KNOBS 10u
 /* X+8 and X+9 are the ducking tick's gain words, not the setup's; the ducking words
- * X+26..29 and the two tap offsets follow. */
-#define DYNDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS - 2u + GM2_DYNDELAY_DUCK_WORDS + 2u)
+ * X+26..29, the two tap offsets and the Mix pair follow. */
+#define DYNDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS - 2u + GM2_DYNDELAY_DUCK_WORDS + 2u + 2u)
 
 static const gm2_knob k_knobs[DYNDELAY_KNOBS] = {
     {"DLY Dly", 0, 1800, 300, GM2_EFFECT_HOLD},
@@ -19,6 +19,7 @@ static const gm2_knob k_knobs[DYNDELAY_KNOBS] = {
     {"DLY Sense", -50, 0, -25, 0},
     {"DLY Damp", 0, 100, 18, 0},
     {"DLY Rel", 11, 21, 14, 0},
+    {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
 };
 
 static void dyndelay_raw(const int32_t *values, gm2_dyndelay_setup_raw *raw) {
@@ -32,8 +33,14 @@ static void dyndelay_raw(const int32_t *values, gm2_dyndelay_setup_raw *raw) {
       .sense = (int)values[6],
       .damp = (int)values[7],
       .release = (int)values[8],
+      .mix = (int)values[9],
       .beat_ms = (double)GM2_EFFECT_BEAT_MS,
   };
+}
+
+static void dyndelay_mix(const gm2_dyndelay_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
 }
 
 static void dyndelay_words(const gm2_dyndelay_config *config, int32_t *words) {
@@ -48,6 +55,9 @@ static void dyndelay_words(const gm2_dyndelay_config *config, int32_t *words) {
   }
   words[word++] = config->tap_offset[0];
   words[word++] = config->tap_offset[1];
+  words[word++] = config->wet;
+  words[word++] = config->dry;
 }
 
-GM2_EFFECT_DEFINE(dyndelay, dyndelay, k_knobs, dyndelay_raw, dyndelay_words, DYNDELAY_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(dyndelay, dyndelay, k_knobs, dyndelay_raw, dyndelay_words, dyndelay_mix,
+                      DYNDELAY_SETUP_WORDS)

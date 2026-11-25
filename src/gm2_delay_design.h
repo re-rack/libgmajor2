@@ -2,6 +2,7 @@
  *
  *   P:0x094574  Feedback: the input and feedback matrices
  *   P:0x094643  Width, Pan: the output matrix
+ *   P:0x08F763  Mix: the wet and dry words the output stage multiplies by
  *   P:0x094835  Feedback Hi-Cut, Feedback Lo-Cut: the lines' filters
  *   P:0x094735  Delay, Tempo: a line's delay time
  *   P:0x09479E  a delay time's tap offset
@@ -22,20 +23,17 @@ typedef enum {
   GM2_DELAY_DESIGN_REVDELAY = 3,
 } gm2_delay_design_subtype;
 
-/* X+51 at Mix 100 % and Out Level 0 dB: the scale of the output matrix's words. */
-#define GM2_DELAY_DESIGN_WET_SCALE 0x7FFFFE
-
 /* P:0x094574: the eight words of the input and feedback matrices, from the raw
  * Feedback values, 0..100 %. Only the Dual Delay has a second one. */
 void gm2_delay_design_matrix(gm2_delay_design_subtype subtype, int feedback_1, int feedback_2,
                              int32_t coef[8]);
 
 /* P:0x094643: the four words of the output matrix, from the Ping Pong's raw
- * Width, 0..100 %, or the Dual Delay's raw Pans, -50..50. The Dynamic Delay's are
- * its ducking tick's and stay zero here; the Reverse Delay's are those of two
- * centred pans. */
+ * Width, 0..100 %, or the Dual Delay's raw Pans, -50..50, scaled by `wet`, the Mix
+ * knob's wet word at X+51. The Dynamic Delay's are its ducking tick's and stay
+ * zero here; the Reverse Delay's are those of two centred pans. */
 void gm2_delay_design_output(gm2_delay_design_subtype subtype, int width, int pan_1, int pan_2,
-                             int32_t coef[4]);
+                             int32_t wet, int32_t coef[4]);
 
 /* P:0x094835: the eight filter words, from the raw Feedback Hi-Cut, 40..60, and
  * Feedback Lo-Cut, 0..40. */

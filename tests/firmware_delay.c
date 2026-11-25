@@ -50,8 +50,9 @@
 #define DELAY_OTHER_COEF 0x0530u /* Y: the engine the activation did not build */
 #define DELAY_ENGINE_WORDS 0x2Au /* Y: the twenty coefficients and their pointers */
 #define DELAY_COEF_WORDS 20u
-#define DELAY_LEVEL 0x055Au
+#define DELAY_LEVEL 0x055Au /* Y: the input, wet and dry words the level code reaches */
 #define DELAY_LEVEL_WORDS 3u
+#define DELAY_LEVEL_STAGED 0x098ECFu /* X: what P:0x08F763 wrote, the same three words */
 #define DELAY_TAP_JOB0 0x098E23u
 #define DELAY_TAP_JOB_STRIDE 11u
 #define DELAY_TAP_STEP_WORD 0u
@@ -93,10 +94,10 @@
 #define GATE_BUDGET 400000
 
 /* The descriptor index of every knob, in the knob table's order. */
-static const uint8_t k_pingpong_index[] = {1, 3, 4, 5, 7, 8};
-static const uint8_t k_dyndelay_index[] = {1, 3, 5, 7, 8, 9, 10, 11, 12};
-static const uint8_t k_dualdelay_index[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-static const uint8_t k_revdelay_index[] = {1, 3, 5, 7, 8};
+static const uint8_t k_pingpong_index[] = {1, 3, 4, 5, 7, 8, 13};
+static const uint8_t k_dyndelay_index[] = {1, 3, 5, 7, 8, 9, 10, 11, 12, 13};
+static const uint8_t k_dualdelay_index[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13};
+static const uint8_t k_revdelay_index[] = {1, 3, 5, 7, 8, 13};
 
 typedef enum { WORDS_DELAY, WORDS_DYNDELAY, WORDS_REVDELAY } words_kind;
 
@@ -403,7 +404,6 @@ static gm2_firmware *delay_open(const gm2_effect *effect, unsigned subtype, cons
     self->raw[word] = 0;
   }
   self->raw[0] = (int32_t)subtype;
-  self->raw[13] = 100; /* Mix */
   for (unsigned knob = 0; knob < count; knob++) {
     self->raw[index[knob]] = effect->knob[knob].def;
   }
@@ -541,6 +541,9 @@ static int delay_words(gm2_firmware *self, int32_t *words) {
       words[count++] =
           gm2_sign24(gm2_read(self->emu, GM2_X, delay_tap_job(ch) + DELAY_TAP_STAGED_WORD));
     }
+  }
+  for (uint32_t at = DELAY_LEVEL_STAGED + 1u; at < DELAY_LEVEL_STAGED + DELAY_LEVEL_WORDS; at++) {
+    words[count++] = gm2_sign24(gm2_read(self->emu, GM2_X, at));
   }
   return count == self->effect->setup_words ? 0 : -1;
 }

@@ -20,8 +20,10 @@
 
 typedef struct {
   int32_t coef[GM2_DELAY_CORE_COEFS]; /* X+0..19, the words the updaters stage */
-  int32_t delay_ms;                   /* Y+26: a grain's length in ms */
-  unsigned grain_chunks;              /* that length in chunks, gm2_tick_period() */
+  int32_t wet;                        /* X:0x098ED0: the Mix pair, X:0x098ED1 the dry one */
+  int32_t dry;
+  int32_t delay_ms;    /* Y+26: a grain's length in ms */
+  unsigned grain_chunks; /* that length in chunks, gm2_tick_period() */
 } gm2_revdelay_config;
 
 typedef struct {
