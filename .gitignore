@@ -1,0 +1,18 @@
+*.o
+/build/
+/.codegraph/
+/.ruff_cache/
+__pycache__/
+# Ghidra creates these while the project is open.
+*.lock
+*.lock~
+# make ghidra-prepare: TC's files, the firmware and everything made from it.
+/reverse_engineering/downloads/
+/reverse_engineering/firmware/
+/reverse_engineering/asm/
+/reverse_engineering/callgraph/
+/reverse_engineering/memory_map.csv
+/reverse_engineering/entrypoints.csv
+/reverse_engineering/seeds.csv
+/reverse_engineering/ghidra/
+/reverse_engineering/ghidra_analysis/
