@@ -20,6 +20,7 @@ typedef struct {
   int level_1;    /* -100..0 dB */
   int level_2;    /* -100..0 dB */
   int mix;        /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
 } gm2_pitch_setup_raw;
 
 int gm2_pitch_setup_config(const gm2_context *context, const gm2_pitch_setup_raw *raw,

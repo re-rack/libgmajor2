@@ -19,6 +19,9 @@
 #define TREMOLO_TAP_TIME 0x099A6Bu
 #define TREMOLO_SUBTYPE_INDEX 0u
 #define TREMOLO_OUT_LEVEL_INDEX 14u
+/* P:0x08F763 and the level struct at UI+36 it takes in R0. */
+#define TREMOLO_LEVEL_CODE 0x08F763u
+#define TREMOLO_LEVEL_STRUCT (TREMOLO_UI + 36u)
 #define TREMOLO_KILL_INDEX 15u
 #define TREMOLO_STAGED 0x09887Au   /* pulse, step, lag, rise, fall, depth, Hi-Cut pairs */
 #define TREMOLO_JOB_DATA 0x098884u /* the block's records: payloads, then list entries */
@@ -40,7 +43,7 @@
 #define TREMOLO_DESCRIPTOR_STRIDE 15u
 #define TREMOLO_DESCRIPTOR_FORMAT 12u
 #define TREMOLO_JOBS_MAX 16u
-#define TREMOLO_KNOBS_MAX 6u
+#define TREMOLO_KNOBS_MAX 7u
 /* The tempo flag P:0x09172F passes to the rate updater from M0, which holds the
  * 0xFFFFFF the audio routines load into every M register: the synced rate path. */
 #define TREMOLO_TEMPO_FLAG 0xFFFFFFu
@@ -127,7 +130,6 @@ static int tremolo_select(gm2_firmware *self) {
   }
   gm2_write(emu, GM2_X, TREMOLO_UI, TREMOLO_ALGORITHM);
   gm2_write(emu, GM2_X, TREMOLO_RAW + TREMOLO_SUBTYPE_INDEX, self->subtype);
-  gm2_write(emu, GM2_X, TREMOLO_RAW + TREMOLO_OUT_LEVEL_INDEX, 0);
   gm2_write(emu, GM2_X, TREMOLO_RAW + TREMOLO_KILL_INDEX, 0);
   gm2_write(emu, GM2_X, TREMOLO_TAP_TIME, GM2_EFFECT_BEAT_MS);
   return 0;
@@ -187,6 +189,22 @@ static int tremolo_rate_rebuild(gm2_firmware *self) {
   return 0;
 }
 
+/* The level code P:0x08F763 on the struct at UI+36, which the Out Level callback
+ * P:0x091A1D reaches only when the block's gate word X:(UI+3) is clear; neither
+ * activation pass writes that word. */
+static int tremolo_level_rebuild(gm2_firmware *self) {
+  gm2_set_reg(self->emu, DSP56300_REG_A2, 0);
+  gm2_set_reg(self->emu, DSP56300_REG_A1, 0);
+  gm2_set_reg(self->emu, DSP56300_REG_A0, 0);
+  gm2_set_reg(self->emu, DSP56300_REG_R0, TREMOLO_LEVEL_STRUCT);
+  gm2_set_reg(self->emu, DSP56300_REG_R7, GM2_DEVICE_STACK);
+  if (gm2_call(self->emu, TREMOLO_LEVEL_CODE, GM2_FIRMWARE_CALL_BUDGET, NULL) != GM2_CALL_OK) {
+    fprintf(stderr, "lfo: level code P:0x%06X did not return\n", TREMOLO_LEVEL_CODE);
+    return -1;
+  }
+  return 0;
+}
+
 /* The knob vector is the host's: the rate updater's write-back of the nearest
  * Speed step is put back without running its own updater. */
 static void tremolo_restore_raw(gm2_firmware *self) {
@@ -236,6 +254,9 @@ static int tremolo_set_knob(gm2_firmware *self, unsigned knob, int value) {
   /* The Tempo rule: the knob values alone decide the sound, so the synced rate
    * the activation computes follows a Speed turn, whose own path is Ignore. */
   if (self->raw_index[knob] == TREMOLO_SPEED_INDEX && tremolo_rate_rebuild(self) != 0) {
+    return -1;
+  }
+  if (self->raw_index[knob] == TREMOLO_OUT_LEVEL_INDEX && tremolo_level_rebuild(self) != 0) {
     return -1;
   }
   tremolo_restore_raw(self);
@@ -389,8 +410,8 @@ static int tremolo_words(gm2_firmware *self, int32_t *words) {
   return 0;
 }
 
-static const unsigned k_tremolo_index[6] = {4u, 5u, 6u, 7u, 8u, 11u};
-static const unsigned k_panner_index[3] = {4u, 5u, 6u};
+static const unsigned k_tremolo_index[7] = {4u, 5u, 6u, 7u, 8u, 11u, TREMOLO_OUT_LEVEL_INDEX};
+static const unsigned k_panner_index[4] = {4u, 5u, 6u, TREMOLO_OUT_LEVEL_INDEX};
 
 static gm2_firmware *tremolo_open(void) {
   return tremolo_shared_open(&gm2_effect_tremolo, 5u, k_tremolo_index, "tremolo");

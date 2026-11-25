@@ -19,6 +19,7 @@ int gm2_cchorus_setup_config(const gm2_context *context, const gm2_cchorus_setup
       .tempo = raw->tempo,
       .hi_cut = raw->hi_cut,
       .mix = raw->mix,
+      .out_level = raw->out_level,
       .beat_ms = raw->beat_ms,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_CCHORUS, &design, config);

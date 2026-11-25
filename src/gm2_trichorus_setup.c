@@ -20,6 +20,7 @@ int gm2_trichorus_setup_config(const gm2_context *context, const gm2_trichorus_s
       .width = raw->width,
       .phase_reverse = raw->phase_reverse,
       .mix = raw->mix,
+      .out_level = raw->out_level,
       .beat_ms = raw->beat_ms,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_TRICHORUS, &design, config);

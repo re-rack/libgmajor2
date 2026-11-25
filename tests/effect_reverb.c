@@ -13,12 +13,14 @@
 #define REVERB_KNOBS(decay, predelay, shape, size, hicol, hifact, locol, lofact, revlev, diffuse,  \
                      mix)                                                                          \
   {                                                                                                \
-      {"REV Decay", 1, 200, decay, 0},     {"REV PreDly", 0, 100, predelay, GM2_EFFECT_HOLD},      \
-      {"REV Shape", 0, 2, shape, 0},       {"REV Size", 0, 7, size, 0},                            \
-      {"REV HiCol", 0, 6, hicol, 0},       {"REV HiFact", -25, 25, hifact, 0},                     \
-      {"REV LoCol", 0, 6, locol, 0},       {"REV LoFact", -25, 25, lofact, 0},                     \
-      {"REV RoomLv", -100, 0, 0, 0},       {"REV RevLev", -100, 0, revlev, 0},                     \
-      {"REV Diffus", -25, 25, diffuse, 0}, {"REV " GM2_MIX_GLYPHS, 0, 100, mix, 0},                \
+    {"REV Decay", 1, 200, decay, 0}, {"REV PreDly", 0, 100, predelay, GM2_EFFECT_HOLD},            \
+        {"REV Shape", 0, 2, shape, 0}, {"REV Size", 0, 7, size, 0}, {"REV HiCol", 0, 6, hicol, 0}, \
+        {"REV HiFact", -25, 25, hifact, 0}, {"REV LoCol", 0, 6, locol, 0},                         \
+        {"REV LoFact", -25, 25, lofact, 0}, {"REV RoomLv", -100, 0, 0, 0},                         \
+        {"REV RevLev", -100, 0, revlev, 0}, {"REV Diffus", -25, 25, diffuse, 0},                   \
+        {"REV " GM2_MIX_GLYPHS, 0, 100, mix, 0}, {                                                 \
+      "REV OutLev", -100, 0, 0, 0,                                                                 \
+    }                                                                                              \
   }
 
 static const gm2_knob k_spring_knobs[] = REVERB_KNOBS(20, 0, 0, 3, 4, 6, 3, 0, -3, 10, 20);
@@ -40,6 +42,7 @@ static void reverb_raw(const int32_t *values, gm2_reverb_setup_raw *raw) {
       .reverb_level = (int)values[9],
       .diffuse = (int)values[10],
       .mix = (int)values[11],
+      .out_level = (int)values[12],
   };
 }
 

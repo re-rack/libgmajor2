@@ -3,16 +3,18 @@
 #include "gm2_tremolo.h"
 #include "gm2_tremolo_setup.h"
 
-#define TREMOLO_KNOBS 6u
+#define TREMOLO_KNOBS 7u
 #define TREMOLO_SETUP_WORDS 13u
 
 static const gm2_knob k_knobs[TREMOLO_KNOBS] = {
     {"TRM Speed", 0, 208, 167, 0}, {"TRM Depth", 0, 100, 100, 0}, {"TRM Tempo", 0, 16, 9, 0},
     {"TRM Type", 0, 1, 0, 0},      {"TRM Pwidth", 0, 100, 50, 0}, {"TRM HiCut", 0, 60, 58, 0},
+    {"TRM OutLev", -100, 0, 0, 0},
 };
 
 static void tremolo_raw(const int32_t *values, gm2_tremolo_setup_raw *raw) {
   *raw = (gm2_tremolo_setup_raw){
+      .out_level = (int)values[6],
       .speed = (int)values[0],
       .depth = (int)values[1],
       .tempo = (int)values[2],
@@ -40,4 +42,10 @@ static void tremolo_words(const gm2_tremolo_config *config, int32_t *words) {
   }
 }
 
-GM2_EFFECT_DEFINE_LFO(tremolo, tremolo, k_knobs, tremolo_raw, tremolo_words, TREMOLO_SETUP_WORDS)
+static void tremolo_mix(const gm2_tremolo_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = 0;
+}
+
+GM2_EFFECT_DEFINE_LFO_MIX(tremolo, tremolo, k_knobs, tremolo_raw, tremolo_words, tremolo_mix,
+                          TREMOLO_SETUP_WORDS)

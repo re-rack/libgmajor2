@@ -4,7 +4,7 @@
 #include "gm2_touchres.h"
 #include "gm2_touchres_setup.h"
 
-#define TOUCHRES_KNOBS 5u
+#define TOUCHRES_KNOBS 6u
 /* The twenty coefficient words, then the follower's two pairs, the Q and the tail
  * multiplier, then the Mix pair. The Style value and the FrqMax frequency reach no
  * word of their own: the tick reads both from the parameter bank. */
@@ -16,10 +16,12 @@ static const gm2_knob k_knobs[TOUCHRES_KNOBS] = {
     {"FIL Resp", 0, 2, 2, 0},
     {"FIL FrqMax", 34, 54, 54, 0},
     {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL OutLev", -100, 0, 0, 0},
 };
 
 static void touchres_raw(const int32_t *values, gm2_touchres_setup_raw *raw) {
   *raw = (gm2_touchres_setup_raw){
+      .out_level = (int)values[5],
       .style = (int)values[0],
       .sense = (int)values[1],
       .response = (int)values[2],

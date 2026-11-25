@@ -50,6 +50,7 @@ int gm2_tremolo_setup_config(const gm2_context *context, const gm2_tremolo_setup
       .depth = raw->depth,
       .tempo = raw->tempo,
       .beat_ms = raw->beat_ms,
+      .out_level = raw->out_level,
   };
   gm2_lfo_gain_design(&rate_words, &design, config);
 

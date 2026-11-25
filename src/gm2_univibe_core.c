@@ -60,6 +60,9 @@ static void univibe_jobs(gm2_univibe_core_state *state, const gm2_univibe_core_c
   for (unsigned i = GM2_UNIVIBE_CORE_RAMPS; i < GM2_UNIVIBE_CORE_COEFS; i++) {
     state->coef[i] = gm2_job_smooth(state->coef[i], config->coef[i], GM2_JOB_SMOOTH_STEP);
   }
+  if (state->wet != config->wet) {
+    state->wet = gm2_job_smooth(state->wet, config->wet, GM2_JOB_SMOOTH_STEP);
+  }
 }
 
 /* One stereo frame, P:0x00107F..0x001116, then the chunk's job run once its last
@@ -168,8 +171,8 @@ void gm2_univibe_core_process_frame(gm2_univibe_core_state *state,
   const int32_t wet_r = gm2_store24(univibe_clip(gm2_word_acc(right_mix), k_output_clip));
 
   /* P:0x00110D..0x001112: the wet word; the zero dry term's MACR still rounds. */
-  out[0] = gm2_store24(gm2_mpyr(GM2_LEVEL_WET, wet_l));
-  out[1] = gm2_store24(gm2_mpyr(wet_r, GM2_LEVEL_WET));
+  out[0] = gm2_store24(gm2_mpyr(state->wet, wet_l));
+  out[1] = gm2_store24(gm2_mpyr(wet_r, state->wet));
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
     return;
@@ -190,6 +193,7 @@ void gm2_univibe_core_state_init(gm2_univibe_core_state *state,
     state->pole[i] = 0;
     state->pole_step[i] = 0;
   }
+  state->wet = config->wet;
   for (unsigned i = 0; i < GM2_UNIVIBE_CORE_COEFS; i++) {
     state->coef[i] = config->coef[i];
   }

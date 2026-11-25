@@ -25,6 +25,6 @@ int gm2_wahwah_setup_config(const gm2_context *context, const gm2_wahwah_setup_r
   config->shift = gm2_wah_design_shift(raw->range);
   /* P:0x09250B: the divide leaves 100 % a hair above one, so the word rails. */
   config->sweep = gm2_swf_to_q23(gm2_swf_div(gm2_swf_from_int(sweep), k_hundred));
-  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+  gm2_mix_words(raw->out_level, raw->mix, &config->wet, &config->dry);
   return 0;
 }

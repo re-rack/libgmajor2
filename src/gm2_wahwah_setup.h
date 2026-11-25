@@ -15,6 +15,7 @@ typedef struct {
   int sweep; /* 0..100 % */
   int range; /* 0 Low, 1 High */
   int mix;   /* 0..100 % */
+  int out_level; /* -100..0 dB */
 } gm2_wahwah_setup_raw;
 
 int gm2_wahwah_setup_config(const gm2_context *context, const gm2_wahwah_setup_raw *raw,

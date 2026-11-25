@@ -21,6 +21,7 @@ int gm2_tzflanger_pos_setup_config(const gm2_context *context,
       .feedback = raw->feedback,
       .fb_cut = raw->fb_cut,
       .beat_ms = raw->beat_ms,
+      .out_level = raw->out_level,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_TZFLANGER_POS, &design, config);
   return 0;

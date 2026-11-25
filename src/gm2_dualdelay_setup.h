@@ -20,6 +20,7 @@ typedef struct {
   int pan_1;      /* -50..50: left..right */
   int pan_2;      /* -50..50: left..right */
   int mix;        /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_dualdelay_setup_raw;
 

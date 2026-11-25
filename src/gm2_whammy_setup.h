@@ -12,6 +12,7 @@ typedef struct {
   int pitch;     /* 0..100 % of the range */
   int direction; /* 0 Down, 1 Up */
   int range;     /* 1..2 octaves */
+  int out_level; /* -100..0 dB */
 } gm2_whammy_setup_raw;
 
 int gm2_whammy_setup_config(const gm2_context *context, const gm2_whammy_setup_raw *raw,

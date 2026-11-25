@@ -79,7 +79,7 @@ struct gm2_firmware {
   const gm2_effect *effect;
   const univibe_block *block;
   gm2_emu *emu;
-  int32_t values[10];
+  int32_t values[11];
   uint32_t record[UNIVIBE_JOBS_MAX]; /* the job records the block holds */
   unsigned records;
   int audio_dirty;
@@ -123,7 +123,7 @@ static void univibe_raws(gm2_firmware *self) {
   raw[10] = k[7]; /* Select */
   raw[12] = k[8]; /* Phase Reverse */
   raw[UNIVIBE_MIX_INDEX] = k[9];
-  raw[UNIVIBE_OUT_LEVEL_INDEX] = 0;
+  raw[UNIVIBE_OUT_LEVEL_INDEX] = k[10];
   for (unsigned i = 0; i < UNIVIBE_PARAM_WORDS; i++) {
     gm2_write(self->emu, GM2_X, UNIVIBE_PARAMS + i, gm2_word24(raw[i]));
   }
@@ -169,12 +169,13 @@ static int univibe_descriptor(gm2_firmware *self) {
   const uint32_t record = gm2_read(self->emu, GM2_X, GM2_CHAIN + UNIVIBE_ALGORITHM);
   const uint32_t table = gm2_read(self->emu, GM2_P, record + 7u);
   const uint32_t count = gm2_read(self->emu, GM2_P, record + 1u);
-  if (record == 0u || table == 0u || count < 14u) {
+  if (record == 0u || table == 0u || count < UNIVIBE_OUT_LEVEL_INDEX + 1u) {
     fprintf(stderr, "univibe: descriptor X:0x%06X of P:0x%06X has %u parameters\n", record, table,
             count);
     return -1;
   }
-  static const unsigned k_index[10] = {1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u, 13u};
+  static const unsigned k_index[11] = {
+      1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u, 13u, UNIVIBE_OUT_LEVEL_INDEX};
   for (unsigned knob = 0; knob < self->effect->knobs; knob++) {
     const gm2_knob *want = &self->effect->knob[knob];
     uint32_t callback = 0;
@@ -276,7 +277,8 @@ static gm2_firmware *modunivibe_open(void) {
  * once more with that A; it writes Speed 1 and Speed 2 back in turn, hence the
  * second restore. */
 static int univibe_set_knob(gm2_firmware *self, unsigned knob, int value) {
-  static const unsigned k_index[10] = {1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u, 13u};
+  static const unsigned k_index[11] = {
+      1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u, 13u, UNIVIBE_OUT_LEVEL_INDEX};
   self->values[knob] = (int32_t)value;
   if (gm2_firmware_edit(self->emu, UNIVIBE_EDIT_BASE + k_index[knob], UNIVIBE_EDIT, value,
                         GM2_DEVICE_STACK) != 0) {

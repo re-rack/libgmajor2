@@ -4,7 +4,7 @@
 #include "gm2_cflanger_setup.h"
 #include "gm2_effect.h"
 
-#define CFLANGER_KNOBS 7u
+#define CFLANGER_KNOBS 8u
 
 static const gm2_knob k_knobs[CFLANGER_KNOBS] = {
     {"FLA Speed", 0, 208, 24, 0},
@@ -14,10 +14,12 @@ static const gm2_knob k_knobs[CFLANGER_KNOBS] = {
     {"FLA FB", -100, 100, -80, 0},
     {"FLA FB Cut", 0, 60, 54, 0},
     {"FLA " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"FLA OutLev", -100, 0, 0, 0},
 };
 
 static void cflanger_raw(const int32_t *values, gm2_cflanger_setup_raw *raw) {
   *raw = (gm2_cflanger_setup_raw){
+      .out_level = (int)values[7],
       .speed = (int)values[0],
       .depth = (int)values[1],
       .tempo = (int)values[2],

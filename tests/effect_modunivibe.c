@@ -3,7 +3,7 @@
 #include "gm2_modunivibe.h"
 #include "gm2_modunivibe_setup.h"
 
-#define MODUNIVIBE_KNOBS 10u
+#define MODUNIVIBE_KNOBS 11u
 #define MODUNIVIBE_SETUP_WORDS (GM2_UNIVIBE_CORE_COEFS + 3u)
 
 static const gm2_knob k_knobs[MODUNIVIBE_KNOBS] = {
@@ -12,10 +12,12 @@ static const gm2_knob k_knobs[MODUNIVIBE_KNOBS] = {
     {"UNI Tempo2", 0, 16, 0, 0},     {"UNI Att", 1, 100, 1, 0},
     {"UNI Rel", 1, 100, 1, 0},       {"UNI Select", 0, 1, 0, 0},
     {"UNI PhaRev", 0, 1, 0, 0},      {"UNI " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"UNI OutLev", -100, 0, 0, 0},
 };
 
 static void modunivibe_raw(const int32_t *values, gm2_modunivibe_setup_raw *raw) {
   *raw = (gm2_modunivibe_setup_raw){
+      .out_level = (int)values[10],
       .speed_1 = (int)values[0],
       .speed_2 = (int)values[1],
       .depth = (int)values[2],
@@ -41,5 +43,10 @@ static void modunivibe_words(const gm2_modunivibe_config *config, int32_t *words
   words[GM2_UNIVIBE_CORE_COEFS + 2u] = config->shaper[1];
 }
 
-GM2_EFFECT_DEFINE_LFO(modunivibe, modunivibe, k_knobs, modunivibe_raw, modunivibe_words,
-                      MODUNIVIBE_SETUP_WORDS)
+static void modunivibe_mix(const gm2_modunivibe_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = 0;
+}
+
+GM2_EFFECT_DEFINE_LFO_MIX(modunivibe, modunivibe, k_knobs, modunivibe_raw, modunivibe_words,
+                          modunivibe_mix, MODUNIVIBE_SETUP_WORDS)

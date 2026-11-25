@@ -24,6 +24,7 @@ int gm2_modunivibe_setup_config(const gm2_context *context, const gm2_modunivibe
       .select = raw->select,
       .phase_reverse = raw->phase_reverse,
       .mix = raw->mix,
+      .out_level = raw->out_level,
       .beat_ms = raw->beat_ms,
   };
   gm2_univibe_design(&rate_words, GM2_UNIVIBE_DESIGN_MODERN, &design, config);

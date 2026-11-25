@@ -21,6 +21,7 @@ typedef struct {
   int hi_cut;    /* 18..57: 160 Hz..14 kHz, 20 steps a decade */
   int resonance; /* 0..100 % */
   int mix;       /* 0..100 % */
+  int out_level; /* -100..0 dB */
 } gm2_resfilter_setup_raw;
 
 int gm2_resfilter_setup_config(const gm2_context *context, const gm2_resfilter_setup_raw *raw,

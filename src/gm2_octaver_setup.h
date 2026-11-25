@@ -11,6 +11,7 @@ typedef struct {
   int direction; /* 0 Down, 1 Up */
   int range;     /* 1..2 octaves */
   int mix;       /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
 } gm2_octaver_setup_raw;
 
 int gm2_octaver_setup_config(const gm2_context *context, const gm2_octaver_setup_raw *raw,

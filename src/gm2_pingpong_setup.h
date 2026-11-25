@@ -15,6 +15,7 @@ typedef struct {
   int fb_hi_cut;  /* 40..60: 2 kHz..20 kHz, 20 steps a decade */
   int fb_lo_cut;  /* 0..40: 20 Hz..2 kHz, 20 steps a decade */
   int mix;        /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_pingpong_setup_raw;
 

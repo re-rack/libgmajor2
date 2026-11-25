@@ -23,6 +23,7 @@ int gm2_vintphaser_setup_config(const gm2_context *context, const gm2_vintphaser
       .range = raw->range,
       .phase_reverse = raw->phase_reverse,
       .mix = raw->mix,
+      .out_level = raw->out_level,
       .beat_ms = raw->beat_ms,
   };
   gm2_phaser_design(&rate_words, GM2_PHASER_DESIGN_VINTAGE, &design, config);

@@ -18,6 +18,7 @@ typedef struct {
   int damp;       /* 0..100 dB */
   int release;    /* 11..21: 20..1000 ms */
   int mix;        /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_dyndelay_setup_raw;
 

@@ -19,8 +19,6 @@
 #define MOD_PARAMS 0x099B66u /* X: the accessor's sixteen raw words */
 #define MOD_PARAM_WORDS 16u
 #define MOD_PARAM_SLOT_SUBTYPE 0u
-#define MOD_PARAM_SLOT_OUT_LEVEL 14u /* 0 dB */
-#define MOD_PARAM_OUT_LEVEL 0
 #define MOD_TAP_TIME 0x099A66u
 #define MOD_BEAT 0x099A6Bu
 #define MOD_UI 0x098C7Fu
@@ -90,7 +88,7 @@
 #define MOD_BUDGET 2000000
 #define MOD_SETTLE_ROUNDS 8000u
 
-#define MODDELAY_KNOBS_MAX 10u
+#define MODDELAY_KNOBS_MAX 11u
 
 typedef struct {
   const gm2_effect *effect;
@@ -98,13 +96,13 @@ typedef struct {
   const unsigned char *slot; /* the firmware raw word each knob holds */
 } moddelay_block;
 
-static const unsigned char k_cchorus_slot[] = {1, 3, 4, 5, 13};
-static const unsigned char k_achorus_slot[] = {1, 3, 4, 5, 8, 9, 12, 13};
-static const unsigned char k_cflanger_slot[] = {1, 3, 4, 5, 6, 7, 13};
-static const unsigned char k_aflanger_slot[] = {1, 3, 4, 5, 6, 7, 8, 9, 12, 13};
-static const unsigned char k_trichorus_slot[] = {1, 3, 4, 8, 12, 13};
-static const unsigned char k_tzflanger_slot[] = {1, 3, 4, 6, 7};
-static const unsigned char k_vibrato_slot[] = {1, 3, 4, 5};
+static const unsigned char k_cchorus_slot[] = {1, 3, 4, 5, 13, 14};
+static const unsigned char k_achorus_slot[] = {1, 3, 4, 5, 8, 9, 12, 13, 14};
+static const unsigned char k_cflanger_slot[] = {1, 3, 4, 5, 6, 7, 13, 14};
+static const unsigned char k_aflanger_slot[] = {1, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14};
+static const unsigned char k_trichorus_slot[] = {1, 3, 4, 8, 12, 13, 14};
+static const unsigned char k_tzflanger_slot[] = {1, 3, 4, 6, 7, 14};
+static const unsigned char k_vibrato_slot[] = {1, 3, 4, 5, 14};
 
 /* The nine effects in fixture order. */
 static const moddelay_block k_blocks[] = {
@@ -442,9 +440,8 @@ static gm2_firmware *moddelay_open(const moddelay_block *block) {
     goto fail;
   }
   /* The device's factory bank: every raw slot at its descriptor default, then the
-   * subtype, the knobs and the fixed Out Level over it. The Through-Zero Flangers'
-   * and the Vibrato's Mix entry is a Dummy at 100 %, so the bank word serves
-   * them. */
+   * subtype and the knobs over it. The Through-Zero Flangers' and the Vibrato's Mix
+   * entry is a Dummy at 100 %, so the bank word serves them. */
   for (unsigned slot = 0; slot < MOD_PARAM_WORDS; slot++) {
     gm2_write(self->emu, GM2_X, MOD_PARAMS + slot,
               gm2_read(self->emu, GM2_P,
@@ -456,7 +453,6 @@ static gm2_firmware *moddelay_open(const moddelay_block *block) {
     gm2_write(self->emu, GM2_X, MOD_PARAMS + block->slot[knob], (uint32_t)value & 0xFFFFFFu);
     self->value[knob] = value;
   }
-  gm2_write(self->emu, GM2_X, MOD_PARAMS + MOD_PARAM_SLOT_OUT_LEVEL, MOD_PARAM_OUT_LEVEL);
   gm2_write(self->emu, GM2_X, MOD_TAP_TIME, 1u);
   gm2_write(self->emu, GM2_X, MOD_BEAT, GM2_EFFECT_BEAT_MS);
   gm2_write(self->emu, GM2_X, MOD_RUN_FLAG, 1u);

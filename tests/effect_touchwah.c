@@ -3,18 +3,18 @@
 #include "gm2_touchwah.h"
 #include "gm2_touchwah_setup.h"
 
-#define TOUCHWAH_KNOBS 4u
+#define TOUCHWAH_KNOBS 5u
 #define TOUCHWAH_SETUP_WORDS 12u
 
 static const gm2_knob k_knobs[TOUCHWAH_KNOBS] = {
-    {"FIL Sensi", 0, 10, 5, 0},
-    {"FIL Resp", 0, 2, 2, 0},
-    {"FIL Range", 0, 1, 0, 0},
-    {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL Sensi", 0, 10, 5, 0},    {"FIL Resp", 0, 2, 2, 0},
+    {"FIL Range", 0, 1, 0, 0},     {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL OutLev", -100, 0, 0, 0},
 };
 
 static void touchwah_raw(const int32_t *values, gm2_touchwah_setup_raw *raw) {
   *raw = (gm2_touchwah_setup_raw){
+      .out_level = (int)values[4],
       .sense = (int)values[0],
       .response = (int)values[1],
       .range = (int)values[2],

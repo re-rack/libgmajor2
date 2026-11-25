@@ -94,10 +94,10 @@
 #define GATE_BUDGET 400000
 
 /* The descriptor index of every knob, in the knob table's order. */
-static const uint8_t k_pingpong_index[] = {1, 3, 4, 5, 7, 8, 13};
-static const uint8_t k_dyndelay_index[] = {1, 3, 5, 7, 8, 9, 10, 11, 12, 13};
-static const uint8_t k_dualdelay_index[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13};
-static const uint8_t k_revdelay_index[] = {1, 3, 5, 7, 8, 13};
+static const uint8_t k_pingpong_index[] = {1, 3, 4, 5, 7, 8, 13, 14};
+static const uint8_t k_dyndelay_index[] = {1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14};
+static const uint8_t k_dualdelay_index[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14};
+static const uint8_t k_revdelay_index[] = {1, 3, 5, 7, 8, 13, 14};
 
 typedef enum { WORDS_DELAY, WORDS_DYNDELAY, WORDS_REVDELAY } words_kind;
 

@@ -4,7 +4,7 @@
 #include "gm2_cchorus_setup.h"
 #include "gm2_effect.h"
 
-#define CCHORUS_KNOBS 5u
+#define CCHORUS_KNOBS 6u
 
 static const gm2_knob k_knobs[CCHORUS_KNOBS] = {
     {"CHO Speed", 0, 208, 31, 0},
@@ -12,10 +12,12 @@ static const gm2_knob k_knobs[CCHORUS_KNOBS] = {
     {"CHO Tempo", 0, 16, 0, 0},
     {"CHO HiCut", 0, 60, 58, 0},
     {"CHO " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"CHO OutLev", -100, 0, 0, 0},
 };
 
 static void cchorus_raw(const int32_t *values, gm2_cchorus_setup_raw *raw) {
   *raw = (gm2_cchorus_setup_raw){
+      .out_level = (int)values[5],
       .speed = (int)values[0],
       .depth = (int)values[1],
       .tempo = (int)values[2],

@@ -23,6 +23,7 @@ typedef struct {
   int response; /* 0 Slow, 1 Medium, 2 Fast */
   int range;    /* 0 Low, 1 High */
   int mix;      /* 0..100 % */
+  int out_level; /* -100..0 dB */
 } gm2_touchwah_setup_raw;
 
 int gm2_touchwah_setup_config(const gm2_context *context, const gm2_touchwah_setup_raw *raw,

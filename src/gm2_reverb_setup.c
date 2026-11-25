@@ -463,6 +463,6 @@ int gm2_reverb_setup_config(const gm2_context *context, const gm2_reverb_setup_r
   reverb_early_weights(&rate_words, shape, size, hi_color, config);
   reverb_early_biquads(&rate_words, shape, hi_color, config);
   reverb_tank_signs(config);
-  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+  gm2_mix_words(raw->out_level, raw->mix, &config->wet, &config->dry);
   return 0;
 }

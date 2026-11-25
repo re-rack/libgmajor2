@@ -22,6 +22,7 @@ typedef struct {
   int shape;      /* 0 Triangle, 1 Sine */
   int range;      /* 0 Low, 1 High */
   int mix;        /* 0..100 % */
+  int out_level; /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_autowah_setup_raw;
 

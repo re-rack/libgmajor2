@@ -3,7 +3,7 @@
 #include "gm2_vintunivibe.h"
 #include "gm2_vintunivibe_setup.h"
 
-#define VINTUNIVIBE_KNOBS 10u
+#define VINTUNIVIBE_KNOBS 11u
 #define VINTUNIVIBE_SETUP_WORDS (GM2_UNIVIBE_CORE_COEFS + 3u)
 
 static const gm2_knob k_knobs[VINTUNIVIBE_KNOBS] = {
@@ -12,10 +12,12 @@ static const gm2_knob k_knobs[VINTUNIVIBE_KNOBS] = {
     {"UNI Tempo2", 0, 16, 0, 0},     {"UNI Att", 1, 100, 1, 0},
     {"UNI Rel", 1, 100, 1, 0},       {"UNI Select", 0, 1, 0, 0},
     {"UNI PhaRev", 0, 1, 0, 0},      {"UNI " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"UNI OutLev", -100, 0, 0, 0},
 };
 
 static void vintunivibe_raw(const int32_t *values, gm2_vintunivibe_setup_raw *raw) {
   *raw = (gm2_vintunivibe_setup_raw){
+      .out_level = (int)values[10],
       .speed_1 = (int)values[0],
       .speed_2 = (int)values[1],
       .depth = (int)values[2],
@@ -41,5 +43,10 @@ static void vintunivibe_words(const gm2_vintunivibe_config *config, int32_t *wor
   words[GM2_UNIVIBE_CORE_COEFS + 2u] = config->shaper[1];
 }
 
-GM2_EFFECT_DEFINE_LFO(vintunivibe, vintunivibe, k_knobs, vintunivibe_raw, vintunivibe_words,
-                      VINTUNIVIBE_SETUP_WORDS)
+static void vintunivibe_mix(const gm2_vintunivibe_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = 0;
+}
+
+GM2_EFFECT_DEFINE_LFO_MIX(vintunivibe, vintunivibe, k_knobs, vintunivibe_raw, vintunivibe_words,
+                          vintunivibe_mix, VINTUNIVIBE_SETUP_WORDS)

@@ -17,6 +17,7 @@ int gm2_whammy_setup_config(const gm2_context *context, const gm2_whammy_setup_r
       .pitch = raw->pitch,
       .direction = raw->direction,
       .range = raw->range,
+      .out_level = raw->out_level,
   };
   gm2_pitch_design(&rate_words, GM2_PITCH_DESIGN_WHAMMY, &design, config);
   return 0;

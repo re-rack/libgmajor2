@@ -287,7 +287,6 @@ static gm2_firmware *reverb_open(unsigned type, const gm2_effect *effect) {
   }
   gm2_write(self->emu, GM2_X, REVERB_PARAMS, type);
   gm2_write(self->emu, GM2_X, REVERB_PARAMS + REVERB_MIX_SLOT, 100u);
-  gm2_write(self->emu, GM2_X, REVERB_PARAMS + REVERB_OUT_SLOT, 0u);
   gm2_write(self->emu, GM2_X, REVERB_TAP_TIME, GM2_EFFECT_BEAT_MS);
 
   gm2_set_reg(self->emu, DSP56300_REG_R0, REVERB_UI);

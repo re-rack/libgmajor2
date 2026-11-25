@@ -4,7 +4,7 @@
 #include "gm2_revdelay.h"
 #include "gm2_revdelay_setup.h"
 
-#define REVDELAY_KNOBS 6u
+#define REVDELAY_KNOBS 7u
 /* X+0..19, the grain length Y+26 and the Mix pair; the grain period in chunks
  * follows from the length and the rate, so it is not a word. */
 #define REVDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 1u + 2u)
@@ -16,10 +16,12 @@ static const gm2_knob k_knobs[REVDELAY_KNOBS] = {
     {"DLY FBHcut", 40, 60, 54, 0},
     {"DLY FBLcut", 0, 40, 10, 0},
     {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
+    {"DLY OutLev", -100, 0, 0, 0},
 };
 
 static void revdelay_raw(const int32_t *values, gm2_revdelay_setup_raw *raw) {
   *raw = (gm2_revdelay_setup_raw){
+      .out_level = (int)values[6],
       .delay = (int)values[0],
       .tempo = (int)values[1],
       .feedback = (int)values[2],

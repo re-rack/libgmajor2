@@ -126,5 +126,5 @@ void gm2_phaser_design(const gm2_rate_words *rate, gm2_phaser_design_subtype sub
   config->raw[GM2_PHASER_CORE_RAW_DEPTH] = depth;
   config->raw[GM2_PHASER_CORE_RAW_TEMPO] = tempo;
   config->note = (unsigned)tempo;
-  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+  gm2_mix_words(raw->out_level, raw->mix, &config->wet, &config->dry);
 }

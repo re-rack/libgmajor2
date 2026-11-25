@@ -3,17 +3,19 @@
 #include "gm2_wahwah.h"
 #include "gm2_wahwah_setup.h"
 
-#define WAHWAH_KNOBS 3u
+#define WAHWAH_KNOBS 4u
 #define WAHWAH_SETUP_WORDS 4u
 
 static const gm2_knob k_knobs[WAHWAH_KNOBS] = {
     {"FIL Sweep", 0, 100, 50, 0},
     {"FIL Range", 0, 1, 0, 0},
     {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL OutLev", -100, 0, 0, 0},
 };
 
 static void wahwah_raw(const int32_t *values, gm2_wahwah_setup_raw *raw) {
   *raw = (gm2_wahwah_setup_raw){
+      .out_level = (int)values[3],
       .sweep = (int)values[0],
       .range = (int)values[1],
       .mix = (int)values[2],

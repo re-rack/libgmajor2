@@ -110,8 +110,7 @@ static int phaser_jobs(gm2_firmware *self);
 
 static void phaser_audio_begin(gm2_emu *emu) { gm2_firmware_audio_reset(emu); }
 
-/* The block's own raw words: the knobs of `self->values`, the subtype, and Out
- * Level 0 dB. */
+/* The block's own raw words: the knobs of `self->values` and the subtype. */
 static void phaser_raws(gm2_firmware *self) {
   const int32_t *k = self->values;
   int32_t raw[PHASER_PARAM_WORDS] = {0};
@@ -123,7 +122,7 @@ static void phaser_raws(gm2_firmware *self) {
   raw[11] = k[4]; /* Range */
   raw[12] = k[5]; /* Phase Reverse */
   raw[PHASER_MIX_INDEX] = k[6];
-  raw[PHASER_OUT_LEVEL_INDEX] = 0;
+  raw[PHASER_OUT_LEVEL_INDEX] = k[7];
   for (unsigned i = 0; i < PHASER_PARAM_WORDS; i++) {
     gm2_write(self->emu, GM2_X, PHASER_PARAMS + i, gm2_word24(raw[i]));
   }
@@ -169,12 +168,13 @@ static int phaser_descriptor(gm2_firmware *self) {
   const uint32_t record = gm2_read(self->emu, GM2_X, GM2_CHAIN + PHASER_ALGORITHM);
   const uint32_t table = gm2_read(self->emu, GM2_P, record + 7u);
   const uint32_t count = gm2_read(self->emu, GM2_P, record + 1u);
-  if (record == 0u || table == 0u || count < 13u) {
+  if (record == 0u || table == 0u || count < PHASER_OUT_LEVEL_INDEX + 1u) {
     fprintf(stderr, "phaser: descriptor X:0x%06X of P:0x%06X has %u parameters\n", record, table,
             count);
     return -1;
   }
-  static const unsigned k_index[7] = {1u, 3u, 4u, 6u, 11u, 12u, PHASER_MIX_INDEX};
+  static const unsigned k_index[8] = {
+      1u, 3u, 4u, 6u, 11u, 12u, PHASER_MIX_INDEX, PHASER_OUT_LEVEL_INDEX};
   for (unsigned knob = 0; knob < self->effect->knobs; knob++) {
     const gm2_knob *want = &self->effect->knob[knob];
     uint32_t callback = 0;
@@ -282,7 +282,8 @@ static gm2_firmware *smoothphaser_open(void) {
  * step from the Tempo, so it re-derives the word from the vector; it writes the
  * nearest Speed back in turn, hence the second restore. */
 static int phaser_set_knob(gm2_firmware *self, unsigned knob, int value) {
-  static const unsigned k_index[7] = {1u, 3u, 4u, 6u, 11u, 12u, PHASER_MIX_INDEX};
+  static const unsigned k_index[8] = {
+      1u, 3u, 4u, 6u, 11u, 12u, PHASER_MIX_INDEX, PHASER_OUT_LEVEL_INDEX};
   self->values[knob] = (int32_t)value;
   if (gm2_firmware_edit(self->emu, PHASER_EDIT_BASE + k_index[knob], PHASER_EDIT, value,
                         GM2_DEVICE_STACK) != 0) {

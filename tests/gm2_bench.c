@@ -27,45 +27,45 @@ typedef struct {
 
 static const int32_t k_eq[] = {60, 6, 10, 100, -6, 6, 180, 3, 4};
 static const int32_t k_gate[] = {0, -20, 90, 45};
-static const int32_t k_wahwah[] = {50, 0, 66};
-static const int32_t k_touchwah[] = {0, 2, 0, 66};
+static const int32_t k_wahwah[] = {50, 0, 66, 0};
+static const int32_t k_touchwah[] = {0, 2, 0, 66, 0};
 /* Shape 0 runs the triangle, the heavier waveform; Tempo at Ignore runs Speed. */
-static const int32_t k_autowah[] = {208, 0, 0, 0, 66};
-static const int32_t k_resfilter[] = {1, 57, 100, 66};
-static const int32_t k_touchres[] = {1, 0, 2, 54, 66};
+static const int32_t k_autowah[] = {208, 0, 0, 0, 66, 0};
+static const int32_t k_resfilter[] = {1, 57, 100, 66, 0};
+static const int32_t k_touchres[] = {1, 0, 2, 54, 66, 0};
 /* Tempo at Ignore; Speed max still crosses both waveform branches. */
-static const int32_t k_tremolo[] = {208, 100, 0, 0, 33, 58};
-static const int32_t k_panner[] = {116, 100, 0};
+static const int32_t k_tremolo[] = {208, 100, 0, 0, 33, 58, 0};
+static const int32_t k_panner[] = {116, 100, 0, 0};
 /* Threshold at its minimum holds the gain computer on the attack side. */
 static const int32_t k_comp[] = {-40, 11, 3, 15, 0};
-static const int32_t k_detune[] = {9, -9, 50, 50, 66};
-static const int32_t k_whammy[] = {33, 0, 2};
-static const int32_t k_octaver[] = {0, 2, 66};
+static const int32_t k_detune[] = {9, -9, 50, 50, 66, 0};
+static const int32_t k_whammy[] = {33, 0, 2, 0};
+static const int32_t k_octaver[] = {0, 2, 66, 0};
 /* Voice 1 at its minimum exercises the negative-ratio wrap. */
-static const int32_t k_pitch[] = {-2400, -15, -50, 50, 350, 350, 100, 100, 0, 0, 66};
-static const int32_t k_ipitch[] = {10, -12, -50, 50, 350, 350, 0, 0, 0, 0, 66};
-static const int32_t k_cchorus[] = {69, 50, 0, 58, 50};
-static const int32_t k_achorus[] = {69, 50, 0, 58, 500, 1, 1, 50};
-static const int32_t k_trichorus[] = {69, 50, 0, 50, 1, 50};
-static const int32_t k_trichorus_asym[] = {69, 50, 0, 50, 1, 50};
-static const int32_t k_cflanger[] = {69, 25, 0, 58, -80, 54, 50};
-static const int32_t k_aflanger[] = {69, 20, 0, 58, -80, 54, 500, 1, 1, 50};
-static const int32_t k_tzflanger_neg[] = {69, 20, 0, -80, 45};
-static const int32_t k_tzflanger_pos[] = {69, 20, 0, -80, 45};
-static const int32_t k_vibrato[] = {152, 7, 0, 58};
-static const int32_t k_vintphaser[] = {69, 90, 0, -90, 0, 0, 66};
-static const int32_t k_smoothphaser[] = {69, 80, 0, -90, 0, 1, 66};
-static const int32_t k_vintunivibe[] = {128, 37, 90, 0, 0, 1, 1, 0, 0, 66};
-static const int32_t k_modunivibe[] = {128, 37, 100, 0, 0, 1, 1, 0, 0, 66};
-static const int32_t k_pingpong[] = {375, 0, 75, 100, 54, 10, 66};
-static const int32_t k_dyndelay[] = {1800, 0, 100, 55, 8, 25, -25, 18, 14, 66};
-static const int32_t k_dualdelay[] = {280, 420, 0, 0, 100, 100, 53, 12, -30, 35, 66};
-static const int32_t k_revdelay[] = {1000, 0, 100, 54, 10, 66};
+static const int32_t k_pitch[] = {-2400, -15, -50, 50, 350, 350, 100, 100, 0, 0, 66, 0};
+static const int32_t k_ipitch[] = {10, -12, -50, 50, 350, 350, 0, 0, 0, 0, 66, 0};
+static const int32_t k_cchorus[] = {69, 50, 0, 58, 50, 0};
+static const int32_t k_achorus[] = {69, 50, 0, 58, 500, 1, 1, 50, 0};
+static const int32_t k_trichorus[] = {69, 50, 0, 50, 1, 50, 0};
+static const int32_t k_trichorus_asym[] = {69, 50, 0, 50, 1, 50, 0};
+static const int32_t k_cflanger[] = {69, 25, 0, 58, -80, 54, 50, 0};
+static const int32_t k_aflanger[] = {69, 20, 0, 58, -80, 54, 500, 1, 1, 50, 0};
+static const int32_t k_tzflanger_neg[] = {69, 20, 0, -80, 45, 0};
+static const int32_t k_tzflanger_pos[] = {69, 20, 0, -80, 45, 0};
+static const int32_t k_vibrato[] = {152, 7, 0, 58, 0};
+static const int32_t k_vintphaser[] = {69, 90, 0, -90, 0, 0, 66, 0};
+static const int32_t k_smoothphaser[] = {69, 80, 0, -90, 0, 1, 66, 0};
+static const int32_t k_vintunivibe[] = {128, 37, 90, 0, 0, 1, 1, 0, 0, 66, 0};
+static const int32_t k_modunivibe[] = {128, 37, 100, 0, 0, 1, 1, 0, 0, 66, 0};
+static const int32_t k_pingpong[] = {375, 0, 75, 100, 54, 10, 66, 0};
+static const int32_t k_dyndelay[] = {1800, 0, 100, 55, 8, 25, -25, 18, 14, 66, 0};
+static const int32_t k_dualdelay[] = {280, 420, 0, 0, 100, 100, 53, 12, -30, 35, 66, 0};
+static const int32_t k_revdelay[] = {1000, 0, 100, 54, 10, 66, 0};
 /* Each Decay is high enough to reach the 24-bit store's rail branch. */
-static const int32_t k_reverb_spring[] = {67, 0, 0, 3, 4, -8, 3, 0, 0, -3, 10, 66};
-static const int32_t k_reverb_hall[] = {134, 50, 0, 4, 3, 0, 4, 9, 0, -6, 0, 66};
-static const int32_t k_reverb_room[] = {67, 33, 0, 3, 2, 0, 4, 9, 0, -6, 0, 66};
-static const int32_t k_reverb_plate[] = {134, 5, 1, 7, 1, 5, 5, 6, 0, -6, 10, 66};
+static const int32_t k_reverb_spring[] = {67, 0, 0, 3, 4, -8, 3, 0, 0, -3, 10, 66, 0};
+static const int32_t k_reverb_hall[] = {134, 50, 0, 4, 3, 0, 4, 9, 0, -6, 0, 66, 0};
+static const int32_t k_reverb_room[] = {67, 33, 0, 3, 2, 0, 4, 9, 0, -6, 0, 66, 0};
+static const int32_t k_reverb_plate[] = {134, 5, 1, 7, 1, 5, 5, 6, 0, -6, 10, 66, 0};
 
 static const bench_setting k_settings[] = {
 #define GM2_BENCH_ENTRY(name) {&gm2_effect_##name, k_##name, sizeof k_##name / sizeof k_##name[0]},

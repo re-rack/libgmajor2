@@ -4,7 +4,7 @@
 #include "gm2_pingpong.h"
 #include "gm2_pingpong_setup.h"
 
-#define PINGPONG_KNOBS 7u
+#define PINGPONG_KNOBS 8u
 /* The twenty coefficient words, the two tap offsets, then the Mix pair. */
 #define PINGPONG_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 2u + 2u)
 
@@ -16,10 +16,12 @@ static const gm2_knob k_knobs[PINGPONG_KNOBS] = {
     {"DLY FBHcut", 40, 60, 54, 0},
     {"DLY FBLcut", 0, 40, 10, 0},
     {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
+    {"DLY OutLev", -100, 0, 0, 0},
 };
 
 static void pingpong_raw(const int32_t *values, gm2_pingpong_setup_raw *raw) {
   *raw = (gm2_pingpong_setup_raw){
+      .out_level = (int)values[7],
       .delay = (int)values[0],
       .tempo = (int)values[1],
       .width = (int)values[2],

@@ -14,6 +14,7 @@ typedef struct {
   int delay_l; /* 0..50 ms */
   int delay_r; /* 0..50 ms */
   int mix;     /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
 } gm2_detune_setup_raw;
 
 int gm2_detune_setup_config(const gm2_context *context, const gm2_detune_setup_raw *raw,

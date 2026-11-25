@@ -23,6 +23,7 @@ int gm2_smoothphaser_setup_config(const gm2_context *context, const gm2_smoothph
       .range = raw->range,
       .phase_reverse = raw->phase_reverse,
       .mix = raw->mix,
+      .out_level = raw->out_level,
       .beat_ms = raw->beat_ms,
   };
   gm2_phaser_design(&rate_words, GM2_PHASER_DESIGN_SMOOTH, &design, config);

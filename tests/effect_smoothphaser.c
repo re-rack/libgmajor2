@@ -3,7 +3,7 @@
 #include "gm2_smoothphaser.h"
 #include "gm2_smoothphaser_setup.h"
 
-#define SMOOTHPHASER_KNOBS 7u
+#define SMOOTHPHASER_KNOBS 8u
 
 static const gm2_knob k_knobs[SMOOTHPHASER_KNOBS] = {
     {"PHA Speed", 0, 208, 38, 0},
@@ -13,10 +13,12 @@ static const gm2_knob k_knobs[SMOOTHPHASER_KNOBS] = {
     {"PHA Range", 0, 1, 0, 0},
     {"PHA PhaRev", 0, 1, 1, 0},
     {"PHA " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"PHA OutLev", -100, 0, 0, 0},
 };
 
 static void smoothphaser_raw(const int32_t *values, gm2_smoothphaser_setup_raw *raw) {
   *raw = (gm2_smoothphaser_setup_raw){
+      .out_level = (int)values[7],
       .speed = (int)values[0],
       .depth = (int)values[1],
       .tempo = (int)values[2],

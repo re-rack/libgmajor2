@@ -24,6 +24,7 @@ typedef struct {
   int response; /* 0 Slow, 1 Medium, 2 Fast */
   int freq_max; /* 34..54: 1 kHz..10 kHz, 20 steps a decade */
   int mix;      /* 0..100 % */
+  int out_level; /* -100..0 dB */
 } gm2_touchres_setup_raw;
 
 int gm2_touchres_setup_config(const gm2_context *context, const gm2_touchres_setup_raw *raw,

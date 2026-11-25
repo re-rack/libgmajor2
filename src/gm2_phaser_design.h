@@ -30,6 +30,7 @@ typedef struct {
   int range;         /* 0 Low, 1 High */
   int phase_reverse; /* 0 Off, 1 On */
   int mix;           /* 0..100 % wet */
+  int out_level;     /* -100..0 dB */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_phaser_design_raw;
 

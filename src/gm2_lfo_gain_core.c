@@ -85,6 +85,9 @@ static void lfo_gain_jobs(gm2_lfo_gain_core_state *state, const gm2_lfo_gain_cor
       state->coef[i] = gm2_job_smooth(state->coef[i], config->coef[i], GM2_JOB_SMOOTH_STEP);
     }
   }
+  if (state->wet != config->wet) {
+    state->wet = gm2_job_smooth(state->wet, config->wet, GM2_JOB_SMOOTH_STEP);
+  }
 }
 
 /* One stereo frame, P:0x000E5A..0x000E8B, then the chunk's job run once its last
@@ -121,7 +124,7 @@ void gm2_lfo_gain_core_process_frame(gm2_lfo_gain_core_state *state,
 
     /* 0x0E83..0x0E89: the wet word times the Hi-Cut state; the zero dry term's
      * MACR still rounds. */
-    out[channel] = gm2_store24(gm2_round24(lfo_gain_mul(GM2_LEVEL_WET, state->hi_cut[channel])));
+    out[channel] = gm2_store24(gm2_round24(lfo_gain_mul(state->wet, state->hi_cut[channel])));
   }
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
@@ -138,6 +141,7 @@ void gm2_lfo_gain_core_state_init(gm2_lfo_gain_core_state *state,
     state->level[channel] = 0;
     state->hi_cut[channel] = 0;
   }
+  state->wet = config->wet;
   for (unsigned i = 0; i < GM2_LFO_GAIN_CORE_COEFS; i++) {
     state->coef[i] = config->coef[i];
   }

@@ -44,7 +44,8 @@ typedef struct {
   /* 0 when the setup refuses each NULL pointer and a context without a rate. */
   int (*rejects)(void);
   /* The block's level words for one knob vector: the input word and, for an effect
-   * with a Mix knob, the wet and dry words its level code stages. 0 on success. */
+   * whose level words a knob sets, the wet and dry words its level code stages. 0
+   * on success. */
   int (*levels)(const int32_t *values, int32_t level[3]);
   /* An instance set up from one knob vector, NULL on failure. */
   void *(*open)(const int32_t *values);
@@ -74,7 +75,7 @@ typedef struct {
  *       the config's setup words, in the order the firmware adapter reads them
  *
  * GM2_EFFECT_DEFINE_LFO is the same for a module with an align call and
- * GM2_EFFECT_DEFINE_MIX for one whose Mix knob sets its level words;
+ * GM2_EFFECT_DEFINE_MIX for one whose Mix or Out Level knob sets its level words;
  * GM2_EFFECT_DEFINE_LFO_MIX takes both. The two Mix variants name the pair with
  * one more function:
  *
@@ -226,8 +227,9 @@ typedef struct {
     return 0;                                                                                      \
   }
 
-/* An effect whose Mix knob sets its level words: the effect names the pair, and a
- * setup that refuses is a broken adapter, never a fall back to a full mix. */
+/* An effect whose Mix or Out Level knob sets its level words: the effect names
+ * the pair, and a setup that refuses is a broken adapter, never a fall back to a
+ * full mix. */
 #define GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                               \
   static int fixture##_levels_mix(const int32_t *values, int32_t level[3]) {                       \
     gm2_context context;                                                                           \

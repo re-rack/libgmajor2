@@ -7,11 +7,11 @@
  * (Soft), a square that is high below it (Hard) or the interpolated sine table
  * (Sine), each smoothed by a one-pole. A channel's gain is 1 - depth * level; the
  * input times that gain runs through a one-pole Hi-Cut and the block's wet word.
- * The routine reads no input-gain word.
+ * The routine reads no input-gain word and its dry term is a zero word.
  *
- * The pulse, step, slope and depth words ride ramps and the two Hi-Cut pairs a
- * one-pole job (gm2_job.h). The waveform, the lag and the smoother are written
- * straight to the words the routine reads.
+ * The pulse, step, slope and depth words ride ramps, the two Hi-Cut pairs and the
+ * block's wet word a one-pole job (gm2_job.h). The waveform, the lag and the
+ * smoother are written straight to the words the routine reads.
  */
 #ifndef GM2_LFO_GAIN_CORE_H
 #define GM2_LFO_GAIN_CORE_H
@@ -61,6 +61,7 @@ typedef struct {
   gm2_lfo_gain_core_wave wave;           /* Y:0x3B5 */
   int32_t lag;                           /* Y:0x3B6, how far the right channel's phase lags */
   int32_t smooth[2]; /* Y:0x3BA/0x3BB, the waveform smoother: pole, 1 - pole */
+  int32_t wet;       /* Y:0x3C1: the block's wet word, the level code's */
   int32_t raw[GM2_LFO_GAIN_CORE_RAWS]; /* the raw values of the knobs that arm a ramp */
   unsigned note; /* the Tempo value the step follows, 0 for Speed */
 } gm2_lfo_gain_core_config;
@@ -68,6 +69,7 @@ typedef struct {
 typedef struct {
   int32_t phase; /* X:0x2AB, the LFO's phase */
   int32_t level[GM2_CHANNELS]; /* X:0x2AE/0x2AF, the smoothed waveform levels */
+  int32_t wet; /* Y:0x3C1: the live wet word, gliding to the config's */
   int32_t hi_cut[GM2_CHANNELS]; /* X:0x2B0/0x2B1, the Hi-Cut's states */
   int32_t coef[GM2_LFO_GAIN_CORE_COEFS]; /* the live words, gliding to the config's */
   int32_t ramp_step[GM2_LFO_GAIN_CORE_RAMPS]; /* each ramp's step, armed by a knob turn */

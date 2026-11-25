@@ -24,6 +24,7 @@
 #define RES_RAW_WORDS 16u
 #define RES_SUBTYPE_INDEX 0u
 #define RES_MIX_INDEX 13u
+#define RES_OUT_LEVEL_INDEX 14u
 /* The descriptor's format word at entry +12: with bits 23 and 13 set, the edit
  * P:0x083268 calls the callback a second time, A = 0x50 and the value at
  * X:0x09860C. No Resonance Filter or Touch Res Filter knob has both bits. */
@@ -93,7 +94,7 @@
 #define RES_GATE_READ 0x090494u
 #define RES_BUDGET 400000
 #define RES_SETTLE_LIMIT 400000
-#define RES_KNOB_MAX 5u
+#define RES_KNOB_MAX 6u
 
 struct gm2_firmware {
   gm2_emu *emu;
@@ -110,8 +111,8 @@ struct gm2_firmware {
   int audio_dirty;
 };
 
-static const unsigned k_resfilter_descriptor[] = {1u, 11u, 12u, 13u};
-static const unsigned k_touchres_descriptor[] = {1u, 2u, 3u, 6u, 13u};
+static const unsigned k_resfilter_descriptor[] = {1u, 11u, 12u, 13u, RES_OUT_LEVEL_INDEX};
+static const unsigned k_touchres_descriptor[] = {1u, 2u, 3u, 6u, 13u, RES_OUT_LEVEL_INDEX};
 static const uint32_t k_touchres_pairs[RES_TICK_PAIRS] = {
     RES_UI_COEFF, RES_UI_THRESHOLD, RES_UI_CENTRE, RES_UI_SPAN, RES_UI_Q, RES_UI_SCALE,
 };
@@ -236,9 +237,10 @@ static void res_restore(gm2_firmware *self) {
   }
 }
 
-/* The rebuilds a turn needs: a Mix turn's level code, the one the Mix callback
- * P:0x09220C runs itself once the block's gate word X:(UI+3) is clear, which
- * neither activation pass writes; and the constants a Style turn needs, because
+/* The rebuilds a turn needs: a Mix or Out Level turn's level code, the one the
+ * callbacks P:0x09220C and P:0x0921A1 run themselves once the block's gate word
+ * X:(UI+3) is clear, which neither activation pass writes; and the constants a
+ * Style turn needs, because
  * neither Style callback refreshes the ones P:0x091F81 sets. The Resonance
  * Filter's Style callback P:0x0921D3 designs with the previous Style's pair, so
  * its Resonance callback P:0x0921F7 -- the constants, then the design -- is what
@@ -247,7 +249,7 @@ static void res_restore(gm2_firmware *self) {
  * constants routine alone is what it needs.
  */
 static int res_rebuild(gm2_firmware *self, unsigned knob) {
-  if (self->descriptor[knob] == RES_MIX_INDEX) {
+  if (self->descriptor[knob] == RES_MIX_INDEX || self->descriptor[knob] == RES_OUT_LEVEL_INDEX) {
     return res_call(self, RES_LEVEL_CODE, 0u, RES_LEVEL_STRUCT, RES_BUDGET);
   }
   if (self->descriptor[knob] != RES_STYLE) {

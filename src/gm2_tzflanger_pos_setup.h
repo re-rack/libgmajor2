@@ -14,6 +14,7 @@ typedef struct {
   int feedback; /* -100..100 % */
   int fb_cut; /* 0..60: 20 Hz..20 kHz, 20 steps a decade */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
+  int out_level;   /* -100..0 dB */
 } gm2_tzflanger_pos_setup_raw;
 
 int gm2_tzflanger_pos_setup_config(const gm2_context *context,

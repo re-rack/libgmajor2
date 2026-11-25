@@ -10,9 +10,10 @@
  *   P:0x093EF9  Feedback Hi-Cut: the feedback filters' words
  *   P:0x093F60  Hi-Cut: the input Hi-Cut's words
  *
- * Mix is not one of them: the level code P:0x08F763 stages the pair
+ * Mix and Out Level are not among them: the level code P:0x08F763 stages the pair
  * X:0x098D1A/X:0x098D1B that the output stage multiplies the voices' sums and the
- * frame's input sample by, at Out Level 0 dB. The Mix callback P:0x093FC0 pins the
+ * frame's input sample by, from the Out Level callback P:0x093FA1. The Mix callback
+ * P:0x093FC0 pins the
  * mix word at 0x7FFFFF on the Through-Zero Flangers and the Vibrato, whose
  * descriptor tables have no Mix knob, so those three keep the fully wet pair.
  */
@@ -49,6 +50,7 @@ typedef struct {
   int golden_ratio;  /* 0 Off, 1 On */
   int phase_reverse; /* 0 Off, 1 On */
   int mix;           /* 0..100 %: the Through-Zero Flangers and the Vibrato have none */
+  int out_level;     /* -100..0 dB */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_moddelay_design_raw;
 

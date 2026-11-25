@@ -4,7 +4,7 @@
 #include "gm2_ipitch.h"
 #include "gm2_ipitch_setup.h"
 
-#define IPITCH_KNOBS 11u
+#define IPITCH_KNOBS 12u
 
 /* Voice 2's default -15 lies outside the descriptor's -12..12, which the
  * accessor clamps to -12. */
@@ -20,10 +20,12 @@ static const gm2_knob k_knobs[IPITCH_KNOBS] = {
     {"PIT Level1", -100, 0, 0, 0},
     {"PIT Level2", -100, 0, 0, 0},
     {"PIT " GM2_MIX_GLYPHS, 0, 100, 25, 0},
+    {"PIT Outlev", -100, 0, 0, 0},
 };
 
 static void ipitch_raw(const int32_t *values, gm2_ipitch_setup_raw *raw) {
   *raw = (gm2_ipitch_setup_raw){
+      .out_level = (int)values[11],
       .voice_1 = (int)values[0],
       .voice_2 = (int)values[1],
       .pan_1 = (int)values[2],

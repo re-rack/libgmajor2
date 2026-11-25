@@ -4,7 +4,7 @@
 #include "gm2_dyndelay_setup.h"
 #include "gm2_effect.h"
 
-#define DYNDELAY_KNOBS 10u
+#define DYNDELAY_KNOBS 11u
 /* X+8 and X+9 are the ducking tick's gain words, not the setup's; the ducking words
  * X+26..29, the two tap offsets and the Mix pair follow. */
 #define DYNDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS - 2u + GM2_DYNDELAY_DUCK_WORDS + 2u + 2u)
@@ -20,10 +20,12 @@ static const gm2_knob k_knobs[DYNDELAY_KNOBS] = {
     {"DLY Damp", 0, 100, 18, 0},
     {"DLY Rel", 11, 21, 14, 0},
     {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
+    {"DLY OutLev", -100, 0, 0, 0},
 };
 
 static void dyndelay_raw(const int32_t *values, gm2_dyndelay_setup_raw *raw) {
   *raw = (gm2_dyndelay_setup_raw){
+      .out_level = (int)values[10],
       .delay = (int)values[0],
       .tempo = (int)values[1],
       .feedback = (int)values[2],

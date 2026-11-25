@@ -4,16 +4,18 @@
 #include "gm2_trichorus.h"
 #include "gm2_trichorus_setup.h"
 
-#define TRICHORUS_KNOBS 6u
+#define TRICHORUS_KNOBS 7u
 
 static const gm2_knob k_knobs[TRICHORUS_KNOBS] = {
-    {"CHO Speed", 0, 208, 31, 0}, {"CHO Depth", 0, 100, 50, 0},
-    {"CHO Tempo", 0, 16, 0, 0},   {"CHO Width", 1, 100, 50, 0},
-    {"CHO PhaRev", 0, 1, 1, 0},   {"CHO " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"CHO Speed", 0, 208, 31, 0},  {"CHO Depth", 0, 100, 50, 0},
+    {"CHO Tempo", 0, 16, 0, 0},    {"CHO Width", 1, 100, 50, 0},
+    {"CHO PhaRev", 0, 1, 1, 0},    {"CHO " GM2_MIX_GLYPHS, 0, 100, 50, 0},
+    {"CHO OutLev", -100, 0, 0, 0},
 };
 
 static void trichorus_raw(const int32_t *values, gm2_trichorus_setup_raw *raw) {
   *raw = (gm2_trichorus_setup_raw){
+      .out_level = (int)values[6],
       .speed = (int)values[0],
       .depth = (int)values[1],
       .tempo = (int)values[2],

@@ -17,6 +17,8 @@
  *               words to_q23(M * 0.005) and
  *               to_q23((100 - floor(M / 2)) * 0.01), M the Mix value; the first
  *               is negated on Phase Reverse, in the left output alone
+ *   P:0x08F763  wet     = the Out Level word times the full mix's sine half, the
+ *               block's wet word
  *   P:0x09349C  lfo_speed = to_q23(hz / rate * 1024), the phase step of the Speed
  *               the Select value picks, zeroed when that Speed value is 37 or less
  */
@@ -174,6 +176,11 @@ void gm2_univibe_design(const gm2_rate_words *rate, gm2_univibe_design_subtype s
   config->coef[GM2_UNIVIBE_CORE_MIX] = dry;
   config->coef[GM2_UNIVIBE_CORE_MIX + 1u] = wet;
   config->coef[GM2_UNIVIBE_CORE_MIX + 2u] = dry;
+
+  /* P:0x08F763: the block's wet word, from the Out Level knob alone; its dry term is
+   * a zero word. */
+  int32_t block_dry;
+  gm2_mix_words(raw->out_level, 100, &config->wet, &block_dry);
 
   /* P:0x09349C: the two speeds' steps and the one Select picks. */
   const int32_t step_1 = univibe_speed_step(rate, speed_1, tempo_1, raw->beat_ms);

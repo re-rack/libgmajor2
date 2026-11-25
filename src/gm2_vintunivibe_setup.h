@@ -19,6 +19,7 @@ typedef struct {
   int select;        /* 0 Speed 1 with Tempo 1, 1 Speed 2 with Tempo 2 */
   int phase_reverse; /* 0 Off, 1 On */
   int mix;           /* 0..100 % */
+  int out_level; /* -100..0 dB */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_vintunivibe_setup_raw;
 

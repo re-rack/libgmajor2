@@ -4,7 +4,7 @@
 #include "gm2_dualdelay_setup.h"
 #include "gm2_effect.h"
 
-#define DUALDELAY_KNOBS 11u
+#define DUALDELAY_KNOBS 12u
 /* The twenty coefficient words, the two tap offsets, then the Mix pair. */
 #define DUALDELAY_SETUP_WORDS (GM2_DELAY_CORE_COEFS + 2u + 2u)
 
@@ -20,10 +20,12 @@ static const gm2_knob k_knobs[DUALDELAY_KNOBS] = {
     {"DLY Pan1", -50, 50, -30, 0},
     {"DLY Pan2", -50, 50, 35, 0},
     {"DLY " GM2_MIX_GLYPHS, 0, 100, 15, 0},
+    {"DLY OutLev", -100, 0, 0, 0},
 };
 
 static void dualdelay_raw(const int32_t *values, gm2_dualdelay_setup_raw *raw) {
   *raw = (gm2_dualdelay_setup_raw){
+      .out_level = (int)values[11],
       .delay_1 = (int)values[0],
       .delay_2 = (int)values[1],
       .tempo_1 = (int)values[2],

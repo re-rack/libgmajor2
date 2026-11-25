@@ -4,21 +4,28 @@
 #include "gm2_whammy.h"
 #include "gm2_whammy_setup.h"
 
-#define WHAMMY_KNOBS 3u
+#define WHAMMY_KNOBS 4u
 
 static const gm2_knob k_knobs[WHAMMY_KNOBS] = {
     {"PIT Pitch", 0, 100, 0, 0},
     {"PIT Dir", 0, 1, 1, 0},
     {"PIT Range", 1, 2, 2, 0},
+    {"PIT Outlev", -100, 0, 0, 0},
 };
 
 static void whammy_raw(const int32_t *values, gm2_whammy_setup_raw *raw) {
   *raw = (gm2_whammy_setup_raw){
+      .out_level = (int)values[3],
       .pitch = (int)values[0],
       .direction = (int)values[1],
       .range = (int)values[2],
   };
 }
 
-GM2_EFFECT_DEFINE(whammy, whammy, k_knobs, whammy_raw, gm2_effect_pitch_words,
-                  GM2_EFFECT_PITCH_WORDS)
+static void whammy_mix(const gm2_whammy_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
+}
+
+GM2_EFFECT_DEFINE_MIX(whammy, whammy, k_knobs, whammy_raw, gm2_effect_pitch_words, whammy_mix,
+                      GM2_EFFECT_PITCH_WORDS)

@@ -15,12 +15,13 @@ typedef struct {
   int speed;      /* 0..208: 0.050..19.95 Hz, 80 steps a decade */
   int depth;      /* 0..100 %: the Tremolo's Depth, the Panner's Width */
   int tempo;      /* 0..16: Ignore, then the note values 1 .. 1/32 triplet */
+  int out_level;  /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_lfo_gain_design_raw;
 
-/* The step and depth words, the smoother, the note and the three knobs' raw
- * values. The waveform, the lag, the pulse words, the Hi-Cut pairs and the Pulse
- * Width's raw value are the effect's to set. */
+/* The step and depth words, the smoother, the block's wet word, the note and the
+ * three knobs' raw values. The waveform, the lag, the pulse words, the Hi-Cut pairs
+ * and the Pulse Width's raw value are the effect's to set. */
 void gm2_lfo_gain_design(const gm2_rate_words *rate, const gm2_lfo_gain_design_raw *raw,
                          gm2_lfo_gain_core_config *config);
 

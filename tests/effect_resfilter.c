@@ -4,18 +4,18 @@
 #include "gm2_resfilter.h"
 #include "gm2_resfilter_setup.h"
 
-#define RESFILTER_KNOBS 4u
+#define RESFILTER_KNOBS 5u
 #define RESFILTER_SETUP_WORDS (GM2_RES_CORE_COEFS + 2u)
 
 static const gm2_knob k_knobs[RESFILTER_KNOBS] = {
-    {"FIL Style", 0, 1, 1, 0},
-    {"FIL HiCut", 18, 57, 37, 0},
-    {"FIL Res", 0, 100, 100, 0},
-    {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL Style", 0, 1, 1, 0},     {"FIL HiCut", 18, 57, 37, 0},
+    {"FIL Res", 0, 100, 100, 0},   {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL OutLev", -100, 0, 0, 0},
 };
 
 static void resfilter_raw(const int32_t *values, gm2_resfilter_setup_raw *raw) {
   *raw = (gm2_resfilter_setup_raw){
+      .out_level = (int)values[4],
       .style = (int)values[0],
       .hi_cut = (int)values[1],
       .resonance = (int)values[2],

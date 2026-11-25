@@ -4,7 +4,8 @@
  * Per stereo frame the routine sums both gained inputs to mono, clips the sum
  * softly and runs it through four all-pass stages whose coefficients step towards
  * targets the lamp sets. Each output is that word mixed with the channel's own
- * gained input, through a second soft clip and the block's wet word.
+ * gained input, through a second soft clip and the block's wet word; the block's
+ * dry term is a zero word.
  *
  * On the first frame of each chunk the LFO's speed slews towards its target, on
  * the Attack words while it has to rise and on the Release words otherwise, and
@@ -13,8 +14,8 @@
  * brightness, faster up than down; and the lamp's word places the four stages'
  * targets on their curves.
  *
- * The depth rides a ramp and the other twenty words one-pole jobs
- * (gm2_job.h). The LFO speed's target and the waveshaper's two words are written
+ * The depth rides a ramp, the other twenty words and the block's wet word one-pole
+ * jobs (gm2_job.h). The LFO speed's target and the waveshaper's two words are written
  * straight to the words the routine reads.
  */
 #ifndef GM2_UNIVIBE_CORE_H
@@ -51,6 +52,7 @@ typedef struct {
   int32_t coef[GM2_UNIVIBE_CORE_COEFS]; /* the words the updaters stage */
   int32_t lfo_speed;                    /* Y:0x046C: the LFO speed's target */
   int32_t shaper[2]; /* Y:0x0474/0x0475: the waveshaper's linear and square weights */
+  int32_t wet; /* Y:0x0497: the block's wet word, the level code's */
   int32_t raw[GM2_UNIVIBE_CORE_RAMPS]; /* the raw value of the knob whose turns arm the ramp */
   unsigned note; /* the Tempo value the speed follows, 0 for Speed */
 } gm2_univibe_core_config;
@@ -65,6 +67,7 @@ typedef struct {
                                             coefficient */
   int32_t
       pole_step[GM2_UNIVIBE_CORE_STAGES]; /* X:0x02E9, 0x02EB, 0x02ED, 0x02EF: its step per frame */
+  int32_t wet; /* Y:0x0497: the live wet word, gliding to the config's */
   int32_t coef[GM2_UNIVIBE_CORE_COEFS]; /* the live words, gliding to the config's */
   int32_t ramp_step[GM2_UNIVIBE_CORE_RAMPS]; /* the ramp's step, armed by a turn of its knob */
   int32_t raw[GM2_UNIVIBE_CORE_RAMPS]; /* the config's raw value at the last job run */

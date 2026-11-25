@@ -16,6 +16,7 @@ typedef struct {
   int golden_ratio; /* 0 Off, 1 On */
   int phase_reverse; /* 0 Off, 1 On */
   int mix; /* 0..100 % */
+  int out_level; /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_achorus_setup_raw;
 

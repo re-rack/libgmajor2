@@ -28,6 +28,6 @@ int gm2_resfilter_setup_config(const gm2_context *context, const gm2_resfilter_s
 
   gm2_res_design_coefs(&rate_words, style, gm2_swf_hz20(hi_cut),
                        gm2_res_design_resonance(style, raw->resonance), config->coef);
-  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+  gm2_mix_words(raw->out_level, raw->mix, &config->wet, &config->dry);
   return 0;
 }

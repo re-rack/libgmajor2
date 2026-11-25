@@ -13,6 +13,7 @@ typedef struct {
   int tempo; /* 0..16: Ignore, then the note values 1 .. 1/32 triplet */
   int hi_cut; /* 0..60: 20 Hz..20 kHz, 20 steps a decade */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
+  int out_level;   /* -100..0 dB */
 } gm2_vibrato_setup_raw;
 
 int gm2_vibrato_setup_config(const gm2_context *context, const gm2_vibrato_setup_raw *raw,

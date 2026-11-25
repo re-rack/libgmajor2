@@ -4,7 +4,7 @@
 #include "gm2_pitch.h"
 #include "gm2_pitch_setup.h"
 
-#define PITCH_KNOBS 11u
+#define PITCH_KNOBS 12u
 
 /* Delay 1 and Delay 2 reach 350 ms, more than a 4,096-frame segment holds. */
 static const gm2_knob k_knobs[PITCH_KNOBS] = {
@@ -19,10 +19,12 @@ static const gm2_knob k_knobs[PITCH_KNOBS] = {
     {"PIT Level1", -100, 0, 0, 0},
     {"PIT Level2", -100, 0, 0, 0},
     {"PIT " GM2_MIX_GLYPHS, 0, 100, 25, 0},
+    {"PIT Outlev", -100, 0, 0, 0},
 };
 
 static void pitch_raw(const int32_t *values, gm2_pitch_setup_raw *raw) {
   *raw = (gm2_pitch_setup_raw){
+      .out_level = (int)values[11],
       .voice_1 = (int)values[0],
       .voice_2 = (int)values[1],
       .pan_1 = (int)values[2],

@@ -19,6 +19,7 @@ typedef struct {
   int width;      /* 0..100 % */
   int tempo;      /* 0..16: Ignore, then the note values 1 .. 1/32 triplet */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
+  int out_level; /* -100..0 dB */
 } gm2_panner_setup_raw;
 
 int gm2_panner_setup_config(const gm2_context *context, const gm2_panner_setup_raw *raw,

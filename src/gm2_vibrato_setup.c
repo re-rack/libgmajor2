@@ -19,6 +19,7 @@ int gm2_vibrato_setup_config(const gm2_context *context, const gm2_vibrato_setup
       .tempo = raw->tempo,
       .hi_cut = raw->hi_cut,
       .beat_ms = raw->beat_ms,
+      .out_level = raw->out_level,
   };
   gm2_moddelay_design(&rate_words, GM2_MODDELAY_DESIGN_VIBRATO, &design, config);
   return 0;

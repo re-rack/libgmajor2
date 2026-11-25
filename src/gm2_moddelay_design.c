@@ -303,5 +303,5 @@ void gm2_moddelay_design(const gm2_rate_words *rate, gm2_moddelay_design_subtype
   config->note = (unsigned)tempo;
   /* P:0x093FC0 pins the mix word at full on the three subtypes with no Mix knob. */
   const int no_mix = tz_flanger || subtype == GM2_MODDELAY_DESIGN_VIBRATO;
-  gm2_mix_words(no_mix ? 100 : raw->mix, &config->wet, &config->dry);
+  gm2_mix_words(raw->out_level, no_mix ? 100 : raw->mix, &config->wet, &config->dry);
 }

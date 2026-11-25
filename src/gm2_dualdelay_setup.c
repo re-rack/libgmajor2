@@ -24,7 +24,7 @@ int gm2_dualdelay_setup_config(const gm2_context *context, const gm2_dualdelay_s
   gm2_rate_words rate_words;
   gm2_rate_words_init(&rate_words, rate);
 
-  gm2_mix_words(raw->mix, &config->wet, &config->dry);
+  gm2_mix_words(raw->out_level, raw->mix, &config->wet, &config->dry);
 
   gm2_delay_design_matrix(GM2_DELAY_DESIGN_DUALDELAY, raw->feedback_1, raw->feedback_2,
                           &config->coef[GM2_DELAY_CORE_INPUT]);

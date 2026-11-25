@@ -22,11 +22,10 @@
 #define PITCH_PARAMS 0x099B56u /* X: the block's sixteen raw words */
 #define PITCH_RAW_WORDS 16u
 #define PITCH_FIRST_PARAM 1u
-#define PITCH_LAST_PARAM 12u
+#define PITCH_LAST_PARAM 13u
 #define PITCH_OUT_LEVEL_INDEX 13u
 #define PITCH_DETECT_INDEX 14u
 #define PITCH_BYPASS_INDEX 15u
-#define PITCH_OUT_LEVEL_RAW 0
 #define PITCH_ALGORITHM 2u
 #define PITCH_TABLE_POINTER 0x098853u /* X: one descriptor table per subtype */
 #define PITCH_DESCRIPTOR_DEFAULT 13u  /* the subtype's factory bank word */
@@ -85,10 +84,11 @@ static const pitch_job k_jobs[PITCH_JOBS] = {
 };
 
 /* The descriptor entry behind each knob, in the knob table's order. */
-static const unsigned k_detune_entry[] = {1u, 2u, 5u, 6u, 12u};
-static const unsigned k_whammy_entry[] = {9u, 10u, 11u};
-static const unsigned k_octaver_entry[] = {10u, 11u, 12u};
-static const unsigned k_pitch_entry[] = {1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 12u};
+static const unsigned k_detune_entry[] = {1u, 2u, 5u, 6u, 12u, PITCH_OUT_LEVEL_INDEX};
+static const unsigned k_whammy_entry[] = {9u, 10u, 11u, PITCH_OUT_LEVEL_INDEX};
+static const unsigned k_octaver_entry[] = {10u, 11u, 12u, PITCH_OUT_LEVEL_INDEX};
+static const unsigned k_pitch_entry[] = {1u, 2u, 3u, 4u,  5u,  6u,
+                                         7u, 8u, 9u, 10u, 12u, PITCH_OUT_LEVEL_INDEX};
 
 typedef struct {
   unsigned subtype;
@@ -163,8 +163,8 @@ static int pitch_descriptor(gm2_firmware *self, uint32_t table) {
   return 0;
 }
 
-/* The device's factory bank, Out Level 0 dB, Detect off and no bypass, then the
- * activation through the descriptor's own words. The Whammy's Mix entry carries
+/* The device's factory bank, Detect off and no bypass, then the activation
+ * through the descriptor's own words. The Whammy's Mix entry carries
  * no name and its callback pins the word at full, so the bank word serves both. */
 static int pitch_raw(gm2_firmware *self, uint32_t table) {
   uint32_t raw[PITCH_RAW_WORDS] = {0};
@@ -172,7 +172,6 @@ static int pitch_raw(gm2_firmware *self, uint32_t table) {
   for (unsigned param = PITCH_FIRST_PARAM; param <= PITCH_LAST_PARAM; param++) {
     raw[param] = gm2_read(self->emu, GM2_P, table + 15u * param + PITCH_DESCRIPTOR_DEFAULT);
   }
-  raw[PITCH_OUT_LEVEL_INDEX] = PITCH_OUT_LEVEL_RAW;
   raw[PITCH_DETECT_INDEX] = 0u;
   raw[PITCH_BYPASS_INDEX] = 0u;
   gm2_write_run(self->emu, GM2_X, PITCH_PARAMS, raw, PITCH_RAW_WORDS);

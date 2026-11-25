@@ -3,7 +3,7 @@
 #include "gm2_autowah_setup.h"
 #include "gm2_effect.h"
 
-#define AUTOWAH_KNOBS 5u
+#define AUTOWAH_KNOBS 6u
 /* shift, shape, the staged step and the Mix pair; the Tempo value only picks the
  * staged step and has no word of its own. */
 #define AUTOWAH_SETUP_WORDS 5u
@@ -14,10 +14,12 @@ static const gm2_knob k_knobs[AUTOWAH_KNOBS] = {
     {"FIL Shape", 0, 1, 1, 0},
     {"FIL Range", 0, 1, 0, 0},
     {"FIL " GM2_MIX_GLYPHS, 0, 100, 100, 0},
+    {"FIL OutLev", -100, 0, 0, 0},
 };
 
 static void autowah_raw(const int32_t *values, gm2_autowah_setup_raw *raw) {
   *raw = (gm2_autowah_setup_raw){
+      .out_level = (int)values[5],
       .speed = (int)values[0],
       .tempo = (int)values[1],
       .shape = (int)values[2],

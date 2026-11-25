@@ -42,6 +42,7 @@ typedef struct {
   int reverb_level; /* -100..0 dB */
   int diffuse;      /* -25..25 */
   int mix;          /* 0..100 % wet */
+  int out_level; /* -100..0 dB */
 } gm2_reverb_setup_raw;
 
 int gm2_reverb_setup_config(const gm2_context *context, const gm2_reverb_setup_raw *raw,
