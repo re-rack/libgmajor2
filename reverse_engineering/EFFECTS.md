@@ -256,14 +256,16 @@ below its input gain:
 | Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
-| Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 
 The Gate & EQ and compressor activations set `S+4..S+7` to `0x7FFFFF`. The
 Tremolo/Panner object fixes its mix at `0x7FFFFF`; the two filter objects set it
 from their Mix parameter (index 13) times 0.01, as do the phasers through the
 callback `P:0x092FEA` → `P:0x092F41`, and the Pitch object from its Mix
 parameter (index 12), whose callback `P:0x091287` restages the pair through
-`P:0x08F763`. The Whammy has no Mix of its own: its descriptors leave the word
+`P:0x08F763`. The Reverb object takes its Mix parameter (index 12) in the
+activation itself and in the callback `P:0x095BE8`, both of which recompute
+`X:(S+7)` and restage the trio. The Whammy has no Mix of its own: its descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
 word at `0x7FFFFF` for that subtype, so `gm2_pitch_design()` passes 100 %. Their
 first activation leaves the out level at 0, and the next one sets it from Out
@@ -884,13 +886,13 @@ initialized at boot (`P:0x0951AD`) from `X:0x0992EC..0x0992EF` (`X:0x09A2E4`,
 | Circular buffer | `Y:0x0A0000..0x0A7FFF` (32,768 words, `m7 = m5 = 0x7FFF`); write pointer `X:0x37D` starts at `0x0A7FFF` and increments by `+1` each frame modulo `0x8000` |
 | State (`X:0x37D` +) | `+0` write pointer; `+1..42` circular buffer tap offset deltas; `+43` pre-delay feedback sample; `+44..45` tank output sums A and B; `+46..47` left and right early biquad outputs; `+48` input LP state; `+49..62` seven tank damping filter state pairs; `+63..76` tank feedback matrix signs; `+77..79` and `+88..90` left/right early comb states; `+80..87` and `+91..98` left/right early biquad states; `+99..105` seven tank primary tap samples; `+106..113` and `+116..123` left/right early tap weights; `+114..115` and `+124..125` left/right early biquad `a0` words |
 | Staged and live words | 80 words staged at `X:0x098F64..0x098FB3` (`S+0..79`), published to `Y:0x589..0x5D9` (`Y+14..62` and `Y+64..94`, with `Y+63` unused zero) by six smoothing jobs `X:0x098FDC..0x098FF3` (`P:0x0001FD` on `S+0..48`, `S+49..51`, `S+52..54` and `S+75..79`; `P:0x00026F` on `S+55..64` and `S+65..74`, all snap 1, step `0x008371`) |
-| Input, wet, dry | `Y:0x5DA..0x5DC`, staged at `X:0x099046..0x099048` by `P:0x08F763` from `UI+63` (`X:0x099033`); initial activation (`UI+1 = 1`) zeroes `UI+69` so `P:0x095BE1` stages the 0 dB `OutLev` word `0x7FFFFE` |
+| Input, wet, dry | `Y:0x5DA..0x5DC`, staged at `X:0x099046..0x099048` by `P:0x08F763` from `UI+63` (`X:0x099033`); the Mix parameter (index 12, callback `P:0x095BE8`) sets `X:(S+7)`, the equal-power mix word; initial activation (`UI+1 = 1`) zeroes `UI+69` so `P:0x095BE1` stages the 0 dB `OutLev` word `0x7FFFFE` |
 | UI object | `X:0x098FF4`; dispatcher `P:0x094FC2` (message 13 is a no-op), activation `P:0x095099`, init `P:0x0951AD`, rate update `P:0x095186`, descriptor record `P:0x086465`, table `P:0x086375` |
 
 ### Parameters and factory subtype banks
 
-Each factory bank is 14 words, the first eleven the parameters below; the other
-three are not knobs.
+Each factory bank is 14 words: the eleven parameters below, then Mix, Out Level
+and one word no page shows.
 
 | Index | Parameter | Range | UI strings / unit | Subtype 0 Spring (`X:0x09A2E4`) | Subtype 1 Hall (`X:0x09A2F2`) | Subtype 2 Room (`X:0x09A300`) | Subtype 3 Plate (`X:0x09A30E`) |
 |---|---|---|---|---|---|---|---|
@@ -905,6 +907,11 @@ three are not knobs.
 | 9 | RoomLv | `-100..0` | dB | `0` | `0` | `0` | `0` |
 | 10 | RevLev | `-100..0` | dB | `-3` | `-6` | `-6` | `-6` |
 | 11 | Diffus | `-25..25` | `-25..25` | `10` | `0` | `0` | `10` |
+| 12 | Mix | `0..100` | % (descriptor default `100`) | `20` | `25` | `25` | `16` |
+| 13 | OutLev | `-100..0` | dB | `0` | `0` | `0` | `0` |
+
+The library runs every Reverb at Out Level 0 dB and lets its Mix knob set the
+pair, so each fixture's Mix default is its bank's word 11.
 
 ### Kernel and setup
 
@@ -929,8 +936,10 @@ Every frame (`P:0x0012D2..0x0013DE`):
   0x8000`.
 - Mixes `wet_R = limit24(Y[90]*X[47] + Y[92]*X[45])` and
   `wet_L = limit24(Y[91]*X[46] + Y[93]*X[44])`, stores the pre-delay feedback
-  `X[43] = limit24(Y[94] * Y:(n3 + X[42]))`, and scales each wet output by
-  `2 * Y:0x5DB` (`mpy + asl + macr`).
+  `X[43] = limit24(Y[94] * Y:(n3 + X[42]))`, then mixes each channel out:
+  `mpy Y:0x5DB,sum` into A, `asl a`, `macr Y:0x5DC,input[n]`, so the wet word
+  scales the channel sum and the dry word the frame's input sample, the one
+  `MACR` rounding the pair together.
 
 Updaters (`gm2_reverb_setup.c`):
 
@@ -965,8 +974,9 @@ Updaters (`gm2_reverb_setup.c`):
   `X:0x0991C3[9*HiCol + 72*Shape]` and permutes `{b0, b2, b1, a2, a1}` into
   `S[55..74]`.
 
-Only the 80 staged words glide, one snap-and-step per chunk run: the six jobs
-walk `Y+14..62` and `Y+64..94` toward `S+0..79`. The tap offsets, tank lengths,
+The 80 staged words glide, one snap-and-step per chunk run: the six jobs walk
+`Y+14..62` and `Y+64..94` toward `S+0..79`, and the level record's own job walks
+`Y:0x5DA..0x5DC` toward `X:0x099046..0x099048`. The tap offsets, tank lengths,
 matrix signs and early tap weights go straight into the state, so a Size, Shape
 or PreDly turn moves the reads on the next frame while the filter and matrix
 words follow over several chunks.
@@ -1218,7 +1228,7 @@ filters as 24-bit words and its four early-reflection biquad outputs as 48-bit
 values with low words in `X[114..115, 124..125]`. Parallel moves on `mac` at
 `P:0x0012E9`, `P:0x0012EC` and `P:0x001300` store the accumulator's previous
 value before the MAC updates it, and the wet/dry stage doubles the wet product
-with `ASL` before `MACR`. Its longest chain is the early signal's eleven doubled
+with `ASL` and lets the `MACR` that adds the dry product round the pair. Its longest chain is the early signal's eleven doubled
 products of two 24-bit words (eight taps and three comb words); a tank line sums
 four plus a word, each matrix sum seven, taken times four, and a biquad five,
 doubled with the carried low word. So no intermediate reaches 2^52 and each
@@ -1352,7 +1362,7 @@ Which words a knob turn moves, briefly:
 | Univibes | Depth on `P:0x0001B9`, the other seventeen words on `P:0x0001FD` |
 | Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps |
 | Delays | the twenty matrix and filter words glide, and a moved tap offset starts a crossfade |
-| Reverb | eighty words glide in six jobs; tap offsets, tank signs and early tap weights land at once |
+| Reverb | eighty words glide in six jobs; tap offsets, tank signs and early tap weights land at once; a Mix turn restages the level pair, which glides on the level record with them |
 
 Each LFO effect also has `gm2_<effect>_align(state, config, beats)`, which sets
 the LFO phase from a song position in quarter notes; the firmware has no such

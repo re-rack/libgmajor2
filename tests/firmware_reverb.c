@@ -271,8 +271,9 @@ static int reverb_settle(gm2_firmware *self) {
 }
 
 /* A fresh block running subtype `type`: the factory bank of that subtype at the
- * raw slots with Mix at 100 % and Out Level 0 dB, the activation, the Out Level
- * callback, the settled rest state and the harness's audio wiring. */
+ * raw slots, with Mix at 100 % and Out Level 0 dB until the bank's own words
+ * replace them, the activation, the Out Level callback, the settled rest state and
+ * the harness's audio wiring. */
 static gm2_firmware *reverb_open(unsigned type, const gm2_effect *effect) {
   gm2_firmware *self = calloc(1, sizeof *self);
   if (self == NULL) {

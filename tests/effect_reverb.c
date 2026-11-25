@@ -1,7 +1,7 @@
 /* The Reverb's four fixtures. Spring, Hall, Room and Plate (Reverb subtypes 0..3)
  * are one algorithm at four factory settings, the banks P:0x0951AD stages from
  * X:0x09A2E4, X:0x09A2F2, X:0x09A300 and X:0x09A30E: each fixture's knob
- * defaults are one bank. */
+ * defaults are one bank, Mix included. */
 #include "gm2.h"
 #include "gm2_effect.h"
 #include "gm2_reverb.h"
@@ -10,20 +10,21 @@
 #define REVERB_SETUP_WORDS                                                                         \
   (GM2_REVERB_COEFS + GM2_REVERB_OFFSETS + GM2_REVERB_TANK_SIGNS + 2u * GM2_REVERB_EARLY_TAPS)
 
-#define REVERB_KNOBS(decay, predelay, shape, size, hicol, hifact, locol, lofact, revlev, diffuse)  \
+#define REVERB_KNOBS(decay, predelay, shape, size, hicol, hifact, locol, lofact, revlev, diffuse,  \
+                     mix)                                                                          \
   {                                                                                                \
       {"REV Decay", 1, 200, decay, 0},     {"REV PreDly", 0, 100, predelay, GM2_EFFECT_HOLD},      \
       {"REV Shape", 0, 2, shape, 0},       {"REV Size", 0, 7, size, 0},                            \
       {"REV HiCol", 0, 6, hicol, 0},       {"REV HiFact", -25, 25, hifact, 0},                     \
       {"REV LoCol", 0, 6, locol, 0},       {"REV LoFact", -25, 25, lofact, 0},                     \
       {"REV RoomLv", -100, 0, 0, 0},       {"REV RevLev", -100, 0, revlev, 0},                     \
-      {"REV Diffus", -25, 25, diffuse, 0},                                                         \
+      {"REV Diffus", -25, 25, diffuse, 0}, {"REV " GM2_MIX_GLYPHS, 0, 100, mix, 0},                \
   }
 
-static const gm2_knob k_spring_knobs[] = REVERB_KNOBS(20, 0, 0, 3, 4, 6, 3, 0, -3, 10);
-static const gm2_knob k_hall_knobs[] = REVERB_KNOBS(25, 50, 0, 4, 3, 0, 4, 9, -6, 0);
-static const gm2_knob k_room_knobs[] = REVERB_KNOBS(12, 40, 0, 3, 2, 0, 4, 9, -6, 0);
-static const gm2_knob k_plate_knobs[] = REVERB_KNOBS(15, 5, 1, 3, 1, 5, 5, 6, -6, 10);
+static const gm2_knob k_spring_knobs[] = REVERB_KNOBS(20, 0, 0, 3, 4, 6, 3, 0, -3, 10, 20);
+static const gm2_knob k_hall_knobs[] = REVERB_KNOBS(25, 50, 0, 4, 3, 0, 4, 9, -6, 0, 25);
+static const gm2_knob k_room_knobs[] = REVERB_KNOBS(12, 40, 0, 3, 2, 0, 4, 9, -6, 0, 25);
+static const gm2_knob k_plate_knobs[] = REVERB_KNOBS(15, 5, 1, 3, 1, 5, 5, 6, -6, 10, 16);
 
 static void reverb_raw(const int32_t *values, gm2_reverb_setup_raw *raw) {
   *raw = (gm2_reverb_setup_raw){
@@ -38,7 +39,13 @@ static void reverb_raw(const int32_t *values, gm2_reverb_setup_raw *raw) {
       .room_level = (int)values[8],
       .reverb_level = (int)values[9],
       .diffuse = (int)values[10],
+      .mix = (int)values[11],
   };
+}
+
+static void reverb_mix(const gm2_reverb_config *config, int32_t *wet, int32_t *dry) {
+  *wet = config->wet;
+  *dry = config->dry;
 }
 
 /* The firmware adapter's order: the eighty staged words, the forty-two offset
@@ -61,8 +68,11 @@ static void reverb_words(const gm2_reverb_config *config, int32_t *words) {
   }
 }
 
-GM2_EFFECT_DEFINE(reverb_spring, reverb, k_spring_knobs, reverb_raw, reverb_words,
-                  REVERB_SETUP_WORDS)
-GM2_EFFECT_DEFINE(reverb_hall, reverb, k_hall_knobs, reverb_raw, reverb_words, REVERB_SETUP_WORDS)
-GM2_EFFECT_DEFINE(reverb_room, reverb, k_room_knobs, reverb_raw, reverb_words, REVERB_SETUP_WORDS)
-GM2_EFFECT_DEFINE(reverb_plate, reverb, k_plate_knobs, reverb_raw, reverb_words, REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_spring, reverb, k_spring_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_hall, reverb, k_hall_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_room, reverb, k_room_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_plate, reverb, k_plate_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)

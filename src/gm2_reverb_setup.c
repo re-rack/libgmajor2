@@ -38,10 +38,15 @@
  *               running the same pair, from the Hi Color and Shape descriptors through
  *               P:0x08F233 and staged as {b0, b2, b1, a2, a1}
  *   P:0x095710  the tank's signs: the fourteen tank feedback matrix signs
+ *
+ * Mix is not one of them: the level code P:0x08F763 stages the input, wet and
+ * dry words at X:0x099046..0x099048 from the level struct at UI+63, at Out Level
+ * 0 dB.
  */
 #include "gm2_reverb_setup.h"
 
 #include "gm2_dsp_math.h"
+#include "gm2_mix.h"
 #include "gm2_rate.h"
 #include "gm2_swf.h"
 #include "gm2_tables.h"
@@ -458,5 +463,6 @@ int gm2_reverb_setup_config(const gm2_context *context, const gm2_reverb_setup_r
   reverb_early_weights(&rate_words, shape, size, hi_color, config);
   reverb_early_biquads(&rate_words, shape, hi_color, config);
   reverb_tank_signs(config);
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
   return 0;
 }

@@ -10,7 +10,7 @@
  * tank's two sums. Each channel then taps eight early reflections in three
  * groups, each group with a comb feedback, and runs their sum through two
  * biquads. The Room and Reverb levels mix the early and the tank signal, and the
- * block's wet word follows.
+ * Mix knob's wet and dry words blend that sum with the frame's input.
  *
  * The eighty words below ride one-pole jobs (gm2_job.h). The offsets, the signs
  * and the early reflections' weights are written straight to the words the
@@ -47,6 +47,8 @@ enum {
 
 typedef struct {
   int32_t coef[GM2_REVERB_COEFS]; /* the words the updaters stage */
+  int32_t wet;                    /* X:0x099047: the Mix knob's wet word */
+  int32_t dry;                    /* X:0x099048: and its dry word */
   /* X:0x037E..0x03A7: the steps the two pointers take, in the order they take
    * them, and last the pre-delay tap's distance from the write point */
   int32_t offsets[GM2_REVERB_OFFSETS];
@@ -76,6 +78,8 @@ typedef struct {
   gm2_reverb_biquad biquad[GM2_CHANNELS][GM2_REVERB_EARLY_BIQUADS];
   int32_t early_out[GM2_CHANNELS]; /* X:0x03AB/0x03AC: each channel's early signal */
   int32_t coef[GM2_REVERB_COEFS];  /* the live words, gliding to the config's */
+  int32_t wet;                     /* Y:0x05DB: the same for the Mix pair */
+  int32_t dry;                     /* Y:0x05DC */
   unsigned chunk_pos;              /* frame within the chunk */
 } gm2_reverb_state;
 
