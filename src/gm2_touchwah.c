@@ -45,7 +45,8 @@ static void touchwah_frame(gm2_touchwah_state *state, const gm2_touchwah_config 
   if (state->core.chunk_pos == 0u) {
     gm2_tick_hold(&state->peak, envelope);
   }
-  if (gm2_wah_core_process_frame(&state->core, config->shift, in, out) == 0) {
+  if (gm2_wah_core_process_frame(&state->core, config->shift, config->wet, config->dry, in, out) ==
+      0) {
     return;
   }
   if (++state->tick < config->tick_chunks) {
@@ -65,7 +66,8 @@ void gm2_touchwah_state_init(gm2_touchwah_state *state, const gm2_touchwah_confi
   state->peak = GM2_W24_MIN;
   state->follower = gm2_swf_zero;
   state->tick = 0;
-  gm2_wah_core_state_init(&state->core, touchwah_sweep(config, state->follower));
+  gm2_wah_core_state_init(&state->core, touchwah_sweep(config, state->follower), config->wet,
+                          config->dry);
 }
 
 GM2_PROCESS_DEFINE(touchwah, touchwah_frame)

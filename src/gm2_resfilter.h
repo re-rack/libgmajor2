@@ -17,6 +17,8 @@
 
 typedef struct {
   int32_t coef[GM2_RES_CORE_COEFS]; /* X:0x098928..0x09893B, the words the design staged */
+  int32_t wet;                      /* Y:0x3EF: the Mix knob's wet and dry words */
+  int32_t dry;                      /* Y:0x3F0 */
 } gm2_resfilter_config;
 
 typedef gm2_res_core_state gm2_resfilter_state;

@@ -1,5 +1,6 @@
 #include "gm2_touchwah_setup.h"
 
+#include "gm2_mix.h"
 #include "gm2_rate.h"
 #include "gm2_swf.h"
 #include "gm2_tick.h"
@@ -22,6 +23,7 @@ int gm2_touchwah_setup_config(const gm2_context *context, const gm2_touchwah_set
   config->decay = gm2_swf_to_q23(gm2_swf_exp(gm2_swf_mul(rate_words.period, k_decay_rate)));
   gm2_tick_response(raw->response, &config->follow_coeff, &config->follow_threshold);
   gm2_tick_sense(raw->sense, &config->centre, &config->span);
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
   config->tick_chunks = gm2_tick_chunks(rate);
   return 0;
 }

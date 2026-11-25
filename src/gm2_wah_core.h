@@ -3,9 +3,11 @@
  *
  * Per stereo frame the routine multiplies both input words by the block's input
  * gain and runs each channel through a double-precision state-variable filter at
- * the live frequency word, a soft clip and the block's wet word. On the first
+ * the live frequency word and a soft clip, then blends that result with the
+ * frame's input sample through the Mix knob's wet and dry words. On the first
  * frame of each chunk a cubic turns the sweep word into the frequency's target,
- * and a one-pole job (gm2_job.h) moves the live frequency towards it.
+ * and one-pole jobs (gm2_job.h) move the live frequency and the two level words
+ * towards theirs.
  *
  * The routine also follows the input's envelope and runs an LFO. Those belong to
  * the effects that read them, the Touch Wah and the Auto Wah.
@@ -22,16 +24,20 @@ typedef struct {
   int32_t sweep;                /* Y:0x40E: the word the cubic reads, which the effect sets */
   int32_t freq_target;          /* X:0x09899E: the cubic of the sweep word */
   int32_t freq;                 /* Y:0x402: the live frequency word */
-  unsigned chunk_pos;           /* frame within the chunk */
+  int32_t wet;                  /* Y:0x41A: the live level words, Y:0x41B the dry one */
+  int32_t dry;
+  unsigned chunk_pos; /* frame within the chunk */
 } gm2_wah_core_state;
 
-/* Silent filters at `sweep`, the live frequency on its cubic. */
-void gm2_wah_core_state_init(gm2_wah_core_state *state, int32_t sweep);
+/* Silent filters at `sweep`, the live frequency on its cubic and the level words on
+ * `wet` and `dry`. */
+void gm2_wah_core_state_init(gm2_wah_core_state *state, int32_t sweep, int32_t wet, int32_t dry);
 
-/* One stereo frame with the frequency shift `shift`, Y:0x40A, then the chunk's job
- * run once its last frame is done. Returns 1 when the frame ended a chunk and 0
- * otherwise, for an effect that acts between chunks. */
-int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift,
+/* One stereo frame with the frequency shift `shift`, Y:0x40A, and the Mix knob's
+ * `wet` and `dry` words, then the chunk's job run once its last frame is done.
+ * Returns 1 when the frame ended a chunk and 0 otherwise, for an effect that acts
+ * between chunks. */
+int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift, int32_t wet, int32_t dry,
                                const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]);
 
 #endif /* GM2_WAH_CORE_H */

@@ -31,15 +31,15 @@ through the library and needs no emulator.
 | `src/gm2_tremolo_setup.c`, `src/gm2_tremolo_setup.h` | Raw Speed/Depth/Tempo/Type/Pwidth/HiCut and the host's beat to Tremolo setup words |
 | `src/gm2_panner.c`, `src/gm2_panner.h` | Panner on the shared routine, with LFO alignment to a song position |
 | `src/gm2_panner_setup.c`, `src/gm2_panner_setup.h` | Raw Speed/Width/Tempo and the host's beat to Panner setup words |
-| `src/gm2_wah_core.c`, `src/gm2_wah_core.h` | Fixed-point wah routine the three wahs share: input gain, sweep cubic, state-variable filter, soft clip and the frequency job |
+| `src/gm2_wah_core.c`, `src/gm2_wah_core.h` | Fixed-point wah routine the three wahs share: input gain, sweep cubic, state-variable filter, soft clip, the wet/dry blend and the frequency job |
 | `src/gm2_wah_design.c`, `src/gm2_wah_design.h` | The wahs' shared Range shift; each effect owns its envelope or LFO and its tick |
-| `src/gm2_wahwah.c`, `src/gm2_wahwah.h`, `src/gm2_wahwah_setup.c`, `src/gm2_wahwah_setup.h` | Wah Wah: Sweep and Range |
-| `src/gm2_touchwah.c`, `src/gm2_touchwah.h`, `src/gm2_touchwah_setup.c`, `src/gm2_touchwah_setup.h` | Touch Wah: Sense, Response and Range, and its tick |
-| `src/gm2_autowah.c`, `src/gm2_autowah.h`, `src/gm2_autowah_setup.c`, `src/gm2_autowah_setup.h` | Auto Wah: Speed, Tempo, Shape and Range, its tick and LFO alignment |
-| `src/gm2_res_core.c`, `src/gm2_res_core.h` | Fixed-point resonance routine both resonance filters share: two biquads a channel, soft clip, the coefficient job |
+| `src/gm2_wahwah.c`, `src/gm2_wahwah.h`, `src/gm2_wahwah_setup.c`, `src/gm2_wahwah_setup.h` | Wah Wah: Sweep, Range and Mix |
+| `src/gm2_touchwah.c`, `src/gm2_touchwah.h`, `src/gm2_touchwah_setup.c`, `src/gm2_touchwah_setup.h` | Touch Wah: Sense, Response, Range and Mix, and its tick |
+| `src/gm2_autowah.c`, `src/gm2_autowah.h`, `src/gm2_autowah_setup.c`, `src/gm2_autowah_setup.h` | Auto Wah: Speed, Tempo, Shape, Range and Mix, its tick and LFO alignment |
+| `src/gm2_res_core.c`, `src/gm2_res_core.h` | Fixed-point resonance routine both resonance filters share: two biquads a channel, soft clip, the wet/dry blend, the coefficient job |
 | `src/gm2_res_design.c`, `src/gm2_res_design.h` | The resonance filters' coefficient design, and the Touch Res Filter's tick |
-| `src/gm2_resfilter.c`, `src/gm2_resfilter.h`, `src/gm2_resfilter_setup.c`, `src/gm2_resfilter_setup.h` | Resonance Filter: Style, Hi-Cut and Resonance |
-| `src/gm2_touchres.c`, `src/gm2_touchres.h`, `src/gm2_touchres_setup.c`, `src/gm2_touchres_setup.h` | Touch Res Filter: Style, Sense, Response and Fmax, its level detector and tick |
+| `src/gm2_resfilter.c`, `src/gm2_resfilter.h`, `src/gm2_resfilter_setup.c`, `src/gm2_resfilter_setup.h` | Resonance Filter: Style, Hi-Cut, Resonance and Mix |
+| `src/gm2_touchres.c`, `src/gm2_touchres.h`, `src/gm2_touchres_setup.c`, `src/gm2_touchres_setup.h` | Touch Res Filter: Style, Sense, Response, Fmax and Mix, its level detector and tick |
 | `src/gm2_pitch_core.c`, `src/gm2_pitch_core.h`, `src/gm2_pitch_design.c`, `src/gm2_pitch_design.h` | Fixed-point two-voice pitch-synchronous delay and AMDF pitch detector (`P:0x000D15..0x000E4D`, `P:0x0003F2..0x00089C`, `P:0x0001E4..0x0001FA`) and parameter setup (`P:0x090937`) the five Pitch effects share |
 | `src/gm2_detune.c`, `src/gm2_detune.h`, `src/gm2_detune_setup.c`, `src/gm2_detune_setup.h` | Detune: Voice L/R and Delay L/R |
 | `src/gm2_whammy.c`, `src/gm2_whammy.h`, `src/gm2_whammy_setup.c`, `src/gm2_whammy_setup.h` | Whammy: Pitch, Direction and Range |
@@ -249,8 +249,8 @@ below its input gain:
 | Gate & EQ | `X:0x0987A4` | `P:0x09038B` | UI+6 | `Y:0x394` | `0x7FFFFF` / `0x7FFFFE` / 0 |
 | Compressor | `X:0x098F45` | `P:0x094C7C` | UI+6 | `Y:0x578` | `0x7FFFFF` / `0x7FFFFE` / 0 |
 | Tremolo/Panner | `X:0x0988CE` | `P:0x09172F` | UI+36 | `Y:0x3C1` | `0x7FFFFF` / `0x7FFFFE` / 0 at Out Level 0 dB |
-| Wahs | `X:0x0989B4` | `P:0x09233B` | UI+60 | `Y:0x419` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
-| Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Wahs | `X:0x0989B4` | `P:0x09233B` | UI+60 | `Y:0x419` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
+| Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
@@ -259,16 +259,25 @@ below its input gain:
 | Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 
 The Gate & EQ and compressor activations set `S+4..S+7` to `0x7FFFFF`. The
-Tremolo/Panner object fixes its mix at `0x7FFFFF`; the two filter objects, the
-phasers through the callback `P:0x092FEA` → `P:0x092F41` and the Delay object set
-it from their Mix parameter (index 13) times 0.01, and the Pitch object from its
-Mix parameter (index 12), whose callback `P:0x091287` restages the pair through
-`P:0x08F763`. The Delay's Mix callback `P:0x094B88` runs `P:0x08F763`
-and then `P:0x094643`, so one turn restages the pair and the output matrix that
-scales by it, whichever order the Mix and the Width, Pan or Delay knobs turn in.
-The Reverb object takes its Mix parameter (index 12) in the
-activation itself and in the callback `P:0x095BE8`, both of which recompute
-`X:(S+7)` and restage the trio. The Whammy has no Mix of its own: its descriptors leave the word
+Tremolo/Panner object fixes its mix at `0x7FFFFF`. The two filter objects stage
+their mix word from Mix parameter (index 13) through `P:0x09277A` (wahs, which
+reaches `P:0x0926BF`) and `P:0x09220C` (resonance filters, which reaches
+`P:0x09217E`); the phasers through `P:0x092FEA` → `P:0x092F41`; the Delay object
+through `P:0x094B88`, which then reruns the output matrix `P:0x094643` that scales
+by the wet word, so one turn restages the pair and the matrix that scales by it,
+whichever order the Mix and the Width, Pan or Delay knobs turn in; the Pitch
+object from its Mix parameter (index 12), whose callback `P:0x091287` restages the
+pair through `P:0x08F763`; and the Reverb object from its Mix parameter (index
+12), in the activation `P:0x095099` itself and in the callback `P:0x095BE8`, both
+of which recompute `X:(S+7)` and restage the trio.
+
+Both filter callbacks store the mix word at `X:(UI+67)` (wahs) or `X:(UI+61)`
+(resonance filters) and then run the level code `P:0x08F763` on the struct at
+UI+60 or UI+54, but only while the block's word `X:(UI+3)` is clear. Nothing in
+either activation writes that word, so it keeps its power-on value and the
+recorded firmware keeps the activation's words: the recorders call the level code
+themselves, on the struct and the value the callback hands it, which is what the
+device does once the word is clear. The Whammy has no Mix of its own: its descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
 word at `0x7FFFFF` for that subtype, so `gm2_pitch_design()` passes 100 %. Their
 first activation leaves the out level at 0, and the next one sets it from Out
@@ -586,7 +595,8 @@ must keep the tables use the device's stack, `GM2_DEVICE_STACK`.
 | 3 Resonance Filter | 1 Style (0 2nd, 1 4th order), 11 HiCut (18..57), 12 Res (0..100 %) |
 | 4 Touch Res Filter | 1 Style, 2 Sense (0..10), 3 Response (0..2), 6 FrqMax (34..54) |
 
-Indices 13 and 14 are Mix and Out Level for all five, held at 100 % and 0 dB. The
+Indices 13 and 14 are Mix (0..100 %) and Out Level (-100..0 dB) for all five; the
+ports expose Mix and hold Out Level at 0 dB. The
 Touch Res Filter's Style and FrqMax entries have the do-nothing callback
 `P:0x0834CD`: its activation and tick read them. Every other index on these
 pages is a Dummy entry. The activation of every wah still writes the sweep word
@@ -686,7 +696,7 @@ object; they differ in what moves the sweep word.
 | Sweep | sweep word `Y:0x40E`; staged frequency `X:0x09899E`, which the routine writes every chunk; live frequency `Y:0x402` |
 | Setup words | `Y:0x40A` Range shift, `Y:0x414` Shape, `Y:0x415` envelope decay, staged LFO step `X:0x09899F` (live `Y:0x413`) |
 | Constants | `Y:0x403..0x406` the sweep cubic, `Y:0x40D` 0x64F41F, `Y:0x40F..0x412` the clip words, `Y:0x416` the log table (`gm2_log2_table` less 0x1F), `Y:0x417` the log offset 0x020000 |
-| Input, wet, dry | `Y:0x419..0x41B` |
+| Input, wet, dry | `Y:0x419..0x41B`; a Mix turn stages the pair through `P:0x08F763` and the level record glides it |
 | Jobs | `X:0x0989A0` moves the staged `X:0x09899E` to `Y:0x402`, `X:0x0989A6` moves the staged `X:0x09899F` to `Y:0x413`; handler `P:0x0001FD`, snap 1, step `0x008371`, one record each, plus the level record |
 | UI object | `X:0x0989B4`; activation `P:0x09233B`, dispatcher `P:0x092246` |
 
@@ -695,7 +705,9 @@ object; they differ in what moves the sweep word.
 Every frame: the input gain; an envelope on half the sum of the channel
 magnitudes, taking a rise at once and a fall through the decay pole; then per
 channel a state-variable filter at the live frequency word, the soft clip
-`P:0x0003AF` inlined, ASL #3, and the wet/dry output. On a chunk's first frame
+`P:0x0003AF` inlined, ASL #3, and the wet/dry output: the wet word
+`Y:0x41A` times the filtered sample, then the dry word `Y:0x41B` times the frame's
+input sample, one rounding over the sum (`P:0x000F96..0x000FA3`). On a chunk's first frame
 the routine also takes log2 of the envelope (plus one) less the log offset into
 the peak hold, turns the sweep word into the staged frequency through the cubic,
 and runs the LFO: the phase advances by the step with the `ifes` wrap; the sine
@@ -714,6 +726,7 @@ from the phase and smoothed by the fixed pole `0x7FB5C8`.
 | `P:0x092527` | the Range shift: 1 for High, 2 for Low |
 | `P:0x0925F3` | Response: the follower's coefficient `K = 1 - exp(-1 / (c * 13000))`, c = 3/10000, 2/10000 or 1/10000, and threshold `2^-23 (1/K + 1)` |
 | `P:0x0925A9` | Sense: with `s = (10 - Sense) / 11` and `u = min(s + 0.6, 1)`, span `1 / (u - s)` and centre `-s * span` |
+| `P:0x09277A`, `P:0x0926BF` | Mix: the mix word at `UI+67`, then the level code on the struct at `UI+60` when `X:(UI+3)` is clear |
 
 The activation runs `P:0x0924C1` with A = 0, the Speed path. The Tempo callback
 `P:0x09274B` acts only on the second call of a two-part edit, the one with
@@ -739,12 +752,14 @@ and one UI object; the Touch Res Filter redesigns its coefficients on every tick
 | State | `X/L:0x060..0x065` left, `0x066..0x06B` right: the input's last two words, and for each biquad its 48-bit output and the high word of the one before |
 | Coefficients | `Y:0x3DA..0x3ED`, five a biquad, two biquads a channel; staged at `X:0x098928..0x09893B`, published by the job `X:0x09893C` (`P:0x00026F`) |
 | Shifts and clip | `Y:0x3CF` = 3 before the biquads, then `Y:0x3D0` = 3 and the clip words `Y:0x3D1..0x3D4` (`P:0x092147`) |
-| Input, wet, dry | `Y:0x3EE..0x3F0` |
-| UI object | `X:0x098948`; activation `P:0x091BB1`, dispatcher `P:0x091ABE` |
+| Input, wet, dry | `Y:0x3EE..0x3F0`; a Mix turn stages the pair through `P:0x08F763` and the level record glides it |
+| UI object | `X:0x098948`; activation `P:0x091BB1`, dispatcher `P:0x091ABE`, Mix callback `P:0x09220C` reaching `P:0x09217E`, Out Level `P:0x092205` |
 
 Every frame: the input gain and ASR #3, per channel two biquads in the EQ
 kernel's form, the second fed by the first's output history, then the soft clip,
-ASL #3 and the wet/dry output.
+ASL #3 and the wet/dry output: the wet word `Y:0x3EF` times the clipped sample,
+then the dry word `Y:0x3F0` times the frame's input sample, one rounding over the
+sum (`P:0x000F15..0x000F21`).
 
 The design (`gm2_res_design.c`), in the firmware's software float:
 
@@ -1368,8 +1383,8 @@ Which words a knob turn moves, briefly:
 | Gate | Mode, Threshold and Damping ride `P:0x0001B9` ramps armed on the turn, a Threshold turn re-arming Damping; the four Release words glide on one `P:0x0001FD` job |
 | Compressor | Threshold, Ratio and Gain ride ramps that any of the three re-arms; Attack, Release and the detector word glide |
 | Tremolo, Panner | pulse, step, rise and fall ride ramps armed by a Speed, Tempo or Pwidth turn, depth one armed by a Depth or Width turn; the Hi-Cut words only glide and the lag is fixed |
-| Wahs | the staged frequency and LFO step glide |
-| Resonance filters | the twenty coefficient words glide as one group |
+| Wahs | the staged frequency and LFO step glide; a Mix turn restages the wet and dry pair, which glides on the level record with them |
+| Resonance filters | the twenty coefficient words glide as one group, and a Mix turn's pair glides on the level record |
 | Pitch | the ratio pair (step `0x020DC6`), the feedback pair and the pan/level quad glide; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD`; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Univibes | Depth on `P:0x0001B9`, the other seventeen words on `P:0x0001FD` |

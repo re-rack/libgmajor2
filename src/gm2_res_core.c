@@ -15,7 +15,8 @@ static const int32_t k_clip[4] = {0x0FFFFF, 0x080000, 0x180000, 2};
 /* One stereo frame, P:0x000EE9..0x000F23, then the chunk's job run once its last
  * frame is done. */
 int gm2_res_core_process_frame(gm2_res_core_state *state, const int32_t coef[GM2_RES_CORE_COEFS],
-                               const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
+                               int32_t wet, int32_t dry, const int32_t in[GM2_CHANNELS],
+                               int32_t out[GM2_CHANNELS]) {
   for (unsigned channel = 0; channel < GM2_CHANNELS; channel++) {
     /* 0x0EEF..0x0EF5: MPYR the input with Y:0x3EE, ASR by Y:0x3CF and store 24
      * bits: the shift leaves at most 2^20, so this store cannot rail. */
@@ -38,23 +39,29 @@ int gm2_res_core_process_frame(gm2_res_core_state *state, const int32_t coef[GM2
      * 24-bit store of its result, at most the rail word shifted left three. */
     const int32_t clipped = gm2_store24(gm2_soft_clip(acc, k_clip, RES_SHIFT));
 
-    /* 0x0F17..0x0F21: MPY the wet word and MACR the dry one in, then the
-     * channel's 24-bit store. The dry word is 0 and its MACR still rounds. */
-    out[channel] = gm2_store24(gm2_round24(gm2_mpy(GM2_LEVEL_WET, clipped)));
+    /* 0x0F15..0x0F21: the wet word and the clipped sample, the dry word and the
+     * frame's input sample, one rounding over the sum. Each doubled product is at
+     * most 2^47, so the 56-bit accumulator cannot wrap. */
+    out[channel] =
+        gm2_store24(gm2_round24(2 * (int64_t)state->wet * clipped +
+                                2 * (int64_t)state->dry * gm2_s24((uint32_t)in[channel])));
   }
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
     return 0;
   }
   state->chunk_pos = 0;
-  /* P:0x00026F on the record X:0x09893C */
+  /* P:0x00026F on the record X:0x09893C, then the level record */
   for (unsigned i = 0; i < GM2_RES_CORE_COEFS; i++) {
     state->coef[i] = gm2_job_smooth(state->coef[i], coef[i], GM2_JOB_SMOOTH_STEP);
   }
+  state->wet = gm2_job_smooth(state->wet, wet, GM2_JOB_SMOOTH_STEP);
+  state->dry = gm2_job_smooth(state->dry, dry, GM2_JOB_SMOOTH_STEP);
   return 1;
 }
 
-void gm2_res_core_state_init(gm2_res_core_state *state, const int32_t coef[GM2_RES_CORE_COEFS]) {
+void gm2_res_core_state_init(gm2_res_core_state *state, const int32_t coef[GM2_RES_CORE_COEFS],
+                             int32_t wet, int32_t dry) {
   for (unsigned channel = 0; channel < GM2_CHANNELS; channel++) {
     for (unsigned i = 0; i < 2u; i++) {
       state->in[channel][i] = 0;
@@ -66,5 +73,7 @@ void gm2_res_core_state_init(gm2_res_core_state *state, const int32_t coef[GM2_R
   for (unsigned i = 0; i < GM2_RES_CORE_COEFS; i++) {
     state->coef[i] = coef[i];
   }
+  state->wet = wet;
+  state->dry = dry;
   state->chunk_pos = 0;
 }

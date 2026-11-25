@@ -24,6 +24,8 @@ typedef struct {
   gm2_rate_words rate;              /* what the tick's design reads */
   gm2_res_design_tick_words words;  /* what the tick reads */
   int style;                        /* 0: 2nd order, 1: 4th order */
+  int32_t wet;                      /* Y:0x3EF: the Mix knob's wet and dry words */
+  int32_t dry;                      /* Y:0x3F0 */
   unsigned tick_chunks;             /* chunks per tick, gm2_tick_chunks() */
 } gm2_touchres_config;
 

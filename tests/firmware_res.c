@@ -59,6 +59,12 @@
 #define RES_STAGED 0x098928u
 #define RES_LIVE 0x03DAu
 #define RES_LEVEL_STAGED 0x098991u
+/* P:0x08F763 and the level struct at UI+54 it takes in R0, which the recorders of
+ * P:0x091B3A hold as the absolute address 0x09897E. The Mix callback P:0x09220C
+ * reaches it only when the block's gate word X:(UI+3) is clear, which neither
+ * activation pass writes. */
+#define RES_LEVEL_CODE 0x08F763u
+#define RES_LEVEL_STRUCT (RES_UI + 54u)
 #define RES_LEVEL 0x03EEu
 #define RES_STATE 0x0060u
 #define RES_STATE_WORDS 12u
@@ -87,7 +93,7 @@
 #define RES_GATE_READ 0x090494u
 #define RES_BUDGET 400000
 #define RES_SETTLE_LIMIT 400000
-#define RES_KNOB_MAX 4u
+#define RES_KNOB_MAX 5u
 
 struct gm2_firmware {
   gm2_emu *emu;
@@ -104,8 +110,8 @@ struct gm2_firmware {
   int audio_dirty;
 };
 
-static const unsigned k_resfilter_descriptor[] = {1u, 11u, 12u};
-static const unsigned k_touchres_descriptor[] = {1u, 2u, 3u, 6u};
+static const unsigned k_resfilter_descriptor[] = {1u, 11u, 12u, 13u};
+static const unsigned k_touchres_descriptor[] = {1u, 2u, 3u, 6u, 13u};
 static const uint32_t k_touchres_pairs[RES_TICK_PAIRS] = {
     RES_UI_COEFF, RES_UI_THRESHOLD, RES_UI_CENTRE, RES_UI_SPAN, RES_UI_Q, RES_UI_SCALE,
 };
@@ -230,13 +236,20 @@ static void res_restore(gm2_firmware *self) {
   }
 }
 
-/* The rebuild a Style turn needs: neither Style callback refreshes the constants
- * P:0x091F81 sets. The Resonance Filter's Style callback P:0x0921D3 designs with the
- * previous Style's pair, so its Resonance callback P:0x0921F7 -- the constants, then
- * the design -- is what puts the vector's design back; the Touch Res Filter has no
- * Resonance knob, and its tick P:0x091CF9 takes the Style's raw word for the biquad
- * set alone, so the constants routine alone is what it needs. */
+/* The rebuilds a turn needs: a Mix turn's level code, the one the Mix callback
+ * P:0x09220C runs itself once the block's gate word X:(UI+3) is clear, which
+ * neither activation pass writes; and the constants a Style turn needs, because
+ * neither Style callback refreshes the ones P:0x091F81 sets. The Resonance
+ * Filter's Style callback P:0x0921D3 designs with the previous Style's pair, so
+ * its Resonance callback P:0x0921F7 -- the constants, then the design -- is what
+ * puts the vector's design back; the Touch Res Filter has no Resonance knob, and
+ * its tick P:0x091CF9 takes the Style's raw word for the biquad set alone, so the
+ * constants routine alone is what it needs.
+ */
 static int res_rebuild(gm2_firmware *self, unsigned knob) {
+  if (self->descriptor[knob] == RES_MIX_INDEX) {
+    return res_call(self, RES_LEVEL_CODE, 0u, RES_LEVEL_STRUCT, RES_BUDGET);
+  }
   if (self->descriptor[knob] != RES_STYLE) {
     return 0;
   }
@@ -526,11 +539,18 @@ static void res_close(gm2_firmware *self) {
   }
 }
 
+/* The pair the level code staged for the live words at Y:0x3EE. */
+static void res_mix_words(const gm2_firmware *self, int32_t *words) {
+  words[0] = gm2_sign24(gm2_read(self->emu, GM2_X, RES_LEVEL_STAGED + 1u));
+  words[1] = gm2_sign24(gm2_read(self->emu, GM2_X, RES_LEVEL_STAGED + 2u));
+}
+
 // cppcheck-suppress constParameterCallback -- the ops signature fixes the pointer
 static int resfilter_words(gm2_firmware *self, int32_t *words) {
   for (unsigned i = 0; i < GM2_RES_CORE_COEFS; i++) {
     words[i] = gm2_sign24(gm2_read(self->emu, GM2_X, RES_STAGED + i));
   }
+  res_mix_words(self, words + GM2_RES_CORE_COEFS);
   return 0;
 }
 
@@ -566,6 +586,7 @@ static int touchres_words(gm2_firmware *self, int32_t *words) {
           gm2_sign24(gm2_read(self->emu, GM2_X, k_touchres_pairs[pair] + half));
     }
   }
+  res_mix_words(self, words + GM2_RES_CORE_COEFS + 12u);
   return 0;
 }
 

@@ -24,6 +24,8 @@ typedef struct {
   gm2_swf follow_threshold; /* UI+48/49: the gap above which it takes that share */
   gm2_swf centre;           /* UI+52/53: the follower level that reads as zero */
   gm2_swf span;             /* UI+54/55: the sweep word per unit of follower level */
+  int32_t wet;              /* Y:0x41A: the Mix knob's wet and dry words */
+  int32_t dry;              /* Y:0x41B */
   unsigned tick_chunks;     /* chunks per tick, gm2_tick_chunks() */
 } gm2_touchwah_config;
 

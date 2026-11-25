@@ -59,7 +59,8 @@ static void autowah_frame(gm2_autowah_state *state, const gm2_autowah_config *co
   if (state->core.chunk_pos == 0u) {
     autowah_lfo(state, config);
   }
-  if (gm2_wah_core_process_frame(&state->core, config->shift, in, out) == 0) {
+  if (gm2_wah_core_process_frame(&state->core, config->shift, config->wet, config->dry, in, out) ==
+      0) {
     return;
   }
   state->lfo_step = gm2_job_smooth(state->lfo_step, config->lfo_step, GM2_JOB_SMOOTH_STEP);
@@ -72,7 +73,7 @@ static void autowah_frame(gm2_autowah_state *state, const gm2_autowah_config *co
 }
 
 void gm2_autowah_state_init(gm2_autowah_state *state, const gm2_autowah_config *config) {
-  gm2_wah_core_state_init(&state->core, AUTOWAH_START);
+  gm2_wah_core_state_init(&state->core, AUTOWAH_START, config->wet, config->dry);
   state->lfo_phase = 0;
   state->lfo_smooth = AUTOWAH_START;
   state->lfo_out = AUTOWAH_START;

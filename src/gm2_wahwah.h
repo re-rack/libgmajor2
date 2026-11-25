@@ -16,6 +16,8 @@
 typedef struct {
   int32_t shift; /* Y:0x40A: the filter's frequency shift, from Range */
   int32_t sweep; /* Y:0x40E: the word the routine's cubic reads */
+  int32_t wet;   /* Y:0x41A: the Mix knob's wet and dry words */
+  int32_t dry;   /* Y:0x41B */
 } gm2_wahwah_config;
 
 typedef gm2_wah_core_state gm2_wahwah_state;

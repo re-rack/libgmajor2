@@ -82,7 +82,7 @@ static int32_t wah_filter(gm2_wah_core_state *state, int32_t scratch, int32_t sh
   return gm2_store24(gm2_soft_clip(damped, k_wah_clip, WAH_CLIP_SHIFT));
 }
 
-int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift,
+int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift, int32_t wet, int32_t dry,
                                const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
   /* 0xF4D..0xF54, on the first frame of each chunk: the sweep word into the
    * frequency's target. */
@@ -102,8 +102,11 @@ int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift,
     const int32_t scratch = gm2_store24(2 * (int64_t)(gained >> 3) * state->freq);
     const int32_t filtered = wah_filter(state, scratch, shifted, quarter, channel);
 
-    /* 0xF96..0xFA3: the wet word; the zero dry term's MACR still rounds. */
-    out[channel] = gm2_store24(gm2_round24(gm2_mpy(GM2_LEVEL_WET, filtered)));
+    /* 0xF96..0xFA3: the wet word and the filtered sample, the dry word and the
+     * frame's input sample, one rounding over the sum. Each doubled product is at
+     * most 2^47, so the 56-bit accumulator cannot wrap. */
+    const int64_t sampled = 2 * (int64_t)state->dry * gm2_s24((uint32_t)in[channel]);
+    out[channel] = gm2_store24(gm2_round24(2 * (int64_t)state->wet * filtered + sampled));
   }
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
@@ -111,10 +114,12 @@ int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift,
   }
   state->chunk_pos = 0;
   state->freq = gm2_job_smooth(state->freq, state->freq_target, GM2_JOB_SMOOTH_STEP);
+  state->wet = gm2_job_smooth(state->wet, wet, GM2_JOB_SMOOTH_STEP);
+  state->dry = gm2_job_smooth(state->dry, dry, GM2_JOB_SMOOTH_STEP);
   return 1;
 }
 
-void gm2_wah_core_state_init(gm2_wah_core_state *state, int32_t sweep) {
+void gm2_wah_core_state_init(gm2_wah_core_state *state, int32_t sweep, int32_t wet, int32_t dry) {
   for (unsigned channel = 0; channel < GM2_CHANNELS; channel++) {
     state->svf[channel][0] = 0;
     state->svf[channel][1] = 0;
@@ -122,5 +127,7 @@ void gm2_wah_core_state_init(gm2_wah_core_state *state, int32_t sweep) {
   state->sweep = sweep;
   state->freq_target = wah_frequency(sweep);
   state->freq = state->freq_target;
+  state->wet = wet;
+  state->dry = dry;
   state->chunk_pos = 0;
 }

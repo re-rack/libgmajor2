@@ -1,6 +1,7 @@
 #include "gm2_touchres_setup.h"
 
 #include "gm2_dsp_math.h"
+#include "gm2_mix.h"
 #include "gm2_rate.h"
 #include "gm2_res_design.h"
 #include "gm2_swf.h"
@@ -23,6 +24,7 @@ int gm2_touchres_setup_config(const gm2_context *context, const gm2_touchres_set
   gm2_rate_words_init(&config->rate, rate);
   gm2_res_design_tick_words_init(&config->words, style, raw->response, raw->sense, raw->freq_max);
   config->style = style;
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
   config->tick_chunks = gm2_tick_chunks(rate);
 
   /* The words at rest are the ones the activation's own tick designs, at level 0. */

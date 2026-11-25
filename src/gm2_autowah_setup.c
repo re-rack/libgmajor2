@@ -2,6 +2,7 @@
 
 #include "gm2_dsp_math.h"
 #include "gm2_lfo.h"
+#include "gm2_mix.h"
 #include "gm2_rate.h"
 #include "gm2_swf.h"
 #include "gm2_tick.h"
@@ -37,6 +38,7 @@ int gm2_autowah_setup_config(const gm2_context *context, const gm2_autowah_setup
   const gm2_swf hz = gm2_lfo_rate(speed, (unsigned)tempo, raw->beat_ms);
   config->lfo_step = gm2_swf_to_q23(gm2_swf_mul(gm2_swf_mul(hz, gm2_swf_four), rate_words.period));
   config->note = (unsigned)tempo;
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
   config->tick_chunks = gm2_tick_chunks(rate);
   return 0;
 }

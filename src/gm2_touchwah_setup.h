@@ -7,6 +7,7 @@
  *                         UI+54/55 the sweep word per unit
  *   P:0x092678  (none)    Y:0x415 the envelope's decay pole
  *   P:0x092527  Range     Y:0x40A = 2 for Low, 1 for High
+ *   P:0x09277A  Mix       UI+67 = to_q23(Mix * 0.01), then P:0x08F763's pair
  *
  * gm2_tick.h owns the Response and Sense derivations; the tick's sweep word is
  * to_q23(clamp(centre + span * follow)).
@@ -21,6 +22,7 @@ typedef struct {
   int sense;    /* 0..10 */
   int response; /* 0 Slow, 1 Medium, 2 Fast */
   int range;    /* 0 Low, 1 High */
+  int mix;      /* 0..100 % */
 } gm2_touchwah_setup_raw;
 
 int gm2_touchwah_setup_config(const gm2_context *context, const gm2_touchwah_setup_raw *raw,

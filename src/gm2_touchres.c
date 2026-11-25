@@ -9,7 +9,8 @@
 static void touchres_frame(gm2_touchres_state *state, const gm2_touchres_config *config,
                            const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
   gm2_gate_detector_frame(&state->detector, in, state->core.chunk_pos);
-  if (gm2_res_core_process_frame(&state->core, state->coef, in, out) == 0) {
+  if (gm2_res_core_process_frame(&state->core, state->coef, config->wet, config->dry, in, out) ==
+      0) {
     return;
   }
   if (++state->tick < config->tick_chunks) {
@@ -23,7 +24,7 @@ static void touchres_frame(gm2_touchres_state *state, const gm2_touchres_config 
 }
 
 void gm2_touchres_state_init(gm2_touchres_state *state, const gm2_touchres_config *config) {
-  gm2_res_core_state_init(&state->core, config->coef);
+  gm2_res_core_state_init(&state->core, config->coef, config->wet, config->dry);
   for (unsigned i = 0; i < GM2_RES_CORE_COEFS; i++) {
     state->coef[i] = config->coef[i];
   }

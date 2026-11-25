@@ -42,6 +42,11 @@
 #define WAH_TEMPO 6u
 /* The level code's publish record behind X:(UI+73): {src, dst, count}. */
 #define WAH_LEVEL_PUBLISH (WAH_UI + 73u)
+/* P:0x08F763 and the level struct at UI+60 it takes in R0. The Mix callback
+ * P:0x09277A reaches it only when the block's gate word X:(UI+3) is clear, which
+ * neither activation pass writes. */
+#define WAH_LEVEL_CODE 0x08F763u
+#define WAH_LEVEL_STRUCT (WAH_UI + 60u)
 #define WAH_LEVEL 0x0419u
 #define WAH_STAGED 0x09899Eu /* the staged frequency, then the staged LFO step */
 #define WAH_AUDIO_ENTRY 0x000F24u
@@ -82,7 +87,7 @@
 #define WAH_SETTLE_LIMIT 400000
 /* The Touch Wah's and Auto Wah's follower words, each pair exponent word first. */
 #define WAH_TOUCHWAH_FOLLOWER_WORDS 8u
-#define WAH_KNOB_MAX 4u
+#define WAH_KNOB_MAX 5u
 
 struct gm2_firmware {
   gm2_emu *emu;
@@ -101,9 +106,9 @@ struct gm2_firmware {
   int audio_dirty;
 };
 
-static const unsigned k_wahwah_descriptor[] = {1u, 9u};
-static const unsigned k_touchwah_descriptor[] = {2u, 3u, 9u};
-static const unsigned k_autowah_descriptor[] = {4u, 6u, 7u, 9u};
+static const unsigned k_wahwah_descriptor[] = {1u, 9u, 13u};
+static const unsigned k_touchwah_descriptor[] = {2u, 3u, 9u, 13u};
+static const unsigned k_autowah_descriptor[] = {4u, 6u, 7u, 9u, 13u};
 static const unsigned k_touchwah_follower[] = {46u, 47u, 48u, 49u, 52u, 53u, 54u, 55u};
 
 /* A: the block index the device's edit path passes, R0: what the updaters read,
@@ -186,11 +191,18 @@ static void wah_restore(gm2_firmware *self) {
   }
 }
 
-/* The rebuild the Tempo rule needs: the Speed callback P:0x09273A clears A before
+/* The rebuilds a turn needs beyond its own callback: a Mix turn's level code, and
+ * the Tempo rule's step. The level code is what the Mix callback P:0x09277A runs
+ * itself once the block's gate word X:(UI+3) is clear, which neither activation
+ * pass writes, so the adapter hands it the struct and the value the callback
+ * would. The Tempo rule: the Speed callback P:0x09273A clears A before
  * P:0x0924C1, so a Speed turn restages the Speed rate's step even under a Tempo
  * value, and the Tempo callback's tempo path has to put the vector's step back.
  * The Tap Time refresh P:0x08D2B0 runs that same path. */
 static int wah_rebuild(gm2_firmware *self, unsigned knob) {
+  if (self->descriptor[knob] == WAH_MIX_INDEX) {
+    return wah_call(self, WAH_LEVEL_CODE, 0u, WAH_LEVEL_STRUCT, GM2_FIRMWARE_CALL_BUDGET);
+  }
   if (self->subtype != 2u || self->descriptor[knob] != WAH_SPEED) {
     return 0;
   }
@@ -531,10 +543,18 @@ static void wah_close(gm2_firmware *self) {
   }
 }
 
+/* The pair the level code staged for the live words at Y:0x419. */
+static void wah_mix_words(const gm2_firmware *self, int32_t *words) {
+  const uint32_t staged = gm2_read(self->emu, GM2_X, WAH_LEVEL_PUBLISH);
+  words[0] = gm2_sign24(gm2_read(self->emu, GM2_X, staged + 1u));
+  words[1] = gm2_sign24(gm2_read(self->emu, GM2_X, staged + 2u));
+}
+
 // cppcheck-suppress constParameterCallback -- the ops signature fixes the pointer
 static int wahwah_words(gm2_firmware *self, int32_t *words) {
   words[0] = gm2_sign24(gm2_read(self->emu, GM2_Y, WAH_SHIFT));
   words[1] = gm2_sign24(gm2_read(self->emu, GM2_Y, WAH_SWEEP));
+  wah_mix_words(self, words + 2);
   return 0;
 }
 
@@ -545,6 +565,7 @@ static int touchwah_words(gm2_firmware *self, int32_t *words) {
   for (unsigned i = 0; i < self->follower_words; i++) {
     words[2u + i] = gm2_sign24(gm2_read(self->emu, GM2_X, WAH_UI + self->follower[i]));
   }
+  wah_mix_words(self, words + 2u + self->follower_words);
   return 0;
 }
 
@@ -553,6 +574,7 @@ static int autowah_words(gm2_firmware *self, int32_t *words) {
   words[0] = gm2_sign24(gm2_read(self->emu, GM2_Y, WAH_SHIFT));
   words[1] = gm2_sign24(gm2_read(self->emu, GM2_Y, WAH_SHAPE));
   words[2] = gm2_sign24(gm2_read(self->emu, GM2_X, WAH_STAGED + 1u));
+  wah_mix_words(self, words + 3);
   return 0;
 }
 

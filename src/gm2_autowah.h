@@ -18,6 +18,8 @@ typedef struct {
   int32_t shift;        /* Y:0x40A: the filter's frequency shift, from Range */
   int32_t shape;        /* Y:0x414: 0 for the triangle, 1 for the sine */
   int32_t lfo_step;     /* X:0x09899F, staged for Y:0x413: the phase step per chunk */
+  int32_t wet;          /* Y:0x41A: the Mix knob's wet and dry words */
+  int32_t dry;          /* Y:0x41B */
   unsigned note;        /* the Tempo value the step follows, 0 for Speed */
   unsigned tick_chunks; /* chunks per tick, gm2_tick_chunks() */
 } gm2_autowah_config;
