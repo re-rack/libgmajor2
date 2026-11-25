@@ -32,6 +32,8 @@ cc plugin.c $(pkg-config --cflags --libs gm2)
 
 Default build uses SSE2, `CFLAGS='-O2 -march=x86-64-v3'` builds the AVX2 converter and `CFLAGS='-O2 -march=x86-64-v4'` builds it against AVX512. ARM and RISC-V uses vector extensions by default if your CPU supports it.
 
+Sample rates go up to 48 kHz, the hardware's own: `gm2_context_init` refuses faster ones, so a host running faster resamples around the effect.
+
 ## Testing and Benchmarks
 
 ```sh

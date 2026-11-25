@@ -15,6 +15,8 @@
  * Setup forces every raw value into its descriptor window, as the firmware's
  * parameter accessor P:0x0832CB does, and returns 0, or -1 for a NULL pointer or
  * a context without a rate. A config is specific to the context's sample rate.
+ * A context holds rates up to GM2_SAMPLE_RATE_MAX (48 kHz); a host running
+ * faster resamples.
  *
  * The rest state is the one the effect settles in after a long silence: filters
  * and detectors empty, every smoothed word on the config's.

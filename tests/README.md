@@ -77,8 +77,8 @@ fixture cannot agree with the library by construction.
 
 ## Limits
 
-- Everything is recorded at 48 kHz. Other sample rates run the same code paths
-  but are not compared with the firmware.
+- Everything is recorded at 48 kHz. Other accepted rates (below 48 kHz) run the
+  same code paths but are not compared with the firmware.
 - Each fixture is one scripted run. Behaviour that needs a longer run, or a knob
   combination the script never reaches, is not covered.
 - Internal state is not compared, only outputs and setup words.

@@ -10,16 +10,16 @@
  * once every four frames. */
 #define GM2_CHUNK_FRAMES 4u
 
-/* The 24-bit signed maximum, the largest word P:0x000BFD converts. */
-#define GM2_SAMPLE_RATE_MAX 0x7FFFFFu
+/* The effects' buffers hold their longest delays only up to 48 kHz; a host
+ * running faster resamples. */
+#define GM2_SAMPLE_RATE_MAX 48000u
 
 typedef struct {
   unsigned sample_rate; /* Hz; 0 = no rate */
 } gm2_context;
 
 /* Sets the rate in Hz: 0 on success; -1 for a NULL context or a rate outside
- * 1..GM2_SAMPLE_RATE_MAX, the range P:0x000BFD converts and P:0x082DC0 accepts.
- * A rejected rate leaves the context without one. */
+ * 1..GM2_SAMPLE_RATE_MAX. A rejected rate leaves the context without one. */
 int gm2_context_init(gm2_context *context, unsigned sample_rate);
 
 /* The rate every setup reads, or 0 when the context holds no valid one. */

@@ -1278,8 +1278,10 @@ records, UI object links, and actual emulator traces when mapping new effects.
 ## Native API and limits
 
 `gm2_context` carries one instance's sample rate and `gm2_context_init()` sets
-it: 0 on success, -1 for a NULL context or a rate outside 1..0x7FFFFF, the range
-`P:0x000BFD` converts and `P:0x082DC0` accepts. A rejected rate leaves the
+it: 0 on success, -1 for a NULL context or a rate outside 1..48000
+(`GM2_SAMPLE_RATE_MAX`), because the effects' buffers have the device's sizes and
+hold their longest delays only up to 48 kHz; the firmware's own rate routines
+`P:0x000BFD` and `P:0x082DC0` accept up to `0x7FFFFF`. A rejected rate leaves the
 context without a rate. The library keeps no global state, so instances at
 different rates coexist.
 

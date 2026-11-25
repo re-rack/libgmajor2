@@ -479,6 +479,10 @@ static void expect(int ok, const char *what) {
 
 static int same_swf(gm2_swf a, gm2_swf b) { return a.m == b.m && a.e == b.e; }
 
+/* The fixtures prove the buffers hold the longest delays only at the recorded rate. */
+_Static_assert(GM2_SAMPLE_RATE_MAX == GM2_EFFECT_RATE,
+               "the largest accepted rate must be the recorded rate");
+
 /* gm2_context_init and gm2_context_rate: a rate outside 1..GM2_SAMPLE_RATE_MAX
  * leaves no rate. */
 static unsigned check_context(void) {

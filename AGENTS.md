@@ -184,6 +184,7 @@ In code and docs, "block" means only such an effect block. The firmware's four-f
 
 ## Host integration
 
+- **Sample rates up to 48 kHz.** The effects' buffers are the device's sizes, so above 48 kHz the delays would read past them or wrap; `gm2_context_init` refuses faster rates (`GM2_SAMPLE_RATE_MAX`) and a host running faster resamples.
 - **No Mix or Out Level knobs.** The host blends and sets levels, so every effect runs at full mix and full Out Level (0 dB), and its fixtures are generated at that setting. The words follow the block-word rule above, read from the firmware with Mix at 100 % and Out Level at 0 dB. An effect without an adjustable Mix on the device, such as the through-zero flangers, keeps the device's own blend. Kill Dry is not ported.
 - **Tempo sync follows the host's tempo.** Setup takes the beat length in milliseconds, fractions included, forced into 100–3000 ms; a NaN, which a wrapper passes when the host reports no tempo, takes the hardware's factory Tap Time, 500 ms (`P:0x083A95`). The device holds its tempo as whole milliseconds per beat, so whole-millisecond lengths run the firmware's own tempo math and are bit-exact; other lengths run the same math on the exact length and cannot be checked against the firmware.
 - **Tempo wins.** With a Tempo value set, the beat decides and Speed or Delay do nothing; at Ignore, Speed or Delay decides, as the manual describes. The device's own one-knob edit can let a later Speed or Delay turn override Tempo; the ports follow the knob values alone, as after a preset load.
