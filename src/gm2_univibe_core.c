@@ -9,7 +9,6 @@
 enum {
   UNIVIBE_LFO_OFFSET = 0x400000,     /* Y:0x0472: the one half the depth scales the sine around */
   UNIVIBE_BRIGHTNESS_MAX = 0x0FF000, /* the waveshaper's ceiling */
-  UNIVIBE_MIX = 0x5A827B, /* Y:0x0488..Y:0x048A: the output mix's other three weights */
 };
 
 /* Y:0x048B..Y:0x0490 and Y:0x0491..Y:0x0496, the words of the two soft clips
@@ -160,9 +159,10 @@ void gm2_univibe_core_process_frame(gm2_univibe_core_state *state,
 
   /* P:0x0010F5..0x001109: the stages' word mixed with each channel's gained
    * input, then the output soft clip. */
-  const int64_t left =
-      2 * ((int64_t)coef[GM2_UNIVIBE_CORE_WET] * stage + (int64_t)UNIVIBE_MIX * gained_l);
-  const int64_t right = 2 * (int64_t)UNIVIBE_MIX * (stage + gained_r);
+  const int64_t left = 2 * ((int64_t)coef[GM2_UNIVIBE_CORE_WET] * stage +
+                            (int64_t)coef[GM2_UNIVIBE_CORE_MIX] * gained_l);
+  const int64_t right = 2 * ((int64_t)coef[GM2_UNIVIBE_CORE_MIX + 1u] * stage +
+                             (int64_t)coef[GM2_UNIVIBE_CORE_MIX + 2u] * gained_r);
   const int32_t right_mix = gm2_store24(gm2_asr_n(right, 2));
   const int32_t wet_l = gm2_store24(univibe_clip(gm2_asr_n(left, 2), k_output_clip));
   const int32_t wet_r = gm2_store24(univibe_clip(gm2_word_acc(right_mix), k_output_clip));

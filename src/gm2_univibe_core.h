@@ -13,7 +13,7 @@
  * brightness, faster up than down; and the lamp's word places the four stages'
  * targets on their curves.
  *
- * The depth rides a ramp and the other seventeen words one-pole jobs
+ * The depth rides a ramp and the other twenty words one-pole jobs
  * (gm2_job.h). The LFO speed's target and the waveshaper's two words are written
  * straight to the words the routine reads.
  */
@@ -26,7 +26,7 @@
 
 #define GM2_UNIVIBE_CORE_STAGES 4u
 #define GM2_UNIVIBE_CORE_RAMPS 1u
-#define GM2_UNIVIBE_CORE_COEFS 18u
+#define GM2_UNIVIBE_CORE_COEFS 21u
 
 /* The positions in coef[]. The first GM2_UNIVIBE_CORE_RAMPS ramp, and raw[] holds
  * their knobs' values at the same positions: P:0x09339D arms the depth's ramp on
@@ -43,6 +43,8 @@ enum {
   /* Y:0x0487: the stages' weight in the left output, negative with Phase Reverse
    * on */
   GM2_UNIVIBE_CORE_WET = 17,
+  /* Y:0x0488..Y:0x048A: the left input's weight, then the right channel's two */
+  GM2_UNIVIBE_CORE_MIX = 18,
 };
 
 typedef struct {

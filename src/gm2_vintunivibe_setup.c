@@ -23,6 +23,7 @@ int gm2_vintunivibe_setup_config(const gm2_context *context, const gm2_vintunivi
       .release = raw->release,
       .select = raw->select,
       .phase_reverse = raw->phase_reverse,
+      .mix = raw->mix,
       .beat_ms = raw->beat_ms,
   };
   gm2_univibe_design(&rate_words, GM2_UNIVIBE_DESIGN_VINTAGE, &design, config);

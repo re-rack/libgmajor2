@@ -4,7 +4,8 @@
  *   P:0x0932C2  the four stages' curves
  *   P:0x0933CD  Attack, Release: the speed slew's poles; and the lamp's poles
  *   P:0x09339D  Depth
- *   P:0x093565  Phase Reverse: the stages' weight in the left output
+ *   P:0x093565  Mix, Phase Reverse: the four words the output stage weights the
+ *               stages and the channels' inputs with
  *   P:0x09349C  Speed 1, Speed 2, Tempo 1, Tempo 2, Select: the LFO speed's target
  */
 #ifndef GM2_UNIVIBE_DESIGN_H
@@ -29,6 +30,7 @@ typedef struct {
   int release;       /* 1..100: 0.05..5.0 s */
   int select;        /* 0 Speed 1 with Tempo 1, 1 Speed 2 with Tempo 2 */
   int phase_reverse; /* 0 Off, 1 On */
+  int mix;           /* 0..100 % */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_univibe_design_raw;
 

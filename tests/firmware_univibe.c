@@ -6,8 +6,10 @@
  * reads from the interrupt handler's countdown X:0x0001.
  *
  * The LFO reads the bipolar sine table at Y:0x0100, which P:0x083A02 builds. No
- * knob touches the three level words, so open() runs the level job until they have
- * settled and the run starts at rest, as the native open() does.
+ * knob touches the three level words -- Mix reaches its own staged words instead,
+ * its callback pinning the block's mix word at full before it re-stages them --
+ * so open() runs the level job until they have settled and the run starts at rest,
+ * as the native open() does.
  */
 #include "firmware_common.h"
 #include "gm2_effect.h"
@@ -77,7 +79,7 @@ struct gm2_firmware {
   const gm2_effect *effect;
   const univibe_block *block;
   gm2_emu *emu;
-  int32_t values[9];
+  int32_t values[10];
   uint32_t record[UNIVIBE_JOBS_MAX]; /* the job records the block holds */
   unsigned records;
   int audio_dirty;
@@ -120,7 +122,7 @@ static void univibe_raws(gm2_firmware *self) {
   raw[9] = k[6];  /* Release */
   raw[10] = k[7]; /* Select */
   raw[12] = k[8]; /* Phase Reverse */
-  raw[UNIVIBE_MIX_INDEX] = 100;
+  raw[UNIVIBE_MIX_INDEX] = k[9];
   raw[UNIVIBE_OUT_LEVEL_INDEX] = 0;
   for (unsigned i = 0; i < UNIVIBE_PARAM_WORDS; i++) {
     gm2_write(self->emu, GM2_X, UNIVIBE_PARAMS + i, gm2_word24(raw[i]));
@@ -167,12 +169,12 @@ static int univibe_descriptor(gm2_firmware *self) {
   const uint32_t record = gm2_read(self->emu, GM2_X, GM2_CHAIN + UNIVIBE_ALGORITHM);
   const uint32_t table = gm2_read(self->emu, GM2_P, record + 7u);
   const uint32_t count = gm2_read(self->emu, GM2_P, record + 1u);
-  if (record == 0u || table == 0u || count < 13u) {
+  if (record == 0u || table == 0u || count < 14u) {
     fprintf(stderr, "univibe: descriptor X:0x%06X of P:0x%06X has %u parameters\n", record, table,
             count);
     return -1;
   }
-  static const unsigned k_index[9] = {1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u};
+  static const unsigned k_index[10] = {1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u, 13u};
   for (unsigned knob = 0; knob < self->effect->knobs; knob++) {
     const gm2_knob *want = &self->effect->knob[knob];
     uint32_t callback = 0;
@@ -274,7 +276,7 @@ static gm2_firmware *modunivibe_open(void) {
  * once more with that A; it writes Speed 1 and Speed 2 back in turn, hence the
  * second restore. */
 static int univibe_set_knob(gm2_firmware *self, unsigned knob, int value) {
-  static const unsigned k_index[9] = {1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u};
+  static const unsigned k_index[10] = {1u, 2u, 3u, 4u, 5u, 8u, 9u, 10u, 12u, 13u};
   self->values[knob] = (int32_t)value;
   if (gm2_firmware_edit(self->emu, UNIVIBE_EDIT_BASE + k_index[knob], UNIVIBE_EDIT, value,
                         GM2_DEVICE_STACK) != 0) {
@@ -300,7 +302,7 @@ static int univibe_set_knob(gm2_firmware *self, unsigned knob, int value) {
   return univibe_check_jobs(self);
 }
 
-/* What the port does with each of the thirty-five staged words: the eighteen it
+/* What the port does with each of the thirty-five staged words: the twenty-one it
  * holds, in the order it holds them, and the ones it keeps as constants in its
  * kernel, with the value each must have at every setting. */
 #define UNIVIBE_STAGED_WORDS 35u
@@ -339,12 +341,12 @@ static const int32_t k_univibe_staged[UNIVIBE_STAGED_WORDS] = {
     [29] = UNIVIBE_HELD,
     [30] = UNIVIBE_HELD,
     [31] = UNIVIBE_HELD,
-    [32] = 0x5A827B,
-    [33] = 0x5A827B,
-    [34] = 0x5A827B,
+    [32] = UNIVIBE_HELD,
+    [33] = UNIVIBE_HELD,
+    [34] = UNIVIBE_HELD,
 };
 
-/* The eighteen staged words the port holds, the LFO speed's target Y:0x046C and
+/* The twenty-one staged words the port holds, the LFO speed's target Y:0x046C and
  * the waveshaper's two weights Y:0x0474/0x0475. */
 // cppcheck-suppress constParameterCallback -- the ops signature fixes the pointer
 static int univibe_words(gm2_firmware *self, int32_t *words) {

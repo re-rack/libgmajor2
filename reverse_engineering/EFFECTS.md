@@ -253,7 +253,7 @@ below its input gain:
 | Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 always: `P:0x093565` pins the mix word, and the Mix knob sets `Y:0x487..0x48A` instead |
 | Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
@@ -279,7 +279,10 @@ recorded firmware keeps the activation's words: the recorders call the level cod
 themselves, on the struct and the value the callback hands it, which is what the
 device does once the word is clear. The Whammy has no Mix of its own: its descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
-word at `0x7FFFFF` for that subtype, so `gm2_pitch_design()` passes 100 %. Their
+word at `0x7FFFFF` for that subtype, so `gm2_pitch_design()` passes 100 %. The
+univibe objects carry a Mix of their own that does not reach this pair: their
+callback `P:0x093565` pins the mix word at `0x7FFFFF` and re-stages the pair, and
+stages the output weights `Y:0x487..0x48A` from the knob instead. Their
 first activation leaves the out level at 0, and the next one sets it from Out
 Level. The init table's
 power-on words differ: the Gate & EQ block's wet word is `0x7FFFFF` until
@@ -1057,7 +1060,8 @@ index 4 and reruns the step.
 | Audio continuation | `P:0x00107F..0x001116` (helpers `P:0x001061`, `P:0x001072`), task record `Y:0x45C` |
 | State (`X:0x2DE..0x2EF`, `Y:0x483..0x486`) | `x[0..1]` stereo input/output scratch; `x[2]` slewed LFO speed; `x[3]` LFO phase `[0, 0x7FFFFF]`; `x[4]` lamp brightness one-pole state; `x[5..8]` four all-pass states; `x[9]` fourth all-pass output; `x[10..17]` four `{coef_curr, coef_step}` pairs; `y483[0..3]` per-frame stepped all-pass coefficients |
 | Staged and live words | 35 words staged at `X:0x098B08..0x098B2A` (`S+0..34`), published to `Y:0x46B..0x496` by eight jobs `X:0x098B5A..0x098B79` (`P:0x0001B9` on `S+0..1`, `P:0x0001FD` on `S+2..34`); `Y:0x46C` (target LFO speed) and `Y:0x473..0x476` (waveshaper polynomial `{0, 0, 0x0CCCCD, 0}` for Vintage subtype 11, `{0, 0x200000, -0x100000, 0}` for Modern subtype 12) are written directly to Y |
-| Input, wet, dry | `Y:0x497..0x499`, staged at `X:0x098BB1..0x098BB3` by `P:0x08F763` from `UI+36` (`X:0x098B9E`) |
+| Input, wet, dry | `Y:0x497..0x499`, staged at `X:0x098BB1..0x098BB3` by `P:0x08F763` from `UI+36` (`X:0x098B9E`); always `0x7FFFFF` / `0x7FFFFE` / 0 at Out Level 0 dB, the Mix knob reaching the weights below instead |
+| Output weights | `Y:0x487..0x48A`, the all-pass output's weight in the left channel, the left input's, then the right channel's two; `P:0x0010F5..0x001109` weights the stage and each channel's gained input with them, shifts down two, and soft-clips |
 | UI object and tables | `X:0x098B7A`; dispatcher `P:0x09301F`, activation `P:0x09311B`, sub-record `P:0x085815`, Vintage Univibe table `P:0x085635`, Modern Univibe table `P:0x085725`, all-pass table `X:0x098BB8..0x098BC7` (`gm2_univibe_ap_table`), bipolar sine table `Y:0x0100..0x01FF` (`gm2_sine_table`, generated at boot by `P:0x083A02`) |
 
 Updaters (`gm2_univibe_design.c`):
@@ -1072,9 +1076,16 @@ Updaters (`gm2_univibe_design.c`):
   filament (`S[6..9]`, 5 ms rise / 30 ms fall) one-pole pairs on the 4-frame chunk
   rate (`4 * period_ms`).
 - `P:0x09339D` maps `Depth` (`0..100`) to `min(0x3FF972, to_q23(Depth * 0.005))`
-  in `S[0]` with `S[1] = 0x400000`; `P:0x093565` stages the internal equal-power
-  notch mix `S[31..34] = {±0x5A827B, 0x5A827B, 0x5A827B, 0x5A827B}` (with `S[31]`
-  negated to `0xA57D85` when `PhaRev != 0`); `P:0x09349C` computes the 4-frame
+  in `S[0]` with `S[1] = 0x400000`.
+- `P:0x093565`, the callback of the Mix and PhaRev entries alike, stages the
+  equal-power pair `S[31..34] = {±wet, dry, wet, dry}` from the Mix value `M`:
+  `wet = weight(to_q23(M * 0.005))` and `dry = weight(to_q23((100 - floor(M / 2))
+  * 0.01))`, `weight(x) = to_q23(sin(from_q23(x) * pi/2))`. Mix 100 gives
+  `0x5A827B` four times, Mix 0 gives `{0, 0x7FFFFF, 0, 0x7FFFFF}`, a dry
+  pass-through. Only `S[31]` is negated when `PhaRev != 0`, so the right channel
+  and both dry terms keep their sign. The routine also pins `UI+43`, the block's
+  mix word, at `0x7FFFFF` and re-runs the level code behind it.
+- `P:0x09349C` computes the 4-frame
   chunk LFO speed step (`hz * period * 256 * 4`, zeroed when the effective speed
   is `<= 37`) for `Speed 1` / `Tempo 1` (`Select == 0`) or `Speed 2` / `Tempo 2`
   (`Select != 0`) into `Y:0x46C`.
@@ -1084,7 +1095,9 @@ seven `P:0x0001FD`, plus the level record. `P:0x093612` is the callback of both
 Speed entries and of Select, and it clears A, so each of the three re-runs the
 speed step on the Speed path. Both Tempo entries call `P:0x093637`, which acts
 only on the second call of the edit and writes its value into raw index 4, so a
-Tempo 2 edit lands on Tempo 1.
+Tempo 2 edit lands on Tempo 1. The Mix and PhaRev entries share `P:0x093667`,
+which calls `P:0x093565` on every call, so a turn of either re-derives all four
+output weights.
 
 ### Choruses, Flangers and Vibrato (subtypes 0..8)
 
@@ -1387,7 +1400,7 @@ Which words a knob turn moves, briefly:
 | Resonance filters | the twenty coefficient words glide as one group, and a Mix turn's pair glides on the level record |
 | Pitch | the ratio pair (step `0x020DC6`), the feedback pair and the pan/level quad glide; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD`; a Mix turn restages the wet and dry pair, which glides on the level record with them |
-| Univibes | Depth on `P:0x0001B9`, the other seventeen words on `P:0x0001FD` |
+| Univibes | Depth on `P:0x0001B9`, the other twenty words on `P:0x0001FD` |
 | Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps |
 | Delays | the twenty matrix and filter words and the Mix pair glide, and a moved tap offset starts a crossfade |
 | Reverb | eighty words glide in six jobs; tap offsets, tank signs and early tap weights land at once; a Mix turn restages the level pair, which glides on the level record with them |

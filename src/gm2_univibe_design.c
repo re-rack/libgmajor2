@@ -13,8 +13,10 @@
  *               of a P:0x001072 slewer: the speed poles for A * 50 ms and
  *               R * 50 ms, the lamp's poles for 5 ms and 30 ms
  *   P:0x09339D  depth = min(to_q23(D * 0.005), 0x3FF972)
- *   P:0x093565  wet = -0x5A827B when Phase Reverse is on and 0x5A827B when it is
- *               off
+ *   P:0x093565  the notch's equal-power pair, weight(x) = to_q23(sin(from_q23(x) *
+ *               pi/2)) on the staged words to_q23(M * 0.005) and
+ *               to_q23((100 - floor(M / 2)) * 0.01), M the Mix value; the first
+ *               is negated on Phase Reverse, in the left output alone
  *   P:0x09349C  lfo_speed = to_q23(hz / rate * 1024), the phase step of the Speed
  *               the Select value picks, zeroed when that Speed value is 37 or less
  */
@@ -32,6 +34,8 @@ static const gm2_swf k_time_step = GM2_SWF_CONST(0x640000u, 0x85u); /* 50 ms a s
 static const gm2_swf k_lamp_rise = GM2_SWF_CONST(0x500000u, 0x82u); /* 5 ms */
 static const gm2_swf k_lamp_fall = GM2_SWF_CONST(0x780000u, 0x84u); /* 30 ms */
 static const gm2_swf k_depth_step = GM2_SWF_CONST(0x51EB85u, 0x78u); /* 0.005 */
+static const gm2_swf k_cent = GM2_SWF_CONST(0x51EB85u, 0x79u);      /* 0.01 */
+static const gm2_swf k_pi_2 = GM2_SWF_CONST(0x6487EEu, 0x80u);      /* 1.5707965 */
 
 /* Y:0x0474/0x0475: the waveshaper's linear and square weights. The Vintage
  * Univibe squares the lamp drive; the Modern one adds a linear term and bends it
@@ -55,6 +59,8 @@ enum {
   SELECT_MAX = 1,
   PHASE_REVERSE_MIN = 0,
   PHASE_REVERSE_MAX = 1,
+  MIX_MIN = 0,
+  MIX_MAX = 100,
 };
 
 /* The Depth word's ceiling and the Speed value that stops the LFO. */
@@ -62,9 +68,6 @@ enum {
   UNIVIBE_DESIGN_DEPTH_WORD_MAX = 0x3FF972,
   UNIVIBE_DESIGN_SPEED_STOPPED = 0x25,
 };
-
-/* The wet weight: 2^-0.5. */
-enum { UNIVIBE_DESIGN_WET_WEIGHT = 0x5A827B };
 
 /* P:0x093276: the bilinear pole (1 - tan(pi x)) / (1 + tan(pi x)). */
 static gm2_swf univibe_bilinear(gm2_swf x) {
@@ -75,6 +78,11 @@ static gm2_swf univibe_bilinear(gm2_swf x) {
 /* P:0x0932AE: ((1 - x) / 2)^(1/3). */
 static gm2_swf univibe_curve(gm2_swf x) {
   return gm2_swf_pow(gm2_swf_div(gm2_swf_sub(gm2_swf_one, x), gm2_swf_two), k_cube_root);
+}
+
+/* P:0x093565: the equal-power weight a staged 1.23 mix word selects. */
+static int32_t univibe_mix_weight(int32_t word) {
+  return gm2_swf_to_q23(gm2_swf_sin(gm2_swf_mul(gm2_swf_from_q23(word), k_pi_2)));
 }
 
 /* P:0x0933CD: exp(-4000 / (rate * time_ms)) into `out_keep` and its complement
@@ -157,9 +165,20 @@ void gm2_univibe_design(const gm2_rate_words *rate, gm2_univibe_design_subtype s
   config->coef[GM2_UNIVIBE_CORE_DEPTH] = depth_word;
   config->raw[GM2_UNIVIBE_CORE_DEPTH] = depth;
 
-  /* P:0x093565: Phase Reverse flips the wet word's sign. */
-  config->coef[GM2_UNIVIBE_CORE_WET] =
-      phase_reverse != 0 ? -UNIVIBE_DESIGN_WET_WEIGHT : UNIVIBE_DESIGN_WET_WEIGHT;
+  /* P:0x093565: the notch's pair, the first word on half the Mix value and the
+   * second on what is left of 100. Phase Reverse flips the first one in the left
+   * output alone, so the second and fourth words keep their sign. */
+  const int mix = gm2_clamp_raw(raw->mix, MIX_MIN, MIX_MAX);
+  const int32_t staged_up =
+      gm2_swf_to_q23(gm2_swf_div(gm2_swf_mul(gm2_swf_from_int(mix), k_cent), gm2_swf_two));
+  const int32_t staged_down =
+      gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(100 - (mix >> 1)), k_cent));
+  const int32_t wet = univibe_mix_weight(staged_up);
+  const int32_t dry = univibe_mix_weight(staged_down);
+  config->coef[GM2_UNIVIBE_CORE_WET] = phase_reverse != 0 ? -wet : wet;
+  config->coef[GM2_UNIVIBE_CORE_MIX] = dry;
+  config->coef[GM2_UNIVIBE_CORE_MIX + 1u] = wet;
+  config->coef[GM2_UNIVIBE_CORE_MIX + 2u] = dry;
 
   /* P:0x09349C: the two speeds' steps and the one Select picks. */
   const int32_t step_1 = univibe_speed_step(rate, speed_1, tempo_1, raw->beat_ms);
