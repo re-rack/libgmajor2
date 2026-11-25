@@ -76,7 +76,7 @@ through the library and needs no emulator.
 | `src/gm2_tables.c`, `src/gm2_tables.h` | Firmware lookup tables word for word, and the log2/exp2/decay and waveform readers |
 | `src/gm2_dsp_math.h` | DSP56300 24/48/56-bit arithmetic primitives, header-only and inline |
 | `src/gm2_swf.c`, `src/gm2_swf.h` | Native software-float arithmetic and transcendental helpers, plus the dB and frequency unit maps |
-| `src/gm2_mix.c`, `src/gm2_mix.h` | A Mix knob's wet and dry level words, the equal-power curve `P:0x08F763` stages at Out Level 0 dB |
+| `src/gm2_mix.c`, `src/gm2_mix.h` | A Mix and Out Level knob's wet and dry level words: the equal-power curve on the mix and the dB gain `P:0x08F763` stages |
 | `src/gm2_process.h` | Fixed block level words and the four process entry points every effect shares |
 | `src/gm2_job.c`, `src/gm2_job.h` | One-pole coefficient smoothing, parameter ramps and delay-tap crossfades |
 | `src/gm2_biquad.h` | The firmware's double-precision biquad step and state |
@@ -246,17 +246,35 @@ below its input gain:
 
 | Block | UI object | Activation | S | Destination | Input / wet / dry |
 |---|---|---|---|---|---|
-| Gate & EQ | `X:0x0987A4` | `P:0x09038B` | UI+6 | `Y:0x394` | `0x7FFFFF` / `0x7FFFFE` / 0 |
-| Compressor | `X:0x098F45` | `P:0x094C7C` | UI+6 | `Y:0x578` | `0x7FFFFF` / `0x7FFFFE` / 0 |
-| Tremolo/Panner | `X:0x0988CE` | `P:0x09172F` | UI+36 | `Y:0x3C1` | `0x7FFFFF` / `0x7FFFFE` / 0 at Out Level 0 dB |
-| Wahs | `X:0x0989B4` | `P:0x09233B` | UI+60 | `Y:0x419` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 always: `P:0x093565` pins the mix word, and the Mix knob sets `Y:0x487..0x48A` instead |
-| Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB, or `0x7FFFFE` / 0 for the Through-Zero Flangers and Vibrato, whose tables have no Mix entry and whose callback pins the word |
-| Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
+| Gate & EQ | `X:0x0987A4` | `P:0x09038B` | UI+6 | `Y:0x394` | `0x7FFFFF` / `0x7FFFFE` / 0, no Out Level |
+| Compressor | `X:0x098F45` | `P:0x094C7C` | UI+6 | `Y:0x578` | `0x7FFFFF` / `0x7FFFFE` / 0, no Out Level |
+| Tremolo/Panner | `X:0x0988CE` | `P:0x09172F` | UI+36 | `Y:0x3C1` | `0x7FFFFF` / `0x7FFFFE` / 0, scaled by Out Level |
+| Wahs | `X:0x0989B4` | `P:0x09233B` | UI+60 | `Y:0x419` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level |
+| Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level |
+| Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level |
+| Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level |
+| Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0, scaled by Out Level: `P:0x093565` pins the mix word, and the Mix knob sets `Y:0x487..0x48A` instead |
+| Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level, or `0x7FFFFE` / 0 for the Through-Zero Flangers and Vibrato, whose tables have no Mix entry and whose callback pins the word |
+| Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level |
+| Reverb | `X:0x098FF4` | `P:0x095099`, `P:0x095BE1` | UI+63 | `Y:0x5DA` | `0x7FFFFF` / the Mix knob's pair, scaled by Out Level |
+
+**The Out Level words.** Every block with one reads the knob at `X:(UI)`, clamps it
+into its `-100..0` dB window through `P:0x0832CB`, maps it through `P:0x082DF1` and
+stores it at `S+6`, then runs the level code unless its gate word is set. The
+entry is descriptor index 14 on every block but the Pitch and Reverb objects,
+where it is 13:
+
+| Block | Out Level callback | Store | S | Gate word |
+|---|---|---|---|---|
+| Tremolo/Panner | `P:0x091A88` -> `P:0x091A1D` | UI+42 | UI+36 | UI+3, `0xFFFFFF` fresh |
+| Wahs | `P:0x092773` -> `P:0x0926E3` | UI+66 | UI+60 | UI+3, `0xFFFFFF` fresh |
+| Resonance filters | `P:0x092205` -> `P:0x0921A1` | UI+60 | UI+54 | UI+3, `0xFFFFFF` fresh |
+| Pitch | `P:0x091294` -> `P:0x0912B5` | UI+86 | UI+80 | none: the wrapper reruns `P:0x08F763` itself |
+| Phasers | `P:0x092FE2` -> `P:0x092F63` | UI+42 | UI+36 | UI+3, `0xFFFFFF` fresh |
+| Univibes | `P:0x09365F` -> `P:0x0935E6` | UI+42 | UI+36 | UI+3, `0xFFFFFF` fresh |
+| Choruses / Flangers / Vibrato | `P:0x0940E0` -> `P:0x093FA1` | UI+141 | UI+135 | UI+4, 0 fresh |
+| Delays | `P:0x094B81` -> `P:0x094ABF` | UI+69 | UI+63 | none; the callback reruns the output matrix `P:0x094643` |
+| Reverb | `P:0x095BE1` -> `P:0x095AF9` | `X:0x099039` | `X:0x099033` | UI+3, 0 fresh |
 
 **Who fills the mix word.** The Gate & EQ and compressor activations set
 `S+4..S+7` to `0x7FFFFF`. The Tremolo/Panner object fixes its mix at `0x7FFFFF`.
@@ -269,21 +287,28 @@ the matrix that scales by it, whichever order the Mix and the Width, Pan or Dela
 knobs turn in; the Pitch object from Mix (index 12), whose callback `P:0x091287`
 restages the pair through `P:0x08F763`; and the Reverb object from Mix (index 12),
 in the activation `P:0x095099` itself and in the callback `P:0x095BE8`, both of
-which recompute `X:(S+7)` and restage the trio. The Reverb's subtype banks are
-what a preset load leaves in the out level and mix words, so each of its four
-algorithms starts at Mix 20, 25, 25 or 16 %.
+which recompute `X:(S+7)` and restage the trio. The Out Level word comes from
+index 13 through `P:0x095BE1` -> `P:0x095AF9`, which reads the knob at `X:(UI)`
+and stores `X:0x099039` before rerunning the level code on `X:0x099033`. The
+Reverb's subtype banks are what a preset load leaves in the out level and mix
+words, so each of its four algorithms starts at Mix 20, 25, 25 or 16 %.
 
 **The filters' gate word.** Both filter callbacks store the mix word at `X:(UI+67)`
 (wahs) or `X:(UI+61)` (resonance filters) and then run the level code `P:0x08F763`
 on the struct at UI+60 or UI+54, but only while the block's gate word `X:(UI+3)` is
-clear. Neither activation pass writes that word and it holds `0xFFFFFF` where a
-fresh object leaves it, as on the Tremolo/Panner, phaser and univibe objects too,
-whereas the Pitch, Delay and Reverb objects hold 0 and the Modulation one 1. So on
-the device a Mix turn stages the new value without ever staging its pair. The
-recorders reproduce what the turn should do: before activating, they clear the
-word on the phasers and univibes, whose own callbacks then run the level code, and
-for the two filter objects they run it themselves, on the struct and the value the
-callback hands it, and let its record publish onto `Y:0x419` / `Y:0x3EE`.
+clear; every Out Level callback tests the same word, `X:(UI+3)` or the Modulation
+object's `X:(UI+4)`, and skips the level code the same way. Neither activation
+pass writes that word and it holds `0xFFFFFF` where a fresh object leaves it, as
+on the Tremolo/Panner, phaser and univibe objects too, whereas the Pitch, Delay
+and Reverb objects hold 0 and the Modulation one 1. So on the device a Mix or Out
+Level turn stages the new value without ever staging its pair, except on the
+Pitch object, whose wrapper reruns the level code itself, and the Delay object,
+whose callback reruns the output matrix. The recorders reproduce what the turn
+should do: before activating, they clear the word on the phasers and univibes,
+whose own callbacks then run the level code, and for the two filter objects and
+the Tremolo/Panner they run it themselves, on the struct and the value the
+callback hands it, and let its record publish onto `Y:0x419` / `Y:0x3EE` /
+`Y:0x3C1`.
 
 **Blocks with no Mix of their own.** The Whammy's descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
@@ -295,9 +320,9 @@ and then runs `P:0x08F763`. The entry is a Dummy on the Through-Zero Flangers
 `0x7FFFFF` whatever the bank holds, so `gm2_moddelay_design()` passes 100 % for
 those three. The univibe objects carry a Mix knob that never reaches this pair:
 their callback `P:0x093565` pins the mix word at `0x7FFFFF` and stages the output
-weights `Y:0x487..0x48A` from the knob instead, and their first activation leaves
-the out level at 0, which is why the pair is `0x7FFFFF` / `0x7FFFFE` / 0 whatever
-Mix reads.
+weights `Y:0x487..0x48A` from the knob instead; their level pair stays
+`0x7FFFFF` / `0x7FFFFE` / 0 whatever Mix reads, and only the Out Level turn scales
+it.
 
 **The curve.** `gm2_mix_words()` (`src/gm2_mix.c`) is that curve:
 `to_q23(from_int(mix) * 0.01)` into `sin(word * pi/2)` twice, once for each half,
@@ -316,8 +341,8 @@ two blocks that keep their struct at UI+6; the other recorders read the staged
 words after the activation and let the block's own level job settle the live ones
 (the Reverb's payload is `X:0x099040`, delivering `Y:0x5DA`). The checker requires
 both to match the words the effect's own knobs fix: each effect's test adapter
-names its input word and its settled pair, so a Mix knob's words come out of that
-effect's setup rather than a library-wide constant.
+names its input word and its settled pair, so a Mix or Out Level knob's words come
+out of that effect's setup rather than a library-wide constant.
 
 ### Instruction semantics
 
@@ -887,6 +912,10 @@ Updaters (`gm2_delay_design.c`):
   `d_hi = macr(0.5 + 0.5*c_hi)` and `d_lo = macr(0.5 - 0.5*c_lo)` into
   `X+12..15`, and sets `X+16..19` to `{0xF79C46, 0x3BCE23, 0x802027, 0x7FEFEC}`
   for Dynamic and a copy of `X+12..15` otherwise.
+- `P:0x094ABF` (index 14) stores the Out Level gain at `X+69` and reruns
+  `P:0x094643`, so `X+8..11` follow it: the delays are the one block whose Out
+  Level turn rebuilds words that depend on the order of turns, and the recorder
+  reruns that matrix routine as it reruns the tempo path.
 - `P:0x094735` stages the tap offsets, and its A picks the path: the raw Delay
   of every Dly and Offset callback arrives with A = 0, the tempo path of the
   activation and a subtype selection with A set. The tempo path reads the clamped
@@ -929,7 +958,7 @@ initialized at boot (`P:0x0951AD`) from `X:0x0992EC..0x0992EF` (`X:0x09A2E4`,
 | Circular buffer | `Y:0x0A0000..0x0A7FFF` (32,768 words, `m7 = m5 = 0x7FFF`); write pointer `X:0x37D` starts at `0x0A7FFF` and increments by `+1` each frame modulo `0x8000` |
 | State (`X:0x37D` +) | `+0` write pointer; `+1..42` circular buffer tap offset deltas; `+43` pre-delay feedback sample; `+44..45` tank output sums A and B; `+46..47` left and right early biquad outputs; `+48` input LP state; `+49..62` seven tank damping filter state pairs; `+63..76` tank feedback matrix signs; `+77..79` and `+88..90` left/right early comb states; `+80..87` and `+91..98` left/right early biquad states; `+99..105` seven tank primary tap samples; `+106..113` and `+116..123` left/right early tap weights; `+114..115` and `+124..125` left/right early biquad `a0` words |
 | Staged and live words | 80 words staged at `X:0x098F64..0x098FB3` (`S+0..79`), published to `Y:0x589..0x5D9` (`Y+14..62` and `Y+64..94`, with `Y+63` unused zero) by six smoothing jobs `X:0x098FDC..0x098FF3` (`P:0x0001FD` on `S+0..48`, `S+49..51`, `S+52..54` and `S+75..79`; `P:0x00026F` on `S+55..64` and `S+65..74`, all snap 1, step `0x008371`) |
-| Input, wet, dry | `Y:0x5DA..0x5DC`, staged at `X:0x099046..0x099048` by `P:0x08F763` from `UI+63` (`X:0x099033`); the Mix parameter (index 12, callback `P:0x095BE8`) sets `X:(S+7)`, the equal-power mix word; initial activation (`UI+1 = 1`) zeroes `UI+69` so `P:0x095BE1` stages the 0 dB `OutLev` word `0x7FFFFE` |
+| Input, wet, dry | `Y:0x5DA..0x5DC`, staged at `X:0x099046..0x099048` by `P:0x08F763` from `UI+63` (`X:0x099033`); the Mix parameter (index 12, callback `P:0x095BE8`) sets `X:(S+7)`, the equal-power mix word, and the Out Level parameter (index 13, callback `P:0x095BE1`) sets `X:(S+6)`, its dB gain, `0x7FFFFE` at 0 dB |
 | UI object | `X:0x098FF4`; dispatcher `P:0x094FC2` (message 13 is a no-op), activation `P:0x095099`, init `P:0x0951AD`, rate update `P:0x095186`, descriptor record `P:0x086465`, table `P:0x086375` |
 
 ### Parameters and factory subtype banks
@@ -953,8 +982,8 @@ and one word no page shows.
 | 12 | Mix | `0..100` | % (descriptor default `100`) | `20` | `25` | `25` | `16` |
 | 13 | OutLev | `-100..0` | dB | `0` | `0` | `0` | `0` |
 
-The library runs every Reverb at Out Level 0 dB and lets its Mix knob set the
-pair, so each fixture's Mix default is its bank's word 11.
+The library takes the Reverb's Mix and Out Level as knobs, so each fixture's Mix
+default is its bank's word 11 and its Out Level default the bank's word 12.
 
 ### Kernel and setup
 
@@ -1072,7 +1101,7 @@ index 4 and reruns the step.
 | Audio continuation | `P:0x00107F..0x001116` (helpers `P:0x001061`, `P:0x001072`), task record `Y:0x45C` |
 | State (`X:0x2DE..0x2EF`, `Y:0x483..0x486`) | `x[0..1]` stereo input/output scratch; `x[2]` slewed LFO speed; `x[3]` LFO phase `[0, 0x7FFFFF]`; `x[4]` lamp brightness one-pole state; `x[5..8]` four all-pass states; `x[9]` fourth all-pass output; `x[10..17]` four `{coef_curr, coef_step}` pairs; `y483[0..3]` per-frame stepped all-pass coefficients |
 | Staged and live words | 35 words staged at `X:0x098B08..0x098B2A` (`S+0..34`), published to `Y:0x46B..0x496` by eight jobs `X:0x098B5A..0x098B79` (`P:0x0001B9` on `S+0..1`, `P:0x0001FD` on `S+2..34`); `Y:0x46C` (target LFO speed) and `Y:0x473..0x476` (waveshaper polynomial `{0, 0, 0x0CCCCD, 0}` for Vintage subtype 11, `{0, 0x200000, -0x100000, 0}` for Modern subtype 12) are written directly to Y |
-| Input, wet, dry | `Y:0x497..0x499`, staged at `X:0x098BB1..0x098BB3` by `P:0x08F763` from `UI+36` (`X:0x098B9E`); always `0x7FFFFF` / `0x7FFFFE` / 0 at Out Level 0 dB, the Mix knob reaching the weights below instead |
+| Input, wet, dry | `Y:0x497..0x499`, staged at `X:0x098BB1..0x098BB3` by `P:0x08F763` from `UI+36` (`X:0x098B9E`); `0x7FFFFF` / `0x7FFFFE` / 0 times the Out Level gain, the Mix knob reaching the weights below instead |
 | Output weights | `Y:0x487..0x48A`, the all-pass output's weight in the left channel, the left input's, then the right channel's two; `P:0x0010F5..0x001109` weights the stage and each channel's gained input with them, shifts down two, and soft-clips |
 | UI object and tables | `X:0x098B7A`; dispatcher `P:0x09301F`, activation `P:0x09311B`, sub-record `P:0x085815`, Vintage Univibe table `P:0x085635`, Modern Univibe table `P:0x085725`, all-pass table `X:0x098BB8..0x098BC7` (`gm2_univibe_ap_table`), bipolar sine table `Y:0x0100..0x01FF` (`gm2_sine_table`, generated at boot by `P:0x083A02`) |
 
