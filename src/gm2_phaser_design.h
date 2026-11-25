@@ -8,6 +8,7 @@
  *   P:0x092EDA  Speed, Tempo: the phase step
  *   P:0x092E54  the tap weights, by subtype
  *   P:0x092F2B  Phase Reverse: the right output's gain
+ *   P:0x08F763  Mix: the wet and dry words the output stage multiplies by
  */
 #ifndef GM2_PHASER_DESIGN_H
 #define GM2_PHASER_DESIGN_H
@@ -28,6 +29,7 @@ typedef struct {
   int feedback;      /* -100..100 % */
   int range;         /* 0 Low, 1 High */
   int phase_reverse; /* 0 Off, 1 On */
+  int mix;           /* 0..100 % wet */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_phaser_design_raw;
 

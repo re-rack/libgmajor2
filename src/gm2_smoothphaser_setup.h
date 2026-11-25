@@ -1,5 +1,5 @@
-/* Speed, Depth, Tempo, Feedback, Range and Phase Reverse to the Smooth Phaser's
- * words: the Modulation block's descriptor table P:0x08553D. */
+/* Speed, Depth, Tempo, Feedback, Range, Phase Reverse and Mix to the Smooth
+ * Phaser's words: the Modulation block's descriptor table P:0x08553D. */
 #ifndef GM2_SMOOTHPHASER_SETUP_H
 #define GM2_SMOOTHPHASER_SETUP_H
 
@@ -13,6 +13,7 @@ typedef struct {
   int feedback;      /* -100..100 % */
   int range;         /* 0 Low, 1 High */
   int phase_reverse; /* 0 Off, 1 On */
+  int mix;           /* 0..100 % wet */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_smoothphaser_setup_raw;
 

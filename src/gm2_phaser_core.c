@@ -19,7 +19,7 @@
  *   right   = three all-pass sections on input, g_low g_high pole[2]
  *   feedback= mono + the left chain's first and last taps
  *   wet_L   = the left taps;  wet_R = the right gain times the right taps
- *   out     = wet * wet gain + dry * dry gain, rounded
+ *   out[c]  = wet word * wet_c + dry word * in[c], rounded once
  *
  * The 0.01 word 0x0147AE at Y:0x043B and Y:0x043C is what the left branch's
  * section words subtract and the right branch's do not, which is the stereo phase
@@ -103,6 +103,8 @@ static void phaser_jobs(gm2_phaser_core_state *state, const gm2_phaser_core_conf
   for (unsigned i = GM2_PHASER_CORE_RAMPS; i < GM2_PHASER_CORE_COEFS; i++) {
     state->coef[i] = gm2_job_smooth(state->coef[i], config->coef[i], GM2_JOB_SMOOTH_STEP);
   }
+  state->wet = gm2_job_smooth(state->wet, config->wet, GM2_JOB_SMOOTH_STEP);
+  state->dry = gm2_job_smooth(state->dry, config->dry, GM2_JOB_SMOOTH_STEP);
 }
 
 /* One stereo frame, P:0x000FA8..0x001060, then the chunk's job run once its last
@@ -114,8 +116,9 @@ void gm2_phaser_core_process_frame(gm2_phaser_core_state *state,
                                    const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
   const int32_t *c = state->coef;
 
-  const int64_t sum = gm2_mpyr(GM2_LEVEL_INPUT, gm2_s24((uint32_t)in[0])) +
-                      gm2_mpyr(gm2_s24((uint32_t)in[1]), GM2_LEVEL_INPUT);
+  const int32_t in_l = gm2_s24((uint32_t)in[0]);
+  const int32_t in_r = gm2_s24((uint32_t)in[1]);
+  const int64_t sum = gm2_mpyr(GM2_LEVEL_INPUT, in_l) + gm2_mpyr(in_r, GM2_LEVEL_INPUT);
   const int32_t mono = gm2_store24(gm2_asr_n(sum, 1));
 
   /* The phase wraps to zero, and the sine table is read at it. */
@@ -225,9 +228,13 @@ void gm2_phaser_core_process_frame(gm2_phaser_core_state *state,
   state->feedback = gm2_store24((int64_t)mono * 0x1000000 + left);
   const int32_t wet_l = gm2_store24(2 * (int64_t)gm2_store24(left) * PHASER_TAP_GAIN);
 
-  /* The wet word; the zero dry term's MACR still rounds. */
-  out[0] = gm2_store24(gm2_mpyr(GM2_LEVEL_WET, wet_l));
-  out[1] = gm2_store24(gm2_mpyr(wet_r, GM2_LEVEL_WET));
+  /* Each channel: the wet word on its chain and the dry word on the frame's input,
+   * rounded together once. Every operand is a 24-bit word, so each doubled product
+   * is at most 2^47 and their sum stays inside the 56-bit accumulator. */
+  const int32_t wet = state->wet;
+  const int32_t dry = state->dry;
+  out[0] = gm2_store24(gm2_round24(2 * (int64_t)wet * wet_l + 2 * (int64_t)in_l * dry));
+  out[1] = gm2_store24(gm2_round24(2 * (int64_t)wet * wet_r + 2 * (int64_t)in_r * dry));
 
   if (++state->chunk_pos < GM2_CHUNK_FRAMES) {
     return;
@@ -262,6 +269,8 @@ void gm2_phaser_core_state_init(gm2_phaser_core_state *state,
   for (unsigned i = 0; i < GM2_PHASER_CORE_RAWS; i++) {
     state->raw[i] = config->raw[i];
   }
+  state->wet = config->wet;
+  state->dry = config->dry;
   state->chunk_pos = 0;
 }
 

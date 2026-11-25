@@ -252,7 +252,7 @@ below its input gain:
 | Wahs | `X:0x0989B4` | `P:0x09233B` | UI+60 | `Y:0x419` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Resonance filters | `X:0x098948` | `P:0x091BB1` | UI+54 | `Y:0x3EE` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Pitch | `X:0x0987EA` | `P:0x090937` | UI+80 | `Y:0x3A0` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
-| Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
+| Phasers | `X:0x098A8D` | `P:0x092B92`, `P:0x092F63` | UI+36 | `Y:0x459` | `0x7FFFFF` / the Mix knob's pair at Out Level 0 dB |
 | Univibes | `X:0x098B7A` | `P:0x09311B`, `P:0x0935E6` | UI+36 | `Y:0x497` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Choruses / Flangers / Vibrato | `X:0x098C7F` | `P:0x0938BE`, `P:0x093FA1` | UI+135 | `Y:0x4F6` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
 | Delays | `X:0x098E7D` | `P:0x09423F` | UI+63 | `Y:0x55A` | `0x7FFFFF` / `0x7FFFFE` / 0 at Mix 100 %, Out Level 0 dB |
@@ -260,7 +260,8 @@ below its input gain:
 
 The Gate & EQ and compressor activations set `S+4..S+7` to `0x7FFFFF`. The
 Tremolo/Panner object fixes its mix at `0x7FFFFF`; the two filter objects set it
-from their Mix parameter (index 13) times 0.01, and the Pitch object from its Mix
+from their Mix parameter (index 13) times 0.01, as do the phasers through the
+callback `P:0x092FEA` → `P:0x092F41`, and the Pitch object from its Mix
 parameter (index 12), whose callback `P:0x091287` restages the pair through
 `P:0x08F763`. The Whammy has no Mix of its own: its descriptors leave the word
 blank, and the Mix callback `P:0x091287` reaches `P:0x0912C7`, which pins the mix
@@ -986,7 +987,7 @@ subtypes 11 and 12 (Vintage Univibe and Modern Univibe) run `P:0x09301F`
 | Audio continuation | `P:0x000FA8..0x001060`, task record `Y:0x420` |
 | State (`X:0x2C2..0x2DD`) | `x[0..2]` feedback pre-clip filter states; `x[3]` feedback post-clip LP state; `x[4..6]` input all-pass pair; `x[7..15]` left 12-stage all-pass chain (4-stage tap `x[9]`, 12-stage tap `x[15]`); `x[16..22]` right 12-stage all-pass chain (4-stage tap `x[18]`, 12-stage tap `x[22]`); `x[23]` stage-1 to right-branch handoff; `x[24]` mono input sum; `x[25]` filtered feedback; `x[26]` feedback sum; `x[27]` LFO phase `[0, 0x7FFFFF]` |
 | Staged and live words | 22 words staged at `X:0x098A1F..0x098A34` (`S+0..21`), published to `Y:0x433..0x458` by nine jobs `X:0x098A69..0x098A8C` (`P:0x0001B9` linear smoother armed via `P:0x09605F` on `S+0` and `S+1`, `P:0x0001FD` one-pole smoother on `S+2..21`, snap 1, step `0x008371`); `Y:0x43B..0x441` (`0x0147AE`, `0x0147AE`, `0x7D9168`, `0x7B020C`, `0x972B02`, `0x5DD2F2`, `0x74FDF4`) and `Y:0x457` (`0x7FFFFF`) are fixed |
-| Input, wet, dry | `Y:0x459..0x45B`, staged at `X:0x098AC4..0x098AC6` by `P:0x08F763` from `UI+36` (`X:0x098AB1`) |
+| Input, wet, dry | `Y:0x459..0x45B`, staged at `X:0x098AC4..0x098AC6` by `P:0x08F763` from `UI+36` (`X:0x098AB1`). The output stage `P:0x001057..0x00105C` takes the task record `Y:0x0420` as `{wet and dry pair at 0x045A in Y, input buffer, output buffer}`, then runs `mpy wet,chain` and `macr dry,input` on each channel, so the dry operand is the frame's input sample, not the mono sum |
 | UI object and tables | `X:0x098A8D`; dispatcher `P:0x092AA9`, activation `P:0x092B92`, sub-record `P:0x08562D`, Vintage Phaser table `P:0x08544D`, Smooth Phaser table `P:0x08553D`, Range table `X:0x098ACA..0x098AED` (`gm2_phaser_range_table`) |
 
 Updaters (`gm2_phaser_design.c`):
@@ -1347,7 +1348,7 @@ Which words a knob turn moves, briefly:
 | Wahs | the staged frequency and LFO step glide |
 | Resonance filters | the twenty coefficient words glide as one group |
 | Pitch | the ratio pair (step `0x020DC6`), the feedback pair and the pan/level quad glide; a Mix turn restages the wet and dry pair, which glides on the level record with them |
-| Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD` |
+| Phasers | the LFO step and depth on `P:0x0001B9`, the other eighteen words on `P:0x0001FD`; a Mix turn restages the wet and dry pair, which glides on the level record with them |
 | Univibes | Depth on `P:0x0001B9`, the other seventeen words on `P:0x0001FD` |
 | Choruses, Flangers, Vibrato | five jobs glide thirty words and six tap crossfaders move the read taps |
 | Delays | the twenty matrix and filter words glide, and a moved tap offset starts a crossfade |

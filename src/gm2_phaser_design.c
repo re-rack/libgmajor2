@@ -18,11 +18,16 @@
  *   P:0x092E54  the tap weights: the four-stage taps 0x7FFFF8 for Vintage
  *               (subtype 9), the twelve-stage taps for Smooth (subtype 10)
  *   P:0x092F2B  right gain = 0x7FFFFF, or 0x800001 with the phase reversed
+ *
+ * Mix is not one of them: the level code P:0x08F763 stages the pair the output
+ * stage multiplies each chain's output and the frame's input by, at Out Level
+ * 0 dB.
  */
 #include "gm2_phaser_design.h"
 
 #include "gm2_dsp_math.h"
 #include "gm2_lfo.h"
+#include "gm2_mix.h"
 #include "gm2_swf.h"
 #include "gm2_tables.h"
 
@@ -121,4 +126,5 @@ void gm2_phaser_design(const gm2_rate_words *rate, gm2_phaser_design_subtype sub
   config->raw[GM2_PHASER_CORE_RAW_DEPTH] = depth;
   config->raw[GM2_PHASER_CORE_RAW_TEMPO] = tempo;
   config->note = (unsigned)tempo;
+  gm2_mix_words(raw->mix, &config->wet, &config->dry);
 }

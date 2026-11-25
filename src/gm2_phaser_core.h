@@ -10,10 +10,11 @@
  * lower. Each output is a weighted pair of taps of its chain, after its first
  * section and at its end: the Vintage Phaser weights the first, the Smooth Phaser
  * the second. The mono word plus the left taps is the next frame's feedback,
- * through a damping filter, a clip and a low-pass.
+ * through a damping filter, a clip and a low-pass. The Mix knob's wet and dry
+ * words turn each chain's output and the frame's input into the two channels.
  *
- * The step and the depth ride ramps and the other eighteen words a one-pole job
- * (gm2_job.h).
+ * The step and the depth ride ramps, and the other eighteen words and the Mix
+ * pair a one-pole job (gm2_job.h).
  */
 #ifndef GM2_PHASER_CORE_H
 #define GM2_PHASER_CORE_H
@@ -54,6 +55,8 @@ enum {
 
 typedef struct {
   int32_t coef[GM2_PHASER_CORE_COEFS]; /* the words the updaters stage */
+  int32_t wet; /* X:0x098AC5: the Mix knob's wet word */
+  int32_t dry; /* X:0x098AC6: its dry word */
   int32_t raw[GM2_PHASER_CORE_RAWS]; /* the raw values of the knobs that arm a ramp */
   unsigned note; /* the Tempo value the step follows, 0 for Speed */
 } gm2_phaser_core_config;
@@ -67,6 +70,8 @@ typedef struct {
   int32_t feedback; /* X:0x02DC: the mono word plus the left taps */
   int32_t lfo_phase; /* X:0x02DD */
   int32_t coef[GM2_PHASER_CORE_COEFS]; /* the live words, gliding to the config's */
+  int32_t wet; /* Y:0x045A: the live pair, Y:0x045B the dry one */
+  int32_t dry;
   int32_t ramp_step[GM2_PHASER_CORE_RAMPS]; /* each ramp's step, armed by a knob turn */
   int32_t raw[GM2_PHASER_CORE_RAWS]; /* the config's raw values at the last job run */
   unsigned chunk_pos; /* frame within the chunk */
