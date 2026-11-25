@@ -35,7 +35,7 @@ Default build uses SSE2, `CFLAGS='-O2 -march=x86-64-v3'` builds the AVX2 convert
 ## Testing and Benchmarks
 
 ```sh
-git clone git@github.com:tapir/priv-gmajor.git
+git clone git@github.com:tapir/libgmajor2.git
 make check                # test output of every effect against its recorded hardware output
 make benchmark-all-fx     # ns per stereo frame for each effect
 ```
