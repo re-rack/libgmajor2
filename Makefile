@@ -352,9 +352,11 @@ coverage:
 	@cd build/coverage && gcov -b src/*.gcda test_convert_*-gm2_convert.gcda 2>/dev/null | \
 	  awk -v prefix='$(CURDIR)/src/' '/^File / { path = substr($$2, 2, length($$2) - 2); next } \
 	    /^Lines executed:/ { lines = substr($$0, 16); wanted = (index(path, prefix) == 1); next } \
-	    /^Branches executed:/ { if (wanted) { name = path; sub(/.*\//, "", name); \
+	    /^Branches executed:/ { branches = substr($$0, 19); next } \
+	    /^No branches/ { branches = "none"; next } \
+	    /^Calls executed:|^No calls/ { if (wanted) { name = path; sub(/.*\//, "", name); \
 	    if (!(name in seen)) { seen[name] = 1; \
-	    printf "%-16s lines %-18s branches %s\n", name, lines, substr($$0, 19) } } \
+	    printf "%-16s lines %-18s branches %s\n", name, lines, branches } } \
 	    wanted = 0; next }'
 
 clean:

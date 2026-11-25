@@ -11,9 +11,10 @@
 #include "gm2_base.h"
 #include "gm2_convert.h"
 
-/* The input, wet and dry words every block's level code stages at Mix 100 % and
- * Out Level 0 dB. A kernel keeps their multiplies: each word sits at or just
- * below 1.0, and its rounding can move a sample by one LSB. */
+/* The input word every block's level code stages, and the wet word of a full mix at
+ * Out Level 0 dB, which an effect without the device's Mix knob keeps. A kernel
+ * keeps their multiplies: each word sits at or just below 1.0, and its rounding
+ * can move a sample by one LSB. */
 #define GM2_LEVEL_INPUT 0x7FFFFF
 #define GM2_LEVEL_WET 0x7FFFFE
 
