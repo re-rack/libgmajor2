@@ -14,4 +14,7 @@
 /* The wet and dry words of `raw` percent, 0..100. */
 void gm2_mix_words(int raw, int32_t *wet, int32_t *dry);
 
+/* P:0x08F78D: the 1.23 sine half a staged mix word selects. */
+int32_t gm2_mix_curve(int32_t word);
+
 #endif /* GM2_MIX_H */
