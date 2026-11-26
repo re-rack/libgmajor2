@@ -1,5 +1,5 @@
-/* Speed, Width and Tempo to the Panner's words: the Filter block's updaters for
- * subtype 6.
+/* Speed, Width, Tempo and Out Level to the Panner's words: the Filter block's
+ * updaters for subtype 6.
  *
  *   P:0x0918CE  Speed, Tempo  the step
  *   P:0x091999  Width         the depth word
@@ -7,6 +7,7 @@
  *                             behind
  *   P:0x091876  (subtype)     the Hi-Cut open
  *   P:0x0918AF  (none)        the waveform smoother
+ *   P:0x08F763  Out Level     the wet word, a full mix's scaled by its gain
  */
 #ifndef GM2_PANNER_SETUP_H
 #define GM2_PANNER_SETUP_H
@@ -18,8 +19,8 @@ typedef struct {
   int speed;      /* 0..208: 0.050..19.95 Hz, 80 steps a decade */
   int width;      /* 0..100 % */
   int tempo;      /* 0..16: Ignore, then the note values 1 .. 1/32 triplet */
+  int out_level;  /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
-  int out_level; /* -100..0 dB */
 } gm2_panner_setup_raw;
 
 int gm2_panner_setup_config(const gm2_context *context, const gm2_panner_setup_raw *raw,

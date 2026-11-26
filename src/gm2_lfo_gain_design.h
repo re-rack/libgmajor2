@@ -4,6 +4,7 @@
  *   P:0x0918CE  Speed, Tempo   the phase step
  *   P:0x091999  Depth, Width   the depth word
  *   P:0x0918AF  (none)         the waveform smoother's pole pair
+ *   P:0x08F763  Out Level      the wet word, a full mix's scaled by its gain
  */
 #ifndef GM2_LFO_GAIN_DESIGN_H
 #define GM2_LFO_GAIN_DESIGN_H

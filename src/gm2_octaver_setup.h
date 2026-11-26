@@ -1,5 +1,5 @@
-/* Direction, Range and Mix to the Octaver's words: the Pitch block's updaters
- * for subtype 2 (gm2_pitch_design.h), descriptor table P:0x0848A1.
+/* Direction, Range, Mix and Out Level to the Octaver's words: the Pitch block's
+ * updaters for subtype 2 (gm2_pitch_design.h), descriptor table P:0x0848A1.
  */
 #ifndef GM2_OCTAVER_SETUP_H
 #define GM2_OCTAVER_SETUP_H

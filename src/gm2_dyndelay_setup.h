@@ -1,5 +1,6 @@
-/* Dynamic Delay parameter setup, Delay block subtype 1: Delay, Tempo, Feedback,
- * Feedback Hi-Cut, Feedback Lo-Cut, Offset, Sense, Damp, Release and Mix.
+/* Delay, Tempo, Feedback, Feedback Hi-Cut, Feedback Lo-Cut, Offset, Sense,
+ * Damp, Release, Mix and Out Level to the Dynamic Delay's words: the Delay
+ * block's updaters for subtype 1 (gm2_delay_design.h).
  */
 #ifndef GM2_DYNDELAY_SETUP_H
 #define GM2_DYNDELAY_SETUP_H
@@ -18,7 +19,7 @@ typedef struct {
   int damp;       /* 0..100 dB */
   int release;    /* 11..21: 20..1000 ms */
   int mix;        /* 0..100 % wet */
-  int out_level; /* -100..0 dB */
+  int out_level;  /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_dyndelay_setup_raw;
 

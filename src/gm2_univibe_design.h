@@ -7,6 +7,7 @@
  *   P:0x093565  Mix, Phase Reverse: the four words the output stage weights the
  *               stages and the channels' inputs with
  *   P:0x09349C  Speed 1, Speed 2, Tempo 1, Tempo 2, Select: the LFO speed's target
+ *   P:0x08F763  Out Level: the block's wet word, a full mix's scaled by its gain
  */
 #ifndef GM2_UNIVIBE_DESIGN_H
 #define GM2_UNIVIBE_DESIGN_H
@@ -30,7 +31,7 @@ typedef struct {
   int release;       /* 1..100: 0.05..5.0 s */
   int select;        /* 0 Speed 1 with Tempo 1, 1 Speed 2 with Tempo 2 */
   int phase_reverse; /* 0 Off, 1 On */
-  int mix;           /* 0..100 % */
+  int mix;           /* 0..100 % wet */
   int out_level;     /* -100..0 dB */
   double beat_ms;    /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_univibe_design_raw;

@@ -1,4 +1,4 @@
-/* Pitch, Direction and Range to the Whammy's words: the Pitch
+/* Pitch, Direction, Range and Out Level to the Whammy's words: the Pitch
  * block's updaters for subtype 1 (gm2_pitch_design.h), descriptor table
  * P:0x0847B1.
  */

@@ -111,7 +111,7 @@ Every module in `src/` follows one pattern, so that all effects read as one code
 - A state holds the kernel's own words, `coef[]` (the live words gliding to the config's), `ramp_step[]`, `raw[]` (the config's at the last job run), `chunk_pos` (the frame within the chunk) and `tick` (chunks since the last tick).
 - Every word in a config or a state is a signed 24-bit value, sign-extended in its `int32_t`; a setup never stores an unsigned 24-bit pattern. Only audio input is masked on reading, with `gm2_s24((uint32_t)in[channel])`.
 - Nothing is kept because the firmware keeps it: a scratch word is a local, a memory word that never changes is a constant, a staged copy of a config word does not exist, and a word no output depends on is not computed.
-- Raw fields are named after the knob in lower case with underscores (`hi_cut`, `pulse_width`, `feedback_1`), and their comment gives the range and the meaning, never a default.
+- Raw fields are named after the knob in lower case with underscores (`hi_cut`, `pulse_width`, `feedback_1`), and their comment gives the range and the meaning, never a default. They keep the device's knob order, then `mix`, `out_level` and last the host's `beat_ms`, and the first sentence of the setup header names every knob in that order.
 
 **Setup**
 

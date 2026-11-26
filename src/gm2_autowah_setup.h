@@ -1,10 +1,11 @@
-/* Speed, Tempo, Shape, Range and Mix to the Auto Wah's words: the Filter block's
- * updaters for subtype 2.
+/* Speed, Tempo, Shape, Range, Mix and Out Level to the Auto Wah's words: the
+ * Filter block's updaters for subtype 2.
  *
- *   P:0x092477  Shape  Y:0x414 = Shape
+ *   P:0x092477  Shape         Y:0x414 = Shape
  *   P:0x0924C1  Speed, Tempo  the LFO's staged phase step per chunk
- *   P:0x092527  Range  Y:0x40A = 2 for Low, 1 for High
- *   P:0x09277A  Mix    UI+67 = to_q23(Mix * 0.01), then P:0x08F763's pair
+ *   P:0x092527  Range         Y:0x40A = 2 for Low, 1 for High
+ *   P:0x09277A  Mix           UI+67 = to_q23(Mix * 0.01), then P:0x08F763's pair
+ *   P:0x08F763  Out Level     its gain on both words of that pair
  *
  * The Tempo branch stages the tempo rate's step and writes the nearest Speed step
  * back into the Speed parameter; the staged step the smoothing job follows is the
@@ -21,8 +22,8 @@ typedef struct {
   int tempo;      /* 0..16: Ignore, then the note values 1 .. 1/32 triplet */
   int shape;      /* 0 Triangle, 1 Sine */
   int range;      /* 0 Low, 1 High */
-  int mix;        /* 0..100 % */
-  int out_level; /* -100..0 dB */
+  int mix;        /* 0..100 % wet */
+  int out_level;  /* -100..0 dB */
   double beat_ms; /* the host's beat in ms, as gm2_lfo_beat() takes it */
 } gm2_autowah_setup_raw;
 

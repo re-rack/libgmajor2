@@ -44,7 +44,7 @@ typedef struct {
   int pitch;                           /* 0..100 % of the Whammy's range */
   int direction;                       /* 0 Down, 1 Up */
   int range;                           /* 1..2 octaves */
-  int mix;                             /* 0..100 %: the Whammy has none, it stays fully wet */
+  int mix;                             /* 0..100 % wet: the Whammy has none and stays fully wet */
   int out_level;                       /* -100..0 dB */
 } gm2_pitch_design_raw;
 
