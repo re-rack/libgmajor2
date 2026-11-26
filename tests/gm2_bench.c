@@ -71,6 +71,12 @@ static const bench_setting k_settings[] = {
 #define GM2_BENCH_ENTRY(name) {&gm2_effect_##name, k_##name, sizeof k_##name / sizeof k_##name[0]},
     GM2_EFFECTS(GM2_BENCH_ENTRY)
 #undef GM2_BENCH_ENTRY
+/* A de-popped variant runs at its effect's setting, with no turn: the cost it adds
+ * at rest. */
+#define GM2_BENCH_ALT_ENTRY(name, alt)                                                             \
+  {&gm2_effect_##alt, k_##name, sizeof k_##name / sizeof k_##name[0]},
+        GM2_ALT_EFFECTS(GM2_BENCH_ALT_ENTRY)
+#undef GM2_BENCH_ALT_ENTRY
 };
 
 static const bench_setting *bench_find(const char *name) {

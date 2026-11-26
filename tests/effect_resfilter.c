@@ -2,6 +2,7 @@
 #include "gm2_effect.h"
 #include "gm2_res_core.h"
 #include "gm2_resfilter.h"
+#include "gm2_resfilter_alt.h"
 #include "gm2_resfilter_setup.h"
 
 #define RESFILTER_KNOBS 5u
@@ -39,3 +40,5 @@ static void resfilter_mix(const gm2_resfilter_config *config, int32_t *wet, int3
 
 GM2_EFFECT_DEFINE_MIX(resfilter, resfilter, k_knobs, resfilter_raw, resfilter_words, resfilter_mix,
                       RESFILTER_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(resfilter_alt, resfilter_alt, k_knobs, resfilter_raw, resfilter_words,
+                      resfilter_mix, RESFILTER_SETUP_WORDS)

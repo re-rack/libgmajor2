@@ -42,4 +42,17 @@
   X(reverb_room)                                                                                   \
   X(reverb_plate)
 
+/* Every de-popped variant, as the fixture its effect checks against and its own
+ * gm2_effect_<name>, which shares that fixture's knob table and adapter file. */
+#define GM2_ALT_EFFECTS(X)                                                                         \
+  X(eq, eq_alt)                                                                                    \
+  X(resfilter, resfilter_alt)                                                                      \
+  X(pitch, pitch_alt)                                                                              \
+  X(ipitch, ipitch_alt)                                                                            \
+  X(revdelay, revdelay_alt)                                                                        \
+  X(reverb_spring, reverb_spring_alt)                                                              \
+  X(reverb_hall, reverb_hall_alt)                                                                  \
+  X(reverb_room, reverb_room_alt)                                                                  \
+  X(reverb_plate, reverb_plate_alt)
+
 #endif /* GM2_EFFECTS_H */

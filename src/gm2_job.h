@@ -62,6 +62,25 @@ static inline int32_t gm2_job_ramp(int32_t live, int32_t staged, int32_t step) {
   return gm2_store24(b);
 }
 
+/* A group glide, which no firmware record runs: the de-popped variants move a
+ * filter's words with it, so that every word covers the same share of its way
+ * per run and all of them land in the same run. The firmware's one-pole job lands
+ * each word on its own once its gap is under about 500, which for a moment
+ * leaves a filter whose words belong to no design. */
+typedef struct {
+  int32_t remain; /* the share of the way still to go, GM2_JOB_GROUP_WHOLE at the start */
+} gm2_job_group;
+
+#define GM2_JOB_GROUP_WHOLE (1 << 30)
+
+/* One run over `count` words: a change of `staged` since the last run starts the
+ * glide over from where `live` stands, then the share left shrinks as a one-pole
+ * job's gap does and every live word sits that share of its way from `from` to
+ * `staged`. `to` keeps the staged words the glide heads for. Returns 1 while the
+ * words move and 0 once they sit on `staged`. */
+int gm2_job_group_run(gm2_job_group *group, int32_t *live, int32_t *from, int32_t *to,
+                      const int32_t *staged, unsigned count);
+
 /* A tap crossfade record. Tap 1 is audible at rest. */
 typedef struct {
   int32_t step; /* 0 while settled, +-GM2_JOB_FADE_STEP while fading */

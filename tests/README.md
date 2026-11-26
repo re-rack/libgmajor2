@@ -74,6 +74,13 @@ fixture cannot agree with the library by construction.
   directory and builds a C and a C++ host from `gm2.h` and `libgm2.a` alone.
 - **Host additions:** the tempo rule, LFO alignment and the context have no
   firmware counterpart, so the `host` item checks them against their definitions.
+- **De-popped variants:** `gm2_X_alt` has no fixture of its own. The checker
+  runs it beside `gm2_X` on the generated input: equal from the start, then for
+  every knob a jump to its minimum and to its maximum, a 32-step sweep down, ten
+  fast turns and a return to its default, each followed by a settle and 8,192
+  frames that must be equal, the variant taking its buffers through all four entry
+  points in turn. A variant that never plays anything but its effect's output
+  fails too.
 
 ## Limits
 
@@ -82,6 +89,8 @@ fixture cannot agree with the library by construction.
 - Each fixture is one scripted run. Behaviour that needs a longer run, or a knob
   combination the script never reaches, is not covered.
 - Internal state is not compared, only outputs and setup words.
+- A de-popped variant is checked only once settled: whether its copy removes a
+  click is measured, not checked.
 - The control tick and job schedule are the port's fixed timing. The recorder
   uses the same schedule, so the fixtures check the arithmetic, not the device's
   real background timing.

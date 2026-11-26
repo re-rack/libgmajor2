@@ -9,6 +9,10 @@
  * a 501-chunk equal-power crossfade to the new reverse grain. A Delay or Tempo
  * turn runs P:0x094735, which re-anchors the timer target Y+27 to the current
  * count, so the grain period starts over.
+ *
+ * A tap's walk lasts two grain periods, since each splice resets the tap that is
+ * silent: past 41,196 frames (858 ms) at full gain it wraps and the tap reads the
+ * newest audio, a click its feedback then repeats.
  */
 #ifndef GM2_REVDELAY_H
 #define GM2_REVDELAY_H
@@ -47,5 +51,13 @@ void gm2_revdelay_process_interleaved(gm2_revdelay_state *state, const gm2_revde
 
 void gm2_revdelay_process_frame(gm2_revdelay_state *state, const gm2_revdelay_config *config,
                                 const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]);
+
+/* The same frame with `wrap_guard` set, which also ends the grain once the audible
+ * tap's walk is within a crossfade of the buffer's end, so that the walk cannot
+ * wrap while the tap has gain. The de-popped variant's own path runs this one
+ * (gm2_revdelay_alt.h). */
+void gm2_revdelay_advance(gm2_revdelay_state *state, const gm2_revdelay_config *config,
+                          int wrap_guard, const int32_t in[GM2_CHANNELS],
+                          int32_t out[GM2_CHANNELS]);
 
 #endif /* GM2_REVDELAY_H */

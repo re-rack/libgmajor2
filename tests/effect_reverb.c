@@ -5,6 +5,7 @@
 #include "gm2.h"
 #include "gm2_effect.h"
 #include "gm2_reverb.h"
+#include "gm2_reverb_alt.h"
 #include "gm2_reverb_setup.h"
 
 #define REVERB_SETUP_WORDS                                                                         \
@@ -73,9 +74,17 @@ static void reverb_words(const gm2_reverb_config *config, int32_t *words) {
 
 GM2_EFFECT_DEFINE_MIX(reverb_spring, reverb, k_spring_knobs, reverb_raw, reverb_words, reverb_mix,
                       REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_spring_alt, reverb_alt, k_spring_knobs, reverb_raw, reverb_words,
+                      reverb_mix, REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_hall, reverb, k_hall_knobs, reverb_raw, reverb_words, reverb_mix,
                       REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_hall_alt, reverb_alt, k_hall_knobs, reverb_raw, reverb_words,
+                      reverb_mix, REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_room, reverb, k_room_knobs, reverb_raw, reverb_words, reverb_mix,
                       REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_room_alt, reverb_alt, k_room_knobs, reverb_raw, reverb_words,
+                      reverb_mix, REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_plate, reverb, k_plate_knobs, reverb_raw, reverb_words, reverb_mix,
                       REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_plate_alt, reverb_alt, k_plate_knobs, reverb_raw, reverb_words,
+                      reverb_mix, REVERB_SETUP_WORDS)

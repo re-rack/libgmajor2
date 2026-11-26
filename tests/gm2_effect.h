@@ -410,4 +410,8 @@ static inline void gm2_effect_values(const gm2_effect *effect, const gm2_segment
 GM2_EFFECTS(GM2_EFFECT_DECLARE)
 #undef GM2_EFFECT_DECLARE
 
+#define GM2_EFFECT_DECLARE_ALT(name, alt) extern const gm2_effect gm2_effect_##alt;
+GM2_ALT_EFFECTS(GM2_EFFECT_DECLARE_ALT)
+#undef GM2_EFFECT_DECLARE_ALT
+
 #endif /* GM2_EFFECT_H */

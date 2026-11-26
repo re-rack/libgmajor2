@@ -32,6 +32,10 @@
  * gm2_convert.h. An output may be its own input, as hosts process in place; no
  * other overlap is allowed. Nothing allocates.
  *
+ * Some effects X also come as gm2_X_alt, with the same interface and knobs: it
+ * removes a click the device makes on a fast knob turn and gives X's output, sample
+ * for sample, once the knobs have settled. Its state is larger than X's.
+ *
  * Align moves the LFO to where it is at song position `beats`, in quarter notes
  * from the song start, when its cycle starts on beat 0; for the host to call at
  * playback start and after a jump. With Tempo at Ignore the LFO is left alone.
@@ -65,16 +69,22 @@ extern "C" {
 #include "gm2_detune_setup.h"
 #include "gm2_dualdelay_setup.h"
 #include "gm2_dyndelay_setup.h"
+#include "gm2_eq_alt_setup.h"
 #include "gm2_eq_setup.h"
 #include "gm2_gate_setup.h"
+#include "gm2_ipitch_alt_setup.h"
 #include "gm2_ipitch_setup.h"
 #include "gm2_modunivibe_setup.h"
 #include "gm2_octaver_setup.h"
 #include "gm2_panner_setup.h"
 #include "gm2_pingpong_setup.h"
+#include "gm2_pitch_alt_setup.h"
 #include "gm2_pitch_setup.h"
+#include "gm2_resfilter_alt_setup.h"
 #include "gm2_resfilter_setup.h"
+#include "gm2_revdelay_alt_setup.h"
 #include "gm2_revdelay_setup.h"
+#include "gm2_reverb_alt_setup.h"
 #include "gm2_reverb_setup.h"
 #include "gm2_smoothphaser_setup.h"
 #include "gm2_touchres_setup.h"

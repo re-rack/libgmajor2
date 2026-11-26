@@ -1,6 +1,7 @@
 #include "gm2.h"
 #include "gm2_effect.h"
 #include "gm2_eq.h"
+#include "gm2_eq_alt.h"
 #include "gm2_eq_setup.h"
 
 static const gm2_knob k_knobs[] = {
@@ -24,3 +25,4 @@ static void eq_words(const gm2_eq_config *config, int32_t *words) {
 }
 
 GM2_EFFECT_DEFINE(eq, eq, k_knobs, eq_raw, eq_words, GM2_EQ_COEFS)
+GM2_EFFECT_DEFINE(eq_alt, eq_alt, k_knobs, eq_raw, eq_words, GM2_EQ_COEFS)

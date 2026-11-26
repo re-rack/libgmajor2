@@ -794,16 +794,21 @@ static inline int64_t pitch_tap(const gm2_pitch_core_state *state, int64_t index
 
 /* P:0x000D3C..P:0x000D6E, one voice: the crossfade and the first tap move on, a
  * crossfade that has run out with its tap outside the delay window starts a
- * splice, and the two taps blend into the voice's output. */
-static void pitch_voice(const gm2_pitch_core_state *state, gm2_pitch_core_voice *voice,
-                        int *limit) {
+ * splice, and the two taps blend into the voice's output.
+ *
+ * The de-popped path splices only once this voice's crossfade has run out, while
+ * the firmware's also takes the frame's limit flag, which another store raised:
+ * a voice that splices with its crossfade still running cuts it short and clicks. */
+static void pitch_voice(const gm2_pitch_core_state *state, gm2_pitch_core_voice *voice, int *limit,
+                        int depopped) {
   /* Every sum in the voice is two 24-bit words or their products, so it stays
    * under 2^49 and the accumulator cannot wrap. The crossfade's step taking it
-   * past -1 raises the limit flag, which is what the splice tests, as it tests
-   * one an earlier store of the frame raised. */
+   * past -1 raises the limit flag, which is what the firmware's splice test reads,
+   * even when an earlier store of the frame raised it. */
   int32_t fade = pitch_store(((int64_t)voice->fade - voice->fade_step) * 0x1000000, limit);
   const int above = voice->offset_max < voice->offset;
-  if (*limit != 0 && (above || voice->offset_min > voice->offset)) {
+  const int ready = depopped != 0 ? fade == GM2_W24_MIN : *limit != 0;
+  if (ready && (above || voice->offset_min > voice->offset)) {
     const int64_t span = (int64_t)voice->span * 0x1000000;
     const int64_t next = span + (int64_t)voice->offset * 0x1000000;
     voice->jump = pitch_store(above ? -span : span, limit);
@@ -962,8 +967,8 @@ static void pitch_jobs(gm2_pitch_core_state *state, const gm2_pitch_core_config 
 
 /* One stereo frame, P:0x000D15, then the chunk's job run once its last frame is
  * done. */
-void gm2_pitch_core_process_frame(gm2_pitch_core_state *state, const gm2_pitch_core_config *config,
-                                  const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
+static void pitch_frame(gm2_pitch_core_state *state, const gm2_pitch_core_config *config,
+                        const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS], int depopped) {
   const int32_t left = gm2_s24((uint32_t)in[0]);
   const int32_t right = gm2_s24((uint32_t)in[1]);
   int limit = 0;
@@ -983,7 +988,7 @@ void gm2_pitch_core_process_frame(gm2_pitch_core_state *state, const gm2_pitch_c
   state->audio_at = state->audio_at == 0u ? GM2_PITCH_CORE_AUDIO_WORDS - 1u : state->audio_at - 1u;
 
   for (unsigned i = 0; i < GM2_PITCH_CORE_VOICES; i++) {
-    pitch_voice(state, &state->voice[i], &limit);
+    pitch_voice(state, &state->voice[i], &limit, depopped);
   }
 
   /* The pan matrix, then each channel's wet and dry products, rounded together
@@ -1010,6 +1015,18 @@ void gm2_pitch_core_process_frame(gm2_pitch_core_state *state, const gm2_pitch_c
   }
   state->chunk_pos = 0;
   pitch_jobs(state, config);
+}
+
+void gm2_pitch_core_process_frame(gm2_pitch_core_state *state, const gm2_pitch_core_config *config,
+                                  const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
+  pitch_frame(state, config, in, out, 0);
+}
+
+void gm2_pitch_core_process_frame_depopped(gm2_pitch_core_state *state,
+                                           const gm2_pitch_core_config *config,
+                                           const int32_t in[GM2_CHANNELS],
+                                           int32_t out[GM2_CHANNELS]) {
+  pitch_frame(state, config, in, out, 1);
 }
 
 void gm2_pitch_core_state_init(gm2_pitch_core_state *state, const gm2_pitch_core_config *config) {

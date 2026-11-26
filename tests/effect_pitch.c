@@ -2,6 +2,7 @@
 #include "gm2.h"
 #include "gm2_effect.h"
 #include "gm2_pitch.h"
+#include "gm2_pitch_alt.h"
 #include "gm2_pitch_setup.h"
 
 #define PITCH_KNOBS 12u
@@ -45,4 +46,6 @@ static void pitch_mix(const gm2_pitch_config *config, int32_t *wet, int32_t *dry
 }
 
 GM2_EFFECT_DEFINE_MIX(pitch, pitch, k_knobs, pitch_raw, gm2_effect_pitch_words, pitch_mix,
+                      GM2_EFFECT_PITCH_WORDS)
+GM2_EFFECT_DEFINE_MIX(pitch_alt, pitch_alt, k_knobs, pitch_raw, gm2_effect_pitch_words, pitch_mix,
                       GM2_EFFECT_PITCH_WORDS)

@@ -139,4 +139,11 @@ void gm2_pitch_core_state_init(gm2_pitch_core_state *state, const gm2_pitch_core
 void gm2_pitch_core_process_frame(gm2_pitch_core_state *state, const gm2_pitch_core_config *config,
                                   const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]);
 
+/* The same frame for the de-popped variants: a voice splices only once its own
+ * crossfade has run out, never on a limit flag another store of the frame raised. */
+void gm2_pitch_core_process_frame_depopped(gm2_pitch_core_state *state,
+                                           const gm2_pitch_core_config *config,
+                                           const int32_t in[GM2_CHANNELS],
+                                           int32_t out[GM2_CHANNELS]);
+
 #endif /* GM2_PITCH_CORE_H */

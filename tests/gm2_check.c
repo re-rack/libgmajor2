@@ -457,7 +457,7 @@ static unsigned check_effect(const gm2_effect *effect) {
   unsigned settings = 0;
   size_t frames = 0;
   if (length < 0 || (size_t)length >= sizeof path || gm2_fixture_load(&fixture, path) != 0) {
-    printf("%-15s FAIL  cannot load the fixture\n", effect->name);
+    printf("%-17s FAIL  cannot load the fixture\n", effect->name);
     return 1;
   }
   int knobs_ok = check_knobs(effect, &fixture);
@@ -476,9 +476,209 @@ static unsigned check_effect(const gm2_effect *effect) {
   }
   gm2_fixture_free(&fixture);
   int ok = item_failures == 0;
-  printf("%-15s %s  %u settings, %zu frames (split, float, interleaved and frame), descriptor "
+  printf("%-17s %s  %u settings, %zu frames (split, float, interleaved and frame), descriptor "
          "windows, level words, refusals\n",
          effect->name, ok ? "PASS" : "FAIL", settings, frames);
+  return ok ? 0 : 1;
+}
+
+/* --- the de-popped variants: the effect's output once a turn has settled ---- */
+
+/* Frames after a variant's last turn by which it plays its effect's output
+ * again: its longest group glide (34,560), the hand-back's longest wait and its
+ * fade (gm2_handback.h), with room. Each hold then compares its last frames. */
+#define ALT_SETTLE_FRAMES 140000u
+#define ALT_COMPARE_FRAMES 8192u
+#define ALT_SWEEP_STEPS 32u
+#define ALT_SWEEP_FRAMES 128u
+#define ALT_FAST_TURNS 10u
+#define ALT_FAST_FRAMES 64u
+
+typedef struct {
+  const gm2_effect *effect;
+  const gm2_effect *alt;
+  void *exact;
+  void *own;
+  gm2_signal signal;
+  uint32_t seed;
+  size_t compared;
+  size_t departed; /* frames where the variant played its own path */
+  unsigned entry;  /* the entry point the next buffer goes through */
+  int broken;      /* a mismatch was reported: the rest of the run is not compared */
+} alt_run;
+
+/* The variant through one of its four entry points, in turn: Q23 to float is
+ * exact, so the float one's output converts back for an exact compare. */
+#define ALT_ENTRY_POINTS 4u
+
+static void alt_entry(const gm2_effect *alt, void *own, unsigned entry, const int32_t *in_l,
+                      const int32_t *in_r, int32_t got[2][CHUNK_MAX], size_t count) {
+  float flt[2][CHUNK_MAX];
+  int32_t pair[2u * CHUNK_MAX];
+  switch (entry) {
+  case 0:
+    alt->split(own, in_l, in_r, got[0], got[1], count);
+    break;
+  case 1:
+    gm2_q23_to_f32(flt[0], in_l, count);
+    gm2_q23_to_f32(flt[1], in_r, count);
+    alt->f32(own, flt[0], flt[1], flt[0], flt[1], count);
+    gm2_f32_to_q23(got[0], flt[0], count);
+    gm2_f32_to_q23(got[1], flt[1], count);
+    break;
+  case 2:
+    for (size_t i = 0; i < count; i++) {
+      pair[2u * i] = in_l[i];
+      pair[2u * i + 1u] = in_r[i];
+    }
+    alt->interleaved(own, pair, pair, count);
+    for (size_t i = 0; i < count; i++) {
+      got[0][i] = pair[2u * i];
+      got[1][i] = pair[2u * i + 1u];
+    }
+    break;
+  default:
+    for (size_t i = 0; i < count; i++) {
+      const int32_t in[2] = {in_l[i], in_r[i]};
+      int32_t out[2];
+      alt->frame(own, in, out);
+      got[0][i] = out[0];
+      got[1][i] = out[1];
+    }
+    break;
+  }
+}
+
+/* Both instances through `frames` frames of the test signal in random buffer
+ * sizes, the variant through its entry points in turn, comparing their outputs
+ * when `compare` is set. */
+static void alt_play(alt_run *run, size_t frames, int compare, const char *label) {
+  int32_t in_l[CHUNK_MAX];
+  int32_t in_r[CHUNK_MAX];
+  int32_t want[2][CHUNK_MAX];
+  int32_t got[2][CHUNK_MAX];
+  while (frames != 0u) {
+    size_t count = 1u + next_random(&run->seed) % CHUNK_MAX;
+    if (count > frames) {
+      count = frames;
+    }
+    gm2_signal_fill(&run->signal, in_l, in_r, count);
+    run->effect->split(run->exact, in_l, in_r, want[0], want[1], count);
+    alt_entry(run->alt, run->own, run->entry++ % ALT_ENTRY_POINTS, in_l, in_r, got, count);
+    frames -= count;
+    if (!compare) {
+      for (size_t i = 0; i < count; i++) {
+        run->departed += got[0][i] != want[0][i] || got[1][i] != want[1][i];
+      }
+      continue;
+    }
+    if (run->broken) {
+      continue;
+    }
+    for (size_t i = 0; i < count; i++) {
+      for (unsigned channel = 0; channel < GM2_CHANNELS; channel++) {
+        if (got[channel][i] != want[channel][i]) {
+          detail("%s after %s: channel %u is %06X, the effect gives %06X", run->alt->name, label,
+                 channel, (uint32_t)got[channel][i] & 0xFFFFFFu,
+                 (uint32_t)want[channel][i] & 0xFFFFFFu);
+          failed();
+          run->broken = 1;
+          return;
+        }
+      }
+    }
+    run->compared += count;
+  }
+}
+
+static void alt_turn(alt_run *run, unsigned knob, int value) {
+  if (run->effect->set_knob(run->exact, knob, value) != 0 ||
+      run->alt->set_knob(run->own, knob, value) != 0) {
+    detail("%s: %s = %d has no setup", run->alt->name, run->alt->knob[knob].name, value);
+    failed();
+    run->broken = 1;
+  }
+}
+
+/* The settle after a turn, then the frames that must match. */
+static void alt_hold(alt_run *run, unsigned knob, const char *what) {
+  char label[96];
+  snprintf(label, sizeof label, "%.24s %s", run->alt->knob[knob].name, what);
+  alt_play(run, ALT_SETTLE_FRAMES, 0, label);
+  alt_play(run, ALT_COMPARE_FRAMES, 1, label);
+}
+
+static int alt_share(const gm2_knob *record, double share) {
+  return record->min + (int)lround(share * (record->max - record->min));
+}
+
+/* A variant against its effect, from the defaults: both must give the same
+ * output before any turn and again once each turn has settled. Every knob in
+ * turn jumps to its minimum and its maximum, sweeps back down in steps, takes
+ * fast turns between 33 % and 66 % and goes back to its default. */
+static unsigned check_alt(const gm2_effect *effect, const gm2_effect *alt) {
+  item_failures = 0;
+  item_shown = 0;
+  unsigned turns = 0;
+  int32_t values[64];
+  alt_run run = {.effect = effect, .alt = alt, .seed = 0x5EEDu};
+  if (effect->knobs != alt->knobs || effect->knobs > sizeof values / sizeof values[0]) {
+    printf("%-17s FAIL  its knob table is not %s's\n", alt->name, effect->name);
+    return 1;
+  }
+  check_range(alt);
+  if (alt->rejects() != 0) {
+    detail("the setup accepts a NULL pointer or a context without a rate");
+    failed();
+  }
+  gm2_effect_defaults(alt, values);
+  run.exact = effect->open(values);
+  run.own = alt->open(values);
+  if (run.exact == NULL || run.own == NULL) {
+    detail("no instance at the defaults");
+    failed();
+  } else {
+    gm2_signal_init(&run.signal);
+    alt_play(&run, ALT_COMPARE_FRAMES, 1, "the start");
+    for (unsigned knob = 0; knob < alt->knobs && !run.broken; knob++) {
+      const gm2_knob *record = &alt->knob[knob];
+      alt_turn(&run, knob, record->min);
+      alt_hold(&run, knob, "to its minimum");
+      alt_turn(&run, knob, record->max);
+      alt_hold(&run, knob, "to its maximum");
+      turns += 2u;
+      for (unsigned step = 1; step <= ALT_SWEEP_STEPS; step++) {
+        alt_turn(&run, knob, alt_share(record, 1.0 - (double)step / ALT_SWEEP_STEPS));
+        alt_play(&run, ALT_SWEEP_FRAMES + step % GM2_CHUNK_FRAMES, 0, "");
+      }
+      alt_hold(&run, knob, "swept down");
+      turns += ALT_SWEEP_STEPS;
+      for (unsigned turn = 0; turn < ALT_FAST_TURNS; turn++) {
+        alt_turn(&run, knob, alt_share(record, turn % 2u == 0u ? 0.33 : 0.66));
+        alt_play(&run, ALT_FAST_FRAMES + turn % GM2_CHUNK_FRAMES, 0, "");
+      }
+      alt_hold(&run, knob, "after fast turns");
+      turns += ALT_FAST_TURNS;
+      alt_turn(&run, knob, record->def);
+      alt_hold(&run, knob, "back to its default");
+      turns++;
+    }
+  }
+  if (!run.broken && run.departed == 0u) {
+    detail("%s never played anything but %s's output", alt->name, effect->name);
+    failed();
+  }
+  if (run.exact != NULL) {
+    effect->close(run.exact);
+  }
+  if (run.own != NULL) {
+    alt->close(run.own);
+  }
+  int ok = item_failures == 0;
+  printf("%-17s %s  %u turns, %zu settled frames equal to %s's (split, float, interleaved "
+         "and frame), %zu frames of its own, "
+         "descriptor windows, refusals\n",
+         alt->name, ok ? "PASS" : "FAIL", turns, run.compared, effect->name, run.departed);
   return ok ? 0 : 1;
 }
 
@@ -676,7 +876,7 @@ static unsigned check_swf(void) {
   item_failures = 0;
   item_shown = 0;
   if (gm2_fixture_load(&fixture, FIXTURE_DIR "/swf.bin") != 0) {
-    printf("%-15s FAIL  cannot load " FIXTURE_DIR "/swf.bin\n", "swf");
+    printf("%-17s FAIL  cannot load " FIXTURE_DIR "/swf.bin\n", "swf");
     return 1;
   }
   uint32_t count = 0;
@@ -794,7 +994,7 @@ static unsigned check_swf(void) {
   }
   gm2_fixture_free(&fixture);
   int ok = item_failures == 0;
-  printf("%-15s %s  %u operations\n", "swf", ok ? "PASS" : "FAIL", compared);
+  printf("%-17s %s  %u operations\n", "swf", ok ? "PASS" : "FAIL", compared);
   return ok ? 0 : 1;
 }
 
@@ -885,7 +1085,7 @@ static unsigned check_tables(void) {
   item_failures = 0;
   item_shown = 0;
   if (gm2_fixture_load(&fixture, FIXTURE_DIR "/tables.bin") != 0) {
-    printf("%-15s FAIL  cannot load " FIXTURE_DIR "/tables.bin\n", "tables");
+    printf("%-17s FAIL  cannot load " FIXTURE_DIR "/tables.bin\n", "tables");
     return 1;
   }
   uint32_t index_count = 0;
@@ -950,7 +1150,7 @@ static unsigned check_tables(void) {
 done:
   gm2_fixture_free(&fixture);
   int ok = item_failures == 0;
-  printf("%-15s %s  %u tables, %u words\n", "tables", ok ? "PASS" : "FAIL", index_count,
+  printf("%-17s %s  %u tables, %u words\n", "tables", ok ? "PASS" : "FAIL", index_count,
          word_count);
   return ok ? 0 : 1;
 }
@@ -962,6 +1162,19 @@ static const gm2_effect *const k_effects[] = {
 };
 
 #define EFFECT_COUNT (sizeof k_effects / sizeof k_effects[0])
+
+typedef struct {
+  const gm2_effect *effect;
+  const gm2_effect *alt;
+} alt_pair;
+
+static const alt_pair k_alts[] = {
+#define GM2_ALT_ENTRY(name, alt) {&gm2_effect_##name, &gm2_effect_##alt},
+    GM2_ALT_EFFECTS(GM2_ALT_ENTRY)
+#undef GM2_ALT_ENTRY
+};
+
+#define ALT_COUNT (sizeof k_alts / sizeof k_alts[0])
 
 /* The host item: the beat rule, the song-position phase, every effect's align
  * call and the context's refusals. */
@@ -976,7 +1189,7 @@ static unsigned check_host(void) {
     }
   }
   int ok = item_failures == 0;
-  printf("%-15s %s  %u beat, phase and context values, %u effects aligned\n", "host",
+  printf("%-17s %s  %u beat, phase and context values, %u effects aligned\n", "host",
          ok ? "PASS" : "FAIL", compared, aligned);
   return ok ? 0 : 1;
 }
@@ -986,6 +1199,9 @@ static void usage(const char *program) {
   for (size_t i = 0; i < EFFECT_COUNT; i++) {
     fprintf(stderr, " %s", k_effects[i]->name);
   }
+  for (size_t i = 0; i < ALT_COUNT; i++) {
+    fprintf(stderr, " %s", k_alts[i].alt->name);
+  }
   fprintf(stderr, " swf tables host\n");
   fprintf(stderr, "  no name: all of them\n");
 }
@@ -993,11 +1209,15 @@ static void usage(const char *program) {
 int main(int argc, char **argv) {
   unsigned failures = 0;
   unsigned selected[EFFECT_COUNT];
+  unsigned alt_selected[ALT_COUNT];
   int swf = argc == 1;
   int tables = argc == 1;
   int host = argc == 1;
   for (size_t i = 0; i < EFFECT_COUNT; i++) {
     selected[i] = argc == 1 ? 1u : 0u;
+  }
+  for (size_t i = 0; i < ALT_COUNT; i++) {
+    alt_selected[i] = argc == 1 ? 1u : 0u;
   }
   for (int arg = 1; arg < argc; arg++) {
     if (strcmp(argv[arg], "swf") == 0) {
@@ -1010,6 +1230,14 @@ int main(int argc, char **argv) {
     }
     if (strcmp(argv[arg], "host") == 0) {
       host = 1;
+      continue;
+    }
+    size_t alt = 0;
+    while (alt < ALT_COUNT && strcmp(argv[arg], k_alts[alt].alt->name) != 0) {
+      alt++;
+    }
+    if (alt < ALT_COUNT) {
+      alt_selected[alt] = 1;
       continue;
     }
     size_t match = 0;
@@ -1025,6 +1253,11 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < EFFECT_COUNT; i++) {
     if (selected[i] != 0u) {
       failures += check_effect(k_effects[i]);
+    }
+  }
+  for (size_t i = 0; i < ALT_COUNT; i++) {
+    if (alt_selected[i] != 0u) {
+      failures += check_alt(k_alts[i].effect, k_alts[i].alt);
     }
   }
   if (swf != 0) {

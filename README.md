@@ -22,6 +22,20 @@ settings it produces the same output samples as the original hardware.
 | Delay | Ping Pong, Dynamic, Dual, Reverse |
 | Reverb | Spring, Hall, Room, Plate |
 
+## De-popped variants
+
+Some knobs click or pop when turned fast, because the hardware does. For those effects `gm2_X_alt` is the same effect without the click: same knobs, setup and API, and bit-exact with `gm2_X` again once the knobs have settled.
+
+| Variant | Knobs |
+|---|---|
+| `eq_alt` | Freq, Gain, Width (a band below ~120 Hz could rail) |
+| `resfilter_alt` | Style, Hi-Cut, Resonance |
+| `pitch_alt`, `ipitch_alt` | Dly1, Dly2 |
+| `revdelay_alt` | Delay, Tempo |
+| `reverb_alt` | Size, Pre-Delay, Shape, Hi Color |
+
+A variant runs the effect and a de-popped copy side by side from a knob turn until both have settled, then fades back to the effect within about 2 s, so it costs about twice the effect while a knob moves. With feedback, the effect's own click can still sound in the echoes after that.
+
 ## Using the library
 
 ```sh
@@ -44,7 +58,7 @@ make benchmark-all-fx     # ns per stereo frame for each effect
 
 | Target | What it does |
 |---|---|
-| `make check` | replays every effect's recorded firmware output through the library |
+| `make check` | replays every effect's recorded firmware output through the library, and checks each de-popped variant against its effect |
 | `make check-fixture FIXTURE=<name>` | one effect |
 | `make check-install` | build a C and a C++ program against an installed copy |
 | `make benchmark-fx FX=<name>` | time one or more effects |

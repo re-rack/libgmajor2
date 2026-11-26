@@ -2,6 +2,7 @@
 #include "gm2.h"
 #include "gm2_effect.h"
 #include "gm2_ipitch.h"
+#include "gm2_ipitch_alt.h"
 #include "gm2_ipitch_setup.h"
 
 #define IPITCH_KNOBS 12u
@@ -47,3 +48,5 @@ static void ipitch_mix(const gm2_ipitch_config *config, int32_t *wet, int32_t *d
 
 GM2_EFFECT_DEFINE_MIX(ipitch, ipitch, k_knobs, ipitch_raw, gm2_effect_pitch_words, ipitch_mix,
                       GM2_EFFECT_PITCH_WORDS)
+GM2_EFFECT_DEFINE_MIX(ipitch_alt, ipitch_alt, k_knobs, ipitch_raw, gm2_effect_pitch_words,
+                      ipitch_mix, GM2_EFFECT_PITCH_WORDS)

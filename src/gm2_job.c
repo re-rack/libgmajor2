@@ -2,6 +2,8 @@
 
 #include "gm2_swf.h"
 
+#include <string.h>
+
 /* X:0x0993B4: the share of the gap a ramp covers per run, and the parabola's
  * middle word, 0.5. */
 enum { JOB_RAMP_SCALE = 0x00722D, JOB_FADE_MID = 0x400000 };
@@ -11,6 +13,34 @@ int32_t gm2_job_ramp_arm(int32_t live, int32_t target) {
   const int32_t step = gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_q23(JOB_RAMP_SCALE), gap));
   const int32_t size = step < 0 ? -step : step;
   return size < 1 ? 1 : size;
+}
+
+int gm2_job_group_run(gm2_job_group *group, int32_t *live, int32_t *from, int32_t *to,
+                      const int32_t *staged, unsigned count) {
+  const size_t size = sizeof *live * count;
+  if (memcmp(to, staged, size) != 0) {
+    memcpy(from, live, size);
+    memcpy(to, staged, size);
+    group->remain = GM2_JOB_GROUP_WHOLE;
+  }
+  if (group->remain == 0) {
+    return 0;
+  }
+  /* The one-pole job's share per run is half its step word; the share left falls
+   * by at least one so that the glide ends. */
+  int32_t cut = (int32_t)gm2_asr_n((int64_t)group->remain * GM2_JOB_SMOOTH_STEP, 24);
+  group->remain -= cut < 1 ? 1 : cut;
+  int moving = 0;
+  for (unsigned i = 0; i < count; i++) {
+    const int64_t gap = (int64_t)from[i] - staged[i];
+    const int32_t left = (int32_t)gm2_asr_n(gap * group->remain + (GM2_JOB_GROUP_WHOLE >> 1), 30);
+    live[i] = staged[i] + left;
+    moving |= left != 0;
+  }
+  if (!moving) {
+    group->remain = 0;
+  }
+  return moving;
 }
 
 void gm2_job_fade_init(gm2_job_fade *fade, int32_t tap_gain[2]) {

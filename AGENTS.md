@@ -34,7 +34,7 @@ The original firmware running in the xemu function-level harness is the referenc
 | `reverse_engineering/build_ghidra.py` | Build and export the Ghidra project using PyGhidra only |
 | `reverse_engineering/ghidra/GMajor2.gpr` | The Ghidra project `make ghidra-prepare` builds; bootstrap and application are separate programs |
 | `reverse_engineering/harness/` | Emulator plumbing (`gm2_emu.{c,h}`): loads the firmware, applies its initializer, installs a rate and calls routines; the test recorder drives it |
-| `src/` | Native C17 implementations of every effect, their parameter setup, shared family cores and designs, sample-rate and LFO helpers, parameter jobs, arithmetic, lookup tables and float <-> Q23 conversion. Each effect is `gm2_X.{h,c}` plus `gm2_X_setup.{h,c}`; see Code conventions. `gm2.h` is the one header a host includes |
+| `src/` | Native C17 implementations of every effect, their parameter setup, shared family cores and designs, sample-rate and LFO helpers, parameter jobs, arithmetic, lookup tables and float <-> Q23 conversion, and the de-popped variants `gm2_X_alt`. Each effect is `gm2_X.{h,c}` plus `gm2_X_setup.{h,c}`; see Code conventions. `gm2.h` is the one header a host includes |
 | `tests/` | The test system: the recorder writes the firmware's answers to `tests/fixtures/<name>.bin` and `make check` checks the library against them offline (see Testing) |
 | `Makefile` | Builds the library and the test programs into `build/` and runs every check and tool (see Testing) |
 | `README.md` | The project's front page: what the library is, its effects, dependencies and make targets |
@@ -162,7 +162,8 @@ An effect never keeps its own copy of what another module already has:
 | `gm2_rate.h` | The words derived from the sample rate |
 | `gm2_tables.h` | Every firmware table and the steps that read them: `gm2_log2`, `gm2_exp2`, `gm2_wave_read` |
 | `gm2_lfo.h` | The LFO rate, step and beat, the phase advances `gm2_lfo_advance` and `gm2_lfo_advance_restart`, and `gm2_lfo_phase_at` |
-| `gm2_job.h` | The parameter jobs: `gm2_job_smooth`, `gm2_job_ramp_arm`, `gm2_job_ramp`, `gm2_job_fade` |
+| `gm2_job.h` | The parameter jobs: `gm2_job_smooth`, `gm2_job_ramp_arm`, `gm2_job_ramp`, `gm2_job_fade`; and the variants' group glide `gm2_job_group_run` |
+| `gm2_handback.h` | The de-popped variants' hand-back to their effect's path |
 | `gm2_tick.h` | The control tick: its period, the peak hold, the touch follower and its Response and Sense words |
 | `gm2_biquad.h` | The double-precision biquad of the EQ, the resonance filters and the chorus output |
 | `gm2_gate_detector.h` | The Noise Gate's level detector |
@@ -194,6 +195,24 @@ In code and docs, "block" means only such an effect block. The firmware's four-f
 - **The control tick is fixed.** The device moves some effects from its background loop: a timer tick it takes as 13 ms sends the blocks a control message, a 1 kHz hardware timer times the Reverse Delay's grain splices, and smoothing and crossfade jobs walk parameter and tap-gain words towards their targets whenever its task scheduler gets to them. None of these is locked to the audio. The ports run the control tick every 13 ms worth of whole four-frame chunks (`gm2_tick_chunks()`: 143 at 44.1 kHz, 156 at 48 kHz), the Reverse Delay's grain splice every `delay_ms` worth of whole four-frame chunks (`gm2_tick_period(rate, delay_ms)`), restarted by a Delay or Tempo turn, and every smoothing or crossfade job once after each chunk, and the recorder runs the firmware's own routines on that same schedule. The arithmetic is the firmware's; only the timing is ours.
 - **Effects start at rest.** A fresh state is the one the effect settles in after a long silence: filters and detectors empty, smoothed words on their targets. A parameter the device carries over from another effect's page and shows on no page of its own is not ported.
 
+## De-popped variants
+
+Some knobs click when turned fast because the firmware does. `gm2_X_alt` is effect X without that click: the same knobs, setup and API, and bit-exact with X once the knobs have settled. A host picks one or the other.
+
+| Variant | Knobs | The firmware's click |
+|---|---|---|
+| `eq_alt` | Freq, Gain, Width | the one-pole job lands each biquad word on its own, and a band below ~120 Hz can turn unstable and rail |
+| `resfilter_alt` | Style, Hi-Cut, Resonance | the same, a burst of up to 17 dB at low cutoffs |
+| `pitch_alt`, `ipitch_alt` | Dly1, Dly2 | a voice splices on a limit flag another store raised and cuts its crossfade short |
+| `revdelay_alt` | Delay, Tempo | each turn holds the splice off until the reverse tap wraps and reads the newest audio |
+| `reverb_alt` | Size, Pre-Delay, Shape, Hi Color | the early taps and the pre-delay tap step in one frame |
+
+- **Shadow and hand-back.** Fixed-point state that has once diverged never converges again, so a variant always runs its effect's path through the effect's own process function, and from a turn on also a de-popped copy of that state. `gm2_handback` plays the copy until both paths' words sit on the config's, then fades back to the effect within about 2 s; from there only the effect runs.
+- **No second copy of a kernel.** The copy's changes live in the variant, in a mode the effect's code takes as a parameter (`gm2_pitch_core_process_frame_depopped`, `gm2_revdelay_advance`) or in kernel pieces both include (`gm2_reverb_kernel.h`). The effect's own path stays bit-exact and no slower.
+- **Setup is the effect's.** `gm2_X_alt_setup_raw` is a typedef of the effect's raw struct, `gm2_X_alt_setup_config` forwards to its setup, and the config is the effect's.
+- **Limits.** While the copy runs a variant costs its effect twice, state included (the Reverse Delay's is 1.4 MB). Feedback keeps the effect's own clicks in its buffer, and the hand-back plays them out. What the device does with no turn, such as the Reverse Delay's wrap at Delay settings of 858 ms and up, the variant keeps.
+- The Compressor has no variant: its swell on a Threshold or Ratio drop is the auto makeup leading the gain computer's slow pole, and stays at +1.7 dB even for a turn spread over a second.
+
 ## Testing
 
 The emulator only records; every check runs offline. `tests/README.md` explains the method and its limits; this section holds the rules.
@@ -203,6 +222,7 @@ The emulator only records; every check runs offline. `tests/README.md` explains 
 - `tests/gm2_record.c` runs the firmware in the emulator and writes its answers to `tests/fixtures/<name>.bin`. `tests/gm2_check.c` replays every fixture through the library. Expected values come only from the firmware.
 - Everything runs at 48 kHz.
 - An effect is described once: its knob table and native adapter in `tests/effect_<name>.c`, its firmware adapter in its block's `tests/firmware_<block>.c`, and one line in `tests/gm2_effects.h`. There are no per-effect test programs.
+- A de-popped variant has no fixture: a second adapter on its effect's knob table in the same `tests/effect_<name>.c` and one line in `GM2_ALT_EFFECTS`. The checker runs it beside its effect on the generated input through jumps, sweeps and fast turns of every knob, and requires their outputs to be equal before the first turn and after each turn's settle; it also requires the variant to play its own path somewhere. It does not check that the copy removes a click: measure that with a pop scan before and after.
 - An effect's fixture holds:
   - **Setup:** each knob on its own with the others at default, at every position for a knob with 32 positions or fewer, otherwise at 32 positions evenly spaced from minimum to maximum plus the default, with the firmware's setup words; plus four multi-knob presets, every knob active at 33 % and at 66 % (Tempo at Ignore, switches flipped, continuous knobs at that share), at its minimum and at its maximum, each built one knob at a time and each stepped through min, 33 %, 66 %, max, default and its preset value.
   - **Level words:** the input, wet and dry words the block's level code stages at the defaults, which must equal the ones the effect's own knobs give there: `GM2_LEVEL_INPUT` with `GM2_LEVEL_WET` and 0, or the pair `gm2_mix_words()` gives the default Mix and Out Level.
@@ -217,7 +237,7 @@ The emulator only records; every check runs offline. `tests/README.md` explains 
 make build                          # build/default/libgm2.a; also what plain make does
 make install                        # libgm2.a, the headers and gm2.pc under PREFIX; uninstall removes them
 make check-install                  # a C and a C++ host built against a staged install
-make check                          # offline: every fixture and the host checks
+make check                          # offline: every fixture, the de-popped variants and the host checks
 make check-fixture FIXTURE=<name>   # one fixture; check-swf and check-tables are shortcuts
 make check-host                     # the beat rule, LFO alignment and context
 make benchmark-all-fx               # every effect's ns per stereo frame

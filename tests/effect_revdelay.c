@@ -2,6 +2,7 @@
 #include "gm2_delay_core.h"
 #include "gm2_effect.h"
 #include "gm2_revdelay.h"
+#include "gm2_revdelay_alt.h"
 #include "gm2_revdelay_setup.h"
 
 #define REVDELAY_KNOBS 7u
@@ -48,3 +49,5 @@ static void revdelay_words(const gm2_revdelay_config *config, int32_t *words) {
 
 GM2_EFFECT_DEFINE_MIX(revdelay, revdelay, k_knobs, revdelay_raw, revdelay_words, revdelay_mix,
                       REVDELAY_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(revdelay_alt, revdelay_alt, k_knobs, revdelay_raw, revdelay_words,
+                      revdelay_mix, REVDELAY_SETUP_WORDS)
