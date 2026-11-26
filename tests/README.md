@@ -39,8 +39,8 @@ The audio script moves each knob through its minimum, 33 %, 66 %, maximum and
 default, then drives every knob from an active setting (Tempo at Ignore so Speed
 and Delay act, switches flipped), and turns each knob ten times 64 frames apart,
 so every turn lands while the previous one still glides. Segments are offset so
-the turns land on each frame of the firmware's four-frame chunk. Runs are 97k to
-780k frames long.
+the turns land on each frame of the firmware's four-frame chunk. Runs are 173k to
+856k frames long.
 
 The input signal cycles through full-scale noise, held notes, noise bursts, quiet
 noise, a 20 Hz to 20 kHz sweep and full-scale clicks, which open and close gates

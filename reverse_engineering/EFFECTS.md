@@ -12,7 +12,8 @@ C17, including native parameter setup. The emulator is the reference, not a
 replacement for the native library. The test system in `tests/` (see `AGENTS.md`)
 covers every one of them, the software float, the firmware lookup tables and the
 float <-> Q23 conversion: `make check` replays each recorded fixture
-through the library and needs no emulator.
+through the library and needs no emulator. Six modules also come as de-popped
+variants `gm2_X_alt` (see `AGENTS.md`), which no firmware routine backs.
 
 | File | Purpose |
 |---|---|
@@ -28,58 +29,67 @@ through the library and needs no emulator.
 | `src/gm2_lfo_gain_core.c`, `src/gm2_lfo_gain_core.h` | Fixed-point Tremolo/Panner routine both effects share: LFO, waveform, gain, Hi-Cut |
 | `src/gm2_lfo_gain_design.c`, `src/gm2_lfo_gain_design.h` | The shared Tremolo/Panner depth, rate, pulse and smoother words |
 | `src/gm2_tremolo.c`, `src/gm2_tremolo.h` | Tremolo on the shared routine, with LFO alignment to a song position |
-| `src/gm2_tremolo_setup.c`, `src/gm2_tremolo_setup.h` | Raw Speed/Depth/Tempo/Type/Pwidth/HiCut and the host's beat to Tremolo setup words |
+| `src/gm2_tremolo_setup.c`, `src/gm2_tremolo_setup.h` | Raw Speed/Depth/Tempo/Type/Pwidth/HiCut/OutLev and the host's beat to Tremolo setup words |
 | `src/gm2_panner.c`, `src/gm2_panner.h` | Panner on the shared routine, with LFO alignment to a song position |
-| `src/gm2_panner_setup.c`, `src/gm2_panner_setup.h` | Raw Speed/Width/Tempo and the host's beat to Panner setup words |
+| `src/gm2_panner_setup.c`, `src/gm2_panner_setup.h` | Raw Speed/Width/Tempo/OutLev and the host's beat to Panner setup words |
 | `src/gm2_wah_core.c`, `src/gm2_wah_core.h` | Fixed-point wah routine the three wahs share: input gain, sweep cubic, state-variable filter, soft clip, the wet/dry blend and the frequency job |
 | `src/gm2_wah_design.c`, `src/gm2_wah_design.h` | The wahs' shared Range shift; each effect owns its envelope or LFO and its tick |
-| `src/gm2_wahwah.c`, `src/gm2_wahwah.h`, `src/gm2_wahwah_setup.c`, `src/gm2_wahwah_setup.h` | Wah Wah: Sweep, Range and Mix |
-| `src/gm2_touchwah.c`, `src/gm2_touchwah.h`, `src/gm2_touchwah_setup.c`, `src/gm2_touchwah_setup.h` | Touch Wah: Sense, Response, Range and Mix, and its tick |
-| `src/gm2_autowah.c`, `src/gm2_autowah.h`, `src/gm2_autowah_setup.c`, `src/gm2_autowah_setup.h` | Auto Wah: Speed, Tempo, Shape, Range and Mix, its tick and LFO alignment |
+| `src/gm2_wahwah.c`, `src/gm2_wahwah.h`, `src/gm2_wahwah_setup.c`, `src/gm2_wahwah_setup.h` | Wah Wah: Sweep, Range, Mix and Out Level |
+| `src/gm2_touchwah.c`, `src/gm2_touchwah.h`, `src/gm2_touchwah_setup.c`, `src/gm2_touchwah_setup.h` | Touch Wah: Sense, Response, Range, Mix and Out Level, and its tick |
+| `src/gm2_autowah.c`, `src/gm2_autowah.h`, `src/gm2_autowah_setup.c`, `src/gm2_autowah_setup.h` | Auto Wah: Speed, Tempo, Shape, Range, Mix and Out Level, its tick and LFO alignment |
 | `src/gm2_res_core.c`, `src/gm2_res_core.h` | Fixed-point resonance routine both resonance filters share: two biquads a channel, soft clip, the wet/dry blend, the coefficient job |
 | `src/gm2_res_design.c`, `src/gm2_res_design.h` | The resonance filters' coefficient design, and the Touch Res Filter's tick |
-| `src/gm2_resfilter.c`, `src/gm2_resfilter.h`, `src/gm2_resfilter_setup.c`, `src/gm2_resfilter_setup.h` | Resonance Filter: Style, Hi-Cut, Resonance and Mix |
-| `src/gm2_touchres.c`, `src/gm2_touchres.h`, `src/gm2_touchres_setup.c`, `src/gm2_touchres_setup.h` | Touch Res Filter: Style, Sense, Response, Fmax and Mix, its level detector and tick |
+| `src/gm2_resfilter.c`, `src/gm2_resfilter.h`, `src/gm2_resfilter_setup.c`, `src/gm2_resfilter_setup.h` | Resonance Filter: Style, Hi-Cut, Resonance, Mix and Out Level |
+| `src/gm2_touchres.c`, `src/gm2_touchres.h`, `src/gm2_touchres_setup.c`, `src/gm2_touchres_setup.h` | Touch Res Filter: Style, Sense, Response, Fmax, Mix and Out Level, its level detector and tick |
 | `src/gm2_pitch_core.c`, `src/gm2_pitch_core.h`, `src/gm2_pitch_design.c`, `src/gm2_pitch_design.h` | Fixed-point two-voice pitch-synchronous delay and AMDF pitch detector (`P:0x000D15..0x000E4D`, `P:0x0003F2..0x00089C`, `P:0x0001E4..0x0001FA`) and parameter setup (`P:0x090937`) the five Pitch effects share |
-| `src/gm2_detune.c`, `src/gm2_detune.h`, `src/gm2_detune_setup.c`, `src/gm2_detune_setup.h` | Detune: Voice L/R and Delay L/R |
-| `src/gm2_whammy.c`, `src/gm2_whammy.h`, `src/gm2_whammy_setup.c`, `src/gm2_whammy_setup.h` | Whammy: Pitch, Direction and Range |
-| `src/gm2_octaver.c`, `src/gm2_octaver.h`, `src/gm2_octaver_setup.c`, `src/gm2_octaver_setup.h` | Octaver: Direction and Range |
-| `src/gm2_pitch.c`, `src/gm2_pitch.h`, `src/gm2_pitch_setup.c`, `src/gm2_pitch_setup.h` | Pitch Shifter: Voice 1/2, Pan 1/2, Delay 1/2, Feedback 1/2 and Level 1/2 |
-| `src/gm2_ipitch.c`, `src/gm2_ipitch.h`, `src/gm2_ipitch_setup.c`, `src/gm2_ipitch_setup.h` | Intelligent Pitch Shifter: Voice 1/2, Pan 1/2, Delay 1/2, Key, Scale and Level 1/2 |
+| `src/gm2_detune.c`, `src/gm2_detune.h`, `src/gm2_detune_setup.c`, `src/gm2_detune_setup.h` | Detune: Voice L/R, Delay L/R, Mix and Out Level |
+| `src/gm2_whammy.c`, `src/gm2_whammy.h`, `src/gm2_whammy_setup.c`, `src/gm2_whammy_setup.h` | Whammy: Pitch, Direction, Range and Out Level |
+| `src/gm2_octaver.c`, `src/gm2_octaver.h`, `src/gm2_octaver_setup.c`, `src/gm2_octaver_setup.h` | Octaver: Direction, Range, Mix and Out Level |
+| `src/gm2_pitch.c`, `src/gm2_pitch.h`, `src/gm2_pitch_setup.c`, `src/gm2_pitch_setup.h` | Pitch Shifter: Voice 1/2, Pan 1/2, Delay 1/2, Feedback 1/2, Level 1/2, Mix and Out Level |
+| `src/gm2_ipitch.c`, `src/gm2_ipitch.h`, `src/gm2_ipitch_setup.c`, `src/gm2_ipitch_setup.h` | Intelligent Pitch Shifter: Voice 1/2, Pan 1/2, Delay 1/2, Key, Scale, Level 1/2, Mix and Out Level |
 | `src/gm2_phaser_core.c`, `src/gm2_phaser_core.h`, `src/gm2_phaser_design.c`, `src/gm2_phaser_design.h` | Fixed-point phaser routine (`P:0x000FA8..0x001060`) and parameter setup (`P:0x092B92`) the Vintage and Smooth Phasers share |
-| `src/gm2_vintphaser.c`, `src/gm2_vintphaser.h`, `src/gm2_vintphaser_setup.c`, `src/gm2_vintphaser_setup.h` | Vintage Phaser (4 all-pass stages): Speed, Depth, Tempo, Feedback, Range, Phase Reverse, and LFO alignment |
-| `src/gm2_smoothphaser.c`, `src/gm2_smoothphaser.h`, `src/gm2_smoothphaser_setup.c`, `src/gm2_smoothphaser_setup.h` | Smooth Phaser (12 all-pass stages): Speed, Depth, Tempo, Feedback, Range, Phase Reverse, and LFO alignment |
+| `src/gm2_vintphaser.c`, `src/gm2_vintphaser.h`, `src/gm2_vintphaser_setup.c`, `src/gm2_vintphaser_setup.h` | Vintage Phaser (4 all-pass stages): Speed, Depth, Tempo, Feedback, Range, Phase Reverse, Mix and Out Level, and LFO alignment |
+| `src/gm2_smoothphaser.c`, `src/gm2_smoothphaser.h`, `src/gm2_smoothphaser_setup.c`, `src/gm2_smoothphaser_setup.h` | Smooth Phaser (12 all-pass stages): Speed, Depth, Tempo, Feedback, Range, Phase Reverse, Mix and Out Level, and LFO alignment |
 | `src/gm2_univibe_core.c`, `src/gm2_univibe_core.h`, `src/gm2_univibe_design.c`, `src/gm2_univibe_design.h` | Fixed-point univibe routine (`P:0x00107F..0x001116`) and parameter setup (`P:0x09311B`) the Vintage and Modern Univibes share |
-| `src/gm2_vintunivibe.c`, `src/gm2_vintunivibe.h`, `src/gm2_vintunivibe_setup.c`, `src/gm2_vintunivibe_setup.h` | Vintage Univibe: Speed 1/2, Depth, Tempo 1/2, Attack, Release, Select, Phase Reverse, and LFO alignment |
-| `src/gm2_modunivibe.c`, `src/gm2_modunivibe.h`, `src/gm2_modunivibe_setup.c`, `src/gm2_modunivibe_setup.h` | Modern Univibe: Speed 1/2, Depth, Tempo 1/2, Attack, Release, Select, Phase Reverse, and LFO alignment |
+| `src/gm2_vintunivibe.c`, `src/gm2_vintunivibe.h`, `src/gm2_vintunivibe_setup.c`, `src/gm2_vintunivibe_setup.h` | Vintage Univibe: Speed 1/2, Depth, Tempo 1/2, Attack, Release, Select, Phase Reverse, Mix and Out Level, and LFO alignment |
+| `src/gm2_modunivibe.c`, `src/gm2_modunivibe.h`, `src/gm2_modunivibe_setup.c`, `src/gm2_modunivibe_setup.h` | Modern Univibe: Speed 1/2, Depth, Tempo 1/2, Attack, Release, Select, Phase Reverse, Mix and Out Level, and LFO alignment |
 | `src/gm2_moddelay_core.c`, `src/gm2_moddelay_core.h`, `src/gm2_moddelay_design.c`, `src/gm2_moddelay_design.h` | Fixed-point six-voice modulated delay routine (`P:0x001117..0x0011F8`, `P:0x00033A`, `P:0x00033C`) and parameter setup (`P:0x0938BE`) the nine Chorus, Flanger and Vibrato effects share |
-| `src/gm2_cchorus.c`, `src/gm2_cchorus.h`, `src/gm2_cchorus_setup.c`, `src/gm2_cchorus_setup.h` | Classic Chorus: Speed, Depth, Tempo, Hi-Cut, and LFO alignment |
-| `src/gm2_achorus.c`, `src/gm2_achorus.h`, `src/gm2_achorus_setup.c`, `src/gm2_achorus_setup.h` | Advanced Chorus: Speed, Depth, Tempo, Hi-Cut, Delay, Golden Ratio, Phase Reverse, and LFO alignment |
-| `src/gm2_cflanger.c`, `src/gm2_cflanger.h`, `src/gm2_cflanger_setup.c`, `src/gm2_cflanger_setup.h` | Classic Flanger: Speed, Depth, Tempo, Hi-Cut, Feedback, Feedback Hi-Cut, and LFO alignment |
-| `src/gm2_aflanger.c`, `src/gm2_aflanger.h`, `src/gm2_aflanger_setup.c`, `src/gm2_aflanger_setup.h` | Advanced Flanger: Speed, Depth, Tempo, Hi-Cut, Feedback, Feedback Hi-Cut, Delay, Golden Ratio, Phase Reverse, and LFO alignment |
-| `src/gm2_trichorus.c`, `src/gm2_trichorus.h`, `src/gm2_trichorus_setup.c`, `src/gm2_trichorus_setup.h` | Tri-Chorus Normal: Speed, Depth, Tempo, Width, Phase Reverse, and LFO alignment |
-| `src/gm2_trichorus_asym.c`, `src/gm2_trichorus_asym.h`, `src/gm2_trichorus_asym_setup.c`, `src/gm2_trichorus_asym_setup.h` | Tri-Chorus Asymmetric: Speed, Depth, Tempo, Width, Phase Reverse, and LFO alignment |
-| `src/gm2_tzflanger_neg.c`, `src/gm2_tzflanger_neg.h`, `src/gm2_tzflanger_neg_setup.c`, `src/gm2_tzflanger_neg_setup.h` | Through-Zero Flanger Negative: Speed, Depth, Tempo, Feedback, Feedback Hi-Cut, and LFO alignment |
-| `src/gm2_tzflanger_pos.c`, `src/gm2_tzflanger_pos.h`, `src/gm2_tzflanger_pos_setup.c`, `src/gm2_tzflanger_pos_setup.h` | Through-Zero Flanger Positive: Speed, Depth, Tempo, Feedback, Feedback Hi-Cut, and LFO alignment |
-| `src/gm2_vibrato.c`, `src/gm2_vibrato.h`, `src/gm2_vibrato_setup.c`, `src/gm2_vibrato_setup.h` | Vibrato: Speed, Depth, Tempo, Hi-Cut, and LFO alignment |
-| `src/gm2_delay_core.c`, `src/gm2_delay_core.h` | Fixed-point delay routine the four delays share: input/feedback matrix, 172,800-word circular buffer, two-tap equal-power crossfade, per-channel LP/HP filters, output matrix, the Mix knob's wet and dry words against the frame's input, smoothing and crossfade jobs |
+| `src/gm2_cchorus.c`, `src/gm2_cchorus.h`, `src/gm2_cchorus_setup.c`, `src/gm2_cchorus_setup.h` | Classic Chorus: Speed, Depth, Tempo, Hi-Cut, Mix and Out Level, and LFO alignment |
+| `src/gm2_achorus.c`, `src/gm2_achorus.h`, `src/gm2_achorus_setup.c`, `src/gm2_achorus_setup.h` | Advanced Chorus: Speed, Depth, Tempo, Hi-Cut, Delay, Golden Ratio, Phase Reverse, Mix and Out Level, and LFO alignment |
+| `src/gm2_cflanger.c`, `src/gm2_cflanger.h`, `src/gm2_cflanger_setup.c`, `src/gm2_cflanger_setup.h` | Classic Flanger: Speed, Depth, Tempo, Hi-Cut, Feedback, Feedback Hi-Cut, Mix and Out Level, and LFO alignment |
+| `src/gm2_aflanger.c`, `src/gm2_aflanger.h`, `src/gm2_aflanger_setup.c`, `src/gm2_aflanger_setup.h` | Advanced Flanger: Speed, Depth, Tempo, Hi-Cut, Feedback, Feedback Hi-Cut, Delay, Golden Ratio, Phase Reverse, Mix and Out Level, and LFO alignment |
+| `src/gm2_trichorus.c`, `src/gm2_trichorus.h`, `src/gm2_trichorus_setup.c`, `src/gm2_trichorus_setup.h` | Tri-Chorus Normal: Speed, Depth, Tempo, Width, Phase Reverse, Mix and Out Level, and LFO alignment |
+| `src/gm2_trichorus_asym.c`, `src/gm2_trichorus_asym.h`, `src/gm2_trichorus_asym_setup.c`, `src/gm2_trichorus_asym_setup.h` | Tri-Chorus Asymmetric: Speed, Depth, Tempo, Width, Phase Reverse, Mix and Out Level, and LFO alignment |
+| `src/gm2_tzflanger_neg.c`, `src/gm2_tzflanger_neg.h`, `src/gm2_tzflanger_neg_setup.c`, `src/gm2_tzflanger_neg_setup.h` | Through-Zero Flanger Negative: Speed, Depth, Tempo, Feedback, Feedback Hi-Cut and Out Level, and LFO alignment |
+| `src/gm2_tzflanger_pos.c`, `src/gm2_tzflanger_pos.h`, `src/gm2_tzflanger_pos_setup.c`, `src/gm2_tzflanger_pos_setup.h` | Through-Zero Flanger Positive: Speed, Depth, Tempo, Feedback, Feedback Hi-Cut and Out Level, and LFO alignment |
+| `src/gm2_vibrato.c`, `src/gm2_vibrato.h`, `src/gm2_vibrato_setup.c`, `src/gm2_vibrato_setup.h` | Vibrato: Speed, Depth, Tempo, Hi-Cut and Out Level, and LFO alignment |
+| `src/gm2_delay_core.c`, `src/gm2_delay_core.h` | Fixed-point delay routine the four delays share: input/feedback matrix, 172,800-word circular buffer, two-tap equal-power crossfade, per-channel LP/HP filters, output matrix, the Mix and Out Level knobs' wet and dry words against the frame's input, smoothing and crossfade jobs |
 | `src/gm2_delay_design.c`, `src/gm2_delay_design.h` | The delays' shared matrix, LP/HP filter and tempo/tap-offset setup; the Dynamic Delay owns ducking and the Reverse Delay owns its grain splice |
-| `src/gm2_pingpong.c`, `src/gm2_pingpong.h`, `src/gm2_pingpong_setup.c`, `src/gm2_pingpong_setup.h` | Ping Pong Delay: Delay, Tempo, Width, Feedback, Feedback Hi-Cut and Lo-Cut, and Mix |
-| `src/gm2_dyndelay.c`, `src/gm2_dyndelay.h`, `src/gm2_dyndelay_setup.c`, `src/gm2_dyndelay_setup.h` | Dynamic Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Offset, Sense, Damp, Release and Mix, its level detector and ducking tick |
-| `src/gm2_dualdelay.c`, `src/gm2_dualdelay.h`, `src/gm2_dualdelay_setup.c`, `src/gm2_dualdelay_setup.h` | Dual Delay: Delay 1/2, Tempo 1/2, Feedback 1/2, Feedback Hi-Cut and Lo-Cut, Pan 1/2 and Mix |
-| `src/gm2_revdelay.c`, `src/gm2_revdelay.h`, `src/gm2_revdelay_setup.c`, `src/gm2_revdelay_setup.h` | Reverse Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Mix, and its grain splice |
-| `src/gm2_reverb.c`, `src/gm2_reverb.h`, `src/gm2_reverb_setup.c`, `src/gm2_reverb_setup.h` | Reverb (Spring, Hall, Room, Plate): 32,768-word circular buffer, input LP and two allpass diffusers, seven tank delay lines with two-band damping filters, eight early reflections and two biquads per channel, and Decay/PreDly/Shape/Size/HiCol/HiFact/LoCol/LoFact/RoomLv/RevLev/Diff setup |
+| `src/gm2_pingpong.c`, `src/gm2_pingpong.h`, `src/gm2_pingpong_setup.c`, `src/gm2_pingpong_setup.h` | Ping Pong Delay: Delay, Tempo, Width, Feedback, Feedback Hi-Cut and Lo-Cut, Mix and Out Level |
+| `src/gm2_dyndelay.c`, `src/gm2_dyndelay.h`, `src/gm2_dyndelay_setup.c`, `src/gm2_dyndelay_setup.h` | Dynamic Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Offset, Sense, Damp, Release, Mix and Out Level, its level detector and ducking tick |
+| `src/gm2_dualdelay.c`, `src/gm2_dualdelay.h`, `src/gm2_dualdelay_setup.c`, `src/gm2_dualdelay_setup.h` | Dual Delay: Delay 1/2, Tempo 1/2, Feedback 1/2, Feedback Hi-Cut and Lo-Cut, Pan 1/2, Mix and Out Level |
+| `src/gm2_revdelay.c`, `src/gm2_revdelay.h`, `src/gm2_revdelay_setup.c`, `src/gm2_revdelay_setup.h` | Reverse Delay: Delay, Tempo, Feedback, Feedback Hi-Cut and Lo-Cut, Mix and Out Level, and its grain splice |
+| `src/gm2_reverb.c`, `src/gm2_reverb.h`, `src/gm2_reverb_setup.c`, `src/gm2_reverb_setup.h` | Reverb (Spring, Hall, Room, Plate): 32,768-word circular buffer, input LP and two allpass diffusers, seven tank delay lines with two-band damping filters, eight early reflections and two biquads per channel, and Decay/PreDly/Shape/Size/HiCol/HiFact/LoCol/LoFact/RoomLv/RevLev/Diff/Mix/OutLev setup |
 | `src/gm2_gate_detector.c`, `src/gm2_gate_detector.h` | The Noise Gate's level detector, which the gate, the Touch Res Filter and the Dynamic Delay share |
 | `src/gm2_tick.c`, `src/gm2_tick.h` | The control tick's period, the peak-hold read, and the touch follower, Response and Sense words |
-| `src/gm2_lfo.c`, `src/gm2_lfo.h` | LFO setup: Speed and tempo rates, phase steps and advances, and song-position phase |
+| `src/gm2_lfo.c`, `src/gm2_lfo.h` | LFO setup: Speed and tempo rates, phase steps and advances, and the song-position phase an align call takes |
 | `src/gm2_rate.c`, `src/gm2_rate.h` | The six sample-rate values the rate install derives |
 | `src/gm2_tables.c`, `src/gm2_tables.h` | Firmware lookup tables word for word, and the log2/exp2/decay and waveform readers |
 | `src/gm2_dsp_math.h` | DSP56300 24/48/56-bit arithmetic primitives, header-only and inline |
 | `src/gm2_swf.c`, `src/gm2_swf.h` | Native software-float arithmetic and transcendental helpers, plus the dB and frequency unit maps |
 | `src/gm2_mix.c`, `src/gm2_mix.h` | A Mix and Out Level knob's wet and dry level words: the equal-power curve on the mix and the dB gain `P:0x08F763` stages |
 | `src/gm2_process.h` | Fixed block level words and the four process entry points every effect shares |
-| `src/gm2_job.c`, `src/gm2_job.h` | One-pole coefficient smoothing, parameter ramps and delay-tap crossfades |
+| `src/gm2_job.c`, `src/gm2_job.h` | One-pole coefficient smoothing, parameter ramps and delay-tap crossfades, and the de-popped variants' group glide |
 | `src/gm2_biquad.h` | The firmware's double-precision biquad step and state |
+| `src/gm2_reverb_kernel.h` | The Reverb kernel's pieces, which the Reverb and its de-popped variant both run |
+| `src/gm2_handback.c`, `src/gm2_handback.h` | The hand-back the de-popped variants share: from a de-popped copy back to the effect's own path |
+| `src/gm2_eq_alt.c`, `src/gm2_eq_alt.h`, `src/gm2_eq_alt_setup.c`, `src/gm2_eq_alt_setup.h` | De-popped EQ: the fifteen biquad words glide as one group |
+| `src/gm2_resfilter_alt.c`, `src/gm2_resfilter_alt.h`, `src/gm2_resfilter_alt_setup.c`, `src/gm2_resfilter_alt_setup.h` | De-popped Resonance Filter: the twenty biquad words glide as one group |
+| `src/gm2_pitch_core_alt.c`, `src/gm2_pitch_core_alt.h` | The de-popped pitch routine both pitch variants run: a voice splices only once its crossfade has run out |
+| `src/gm2_pitch_alt.c`, `src/gm2_pitch_alt.h`, `src/gm2_pitch_alt_setup.c`, `src/gm2_pitch_alt_setup.h` | De-popped Pitch Shifter |
+| `src/gm2_ipitch_alt.c`, `src/gm2_ipitch_alt.h`, `src/gm2_ipitch_alt_setup.c`, `src/gm2_ipitch_alt_setup.h` | De-popped Intelligent Pitch Shifter |
+| `src/gm2_revdelay_alt.c`, `src/gm2_revdelay_alt.h`, `src/gm2_revdelay_alt_setup.c`, `src/gm2_revdelay_alt_setup.h` | De-popped Reverse Delay: a grain also ends before its tap's walk wraps |
+| `src/gm2_reverb_alt.c`, `src/gm2_reverb_alt.h`, `src/gm2_reverb_alt_setup.c`, `src/gm2_reverb_alt_setup.h` | De-popped Reverb: the early taps and the pre-delay tap crossfade, and the eighty words glide as one group |
 | `reverse_engineering/harness/` | Emulator plumbing the test recorder drives: loads the firmware, applies its initializer, installs a rate, calls routines and reads memory |
 | `tests/` | The test recorder, the offline checker and the fixtures recorded from the firmware |
 
@@ -1485,8 +1495,9 @@ The test system checks setups at 48000 Hz only; other rates are accepted but not
 checked. The processing kernels accept any precomputed valid words. The
 firmware's block layer is not ported (see `AGENTS.md`): block objects, routing,
 on/off switching, and the blocks' kill flags (hidden parameter 15, including the
-gate's damping kill path). Every kernel keeps its block's input gain and wet/dry
-words at the values the block's activation leaves, `0x7FFFFF`, `0x7FFFFE` and 0,
-and no API exposes them. The smoothing,
-crossfade and level jobs run on the fixed schedule above, and bit-exactness is
-established against the firmware emulator, not by analog hardware capture.
+gate's damping kill path). Every kernel keeps its block's level multiplies: the
+input word is `0x7FFFFF`, and the wet and dry words are the pair the effect's Mix
+and Out Level knobs give (`gm2_mix_words()`), or `0x7FFFFE` and 0 where the device
+has neither knob; no API exposes the words themselves. The smoothing, crossfade
+and level jobs run on the fixed schedule above, and bit-exactness is established
+against the firmware emulator, not by analog hardware capture.

@@ -101,8 +101,8 @@ Every module in `src/` follows one pattern, so that all effects read as one code
 - An effect X is four files: `gm2_X.h` (config, state, the process entry points, align), `gm2_X.c`, `gm2_X_setup.h` (the raw struct and `gm2_X_setup_config`) and `gm2_X_setup.c`; `gm2.h` includes the setup header.
 - A family's shared audio routine is `gm2_<family>_core.{h,c}`: its config and state, `gm2_<family>_core_state_init`, `gm2_<family>_core_process_frame` and, with an LFO, `gm2_<family>_core_align`. A core has no buffer entry points; its state_init and process_frame take only what the routine needs, directly from the effect's coefficients where no separate core config is useful.
 - A family's shared setup math is `gm2_<family>_design.{h,c}`: functions over raw values, taking `const gm2_rate_words *rate` first where they depend on the rate. They validate nothing and cannot fail.
-- Everything a header declares starts with the header's module name: `gm2_<module>_...`, `GM2_<MODULE>_...`. Only `gm2_base.h` declares library-wide names (`gm2_context`, `GM2_CHANNELS`, `GM2_CHUNK_FRAMES`).
-- Inside a `.c` file: static functions are `<module>_<name>` without `gm2_` (`gate_gain`, `lfo_gain_level`); constants are enum constants `<MODULE>_<NAME>` without `GM2_`; software-float constants are `static const gm2_swf k_<name> = GM2_SWF_CONST(0x......u, 0x..u);` with the value in a trailing comment (the exact ones every setup shares, `gm2_swf_one` and its neighbours, are in `gm2_swf.h`); other constant data is `static const ... k_<name>`. A file that clamps raw knob values (a `_setup.c`, a `_design.c`, `gm2_tick.c`) names its descriptor windows `<FIELD>_MIN` and `<FIELD>_MAX` in one enum.
+- Everything a header declares starts with the header's module name: `gm2_<module>_...`, `GM2_<MODULE>_...`. Only `gm2_base.h` declares library-wide names (`gm2_context`, `GM2_CHANNELS`, `GM2_CHUNK_FRAMES`). The primitives keep their short names: the arithmetic of `gm2_dsp_math.h` (`gm2_mpy`, `GM2_W24_MAX`), the tables and readers of `gm2_tables.h` (`gm2_log2`, `GM2_LFO_SINE_WORDS`), the converters of `gm2_convert.h` (`gm2_f32_to_q23`) and the level words of `gm2_process.h` (`GM2_LEVEL_INPUT`).
+- Inside a `.c` file: static functions are `<module>_<name>` without `gm2_` (`gate_gain`, `lfo_gain_level`); constants are enum constants `<MODULE>_<NAME>` without `GM2_`; software-float constants are `static const gm2_swf k_<name> = GM2_SWF_CONST(0x......u, 0x..u);` with the value in a trailing comment (the ones several setups share, `gm2_swf_one`, `gm2_swf_hundredth` and their neighbours, are in `gm2_swf.h`); other constant data is `static const ... k_<name>`. A file that clamps raw knob values (a `_setup.c`, a `_design.c`, `gm2_tick.c`) names its descriptor windows `<FIELD>_MIN` and `<FIELD>_MAX` in one enum.
 
 **Types**
 
@@ -157,11 +157,11 @@ An effect never keeps its own copy of what another module already has:
 
 | Header | What it shares |
 |---|---|
-| `gm2_dsp_math.h` | The DSP56300 arithmetic (`gm2_mpy`, `gm2_mac`, `gm2_store24`...), `gm2_clamp_raw`, the soft clip `gm2_soft_clip` |
-| `gm2_swf.h` | The software float, its exact constants (`gm2_swf_one`...), and the firmware's unit maps `gm2_swf_hz20`, `gm2_swf_hz80`, `gm2_swf_db` |
+| `gm2_dsp_math.h` | The DSP56300 arithmetic (`gm2_mpy`, `gm2_mac`, `gm2_store24`...), `gm2_clamp_raw`, the soft clip `gm2_soft_clip` and its words |
+| `gm2_swf.h` | The software float, the constants several setups share (`gm2_swf_one`, `gm2_swf_hundredth`, `gm2_swf_pi`...), and the firmware's unit maps `gm2_swf_hz20`, `gm2_swf_hz80`, `gm2_swf_db` |
 | `gm2_rate.h` | The words derived from the sample rate |
 | `gm2_tables.h` | Every firmware table and the steps that read them: `gm2_log2`, `gm2_exp2`, `gm2_wave_read` |
-| `gm2_lfo.h` | The LFO rate, step and beat, the phase advances `gm2_lfo_advance` and `gm2_lfo_advance_restart`, and `gm2_lfo_phase_at` |
+| `gm2_lfo.h` | The LFO rate, step and beat, the phase advances `gm2_lfo_advance` and `gm2_lfo_advance_restart`, `gm2_lfo_phase_at` and the align step `gm2_lfo_align` |
 | `gm2_job.h` | The parameter jobs: `gm2_job_smooth`, `gm2_job_ramp_arm`, `gm2_job_ramp`, `gm2_job_fade`; and the variants' group glide `gm2_job_group_run` |
 | `gm2_handback.h` | The de-popped variants' hand-back to their effect's path |
 | `gm2_tick.h` | The control tick: its period, the peak hold, the touch follower and its Response and Sense words |
@@ -169,6 +169,8 @@ An effect never keeps its own copy of what another module already has:
 | `gm2_gate_detector.h` | The Noise Gate's level detector |
 | `gm2_mix.h` | The Mix and Out Level knobs' wet and dry words: `gm2_mix_words` and the curve half `gm2_mix_curve` |
 | `gm2_process.h` | The block level words and `GM2_PROCESS_DEFINE` |
+| `gm2_convert.h` | The float <-> Q23 conversion |
+| `gm2_reverb_kernel.h` | The Reverb kernel's pieces, for the Reverb and its de-popped variant |
 
 **Comments and order**
 
