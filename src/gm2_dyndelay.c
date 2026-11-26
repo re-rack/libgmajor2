@@ -1,6 +1,5 @@
 #include "gm2_dyndelay.h"
 
-#include "gm2_delay_design.h"
 #include "gm2_dsp_math.h"
 #include "gm2_process.h"
 #include "gm2_tick.h"

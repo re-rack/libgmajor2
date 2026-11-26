@@ -30,14 +30,12 @@
 #include "gm2_swf.h"
 #include "gm2_tables.h"
 
-static const gm2_swf k_pi = GM2_SWF_CONST(0x6487EEu, 0x81u);
 static const gm2_swf k_phase_scale = GM2_SWF_CONST(0x400000u, 0x88u); /* 256 */
-static const gm2_swf k_cube_root = GM2_SWF_CONST(0x555556u, 0x7Eu);
+static const gm2_swf k_cube_root = GM2_SWF_CONST(0x555556u, 0x7Eu); /* 1/3 */
 static const gm2_swf k_time_step = GM2_SWF_CONST(0x640000u, 0x85u); /* 50 ms a step */
 static const gm2_swf k_lamp_rise = GM2_SWF_CONST(0x500000u, 0x82u); /* 5 ms */
 static const gm2_swf k_lamp_fall = GM2_SWF_CONST(0x780000u, 0x84u); /* 30 ms */
 static const gm2_swf k_depth_step = GM2_SWF_CONST(0x51EB85u, 0x78u); /* 0.005 */
-static const gm2_swf k_cent = GM2_SWF_CONST(0x51EB85u, 0x79u);      /* 0.01 */
 
 /* Y:0x0474/0x0475: the waveshaper's linear and square weights. The Vintage
  * Univibe squares the lamp drive; the Modern one adds a linear term and bends it
@@ -73,7 +71,7 @@ enum {
 
 /* P:0x093276: the bilinear pole (1 - tan(pi x)) / (1 + tan(pi x)). */
 static gm2_swf univibe_bilinear(gm2_swf x) {
-  const gm2_swf inverse = gm2_swf_div(gm2_swf_one, gm2_swf_tan(gm2_swf_mul(x, k_pi)));
+  const gm2_swf inverse = gm2_swf_div(gm2_swf_one, gm2_swf_tan(gm2_swf_mul(x, gm2_swf_pi)));
   return gm2_swf_div(gm2_swf_sub(inverse, gm2_swf_one), gm2_swf_add(inverse, gm2_swf_one));
 }
 
@@ -166,10 +164,10 @@ void gm2_univibe_design(const gm2_rate_words *rate, gm2_univibe_design_subtype s
    * second on what is left of 100. Phase Reverse flips the first one in the left
    * output alone, so the second and fourth words keep their sign. */
   const int mix = gm2_clamp_raw(raw->mix, MIX_MIN, MIX_MAX);
-  const int32_t staged_up =
-      gm2_swf_to_q23(gm2_swf_div(gm2_swf_mul(gm2_swf_from_int(mix), k_cent), gm2_swf_two));
+  const int32_t staged_up = gm2_swf_to_q23(
+      gm2_swf_div(gm2_swf_mul(gm2_swf_from_int(mix), gm2_swf_hundredth), gm2_swf_two));
   const int32_t staged_down =
-      gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(100 - (mix >> 1)), k_cent));
+      gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(100 - (mix >> 1)), gm2_swf_hundredth));
   const int32_t wet = gm2_mix_curve(staged_up);
   const int32_t dry = gm2_mix_curve(staged_down);
   config->coef[GM2_UNIVIBE_CORE_WET] = phase_reverse != 0 ? -wet : wet;

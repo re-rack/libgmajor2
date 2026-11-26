@@ -35,13 +35,11 @@
 #include "gm2_tick.h"
 
 /* The firmware's operands as (mantissa, exponent) words. */
-static const gm2_swf k_two_pi = GM2_SWF_CONST(0x6487EEu, 0x82u); /* 2 pi */
 static const gm2_swf k_q_low = GM2_SWF_CONST(0x59999Au, 0x7Fu);    /* 0.7 */
 static const gm2_swf k_hz_low = GM2_SWF_CONST(0x4B0000u, 0x87u);   /* 150 Hz */
 static const gm2_swf k_tick_low = GM2_SWF_CONST(0x4F0CCDu, 0x88u); /* 10^2.5 Hz */
 static const gm2_swf k_style_q[2] = {GM2_SWF_CONST(0x53AE15u, 0x82u), /* 5.23 */
                                      GM2_SWF_CONST(0x5BD70Au, 0x81u)}; /* 2.87 */
-static const gm2_swf k_res_cent = GM2_SWF_CONST(0x51EB85u, 0x79u); /* 0.01 */
 static const gm2_swf k_res_span = GM2_SWF_CONST(0x4D624Fu, 0x82u); /* 4.840267 */
 
 /* The biquad set the second-order Style leaves the second biquad at. */
@@ -65,7 +63,8 @@ gm2_res_design_shape gm2_res_design_resonance(int style, int resonance) {
     res_f = gm2_swf_mul(res_f, gm2_swf_half);
   }
   shape.q = gm2_swf_mul(
-      k_q_low, gm2_swf_pow(gm2_swf_two, gm2_swf_mul(gm2_swf_mul(res_f, k_res_cent), k_res_span)));
+      k_q_low,
+      gm2_swf_pow(gm2_swf_two, gm2_swf_mul(gm2_swf_mul(res_f, gm2_swf_hundredth), k_res_span)));
   shape.scale = gm2_swf_sqrt(gm2_swf_div(k_q_low, shape.q));
   return shape;
 }
@@ -85,7 +84,7 @@ static void res_design_biquad(const gm2_rate_words *rate, gm2_swf hz, gm2_res_de
   const gm2_swf fc = gm2_swf_cmp(hz, k_hz_low) < 0 ? k_hz_low : hz;
 
   /* P:0x091ED2: w0 = 2 rate tan(pi f / rate). */
-  gm2_swf t = gm2_swf_mul(fc, k_two_pi);
+  gm2_swf t = gm2_swf_mul(fc, gm2_swf_two_pi);
   t = gm2_swf_mul(t, gm2_swf_half);
   t = gm2_swf_mul(t, rate->period);
   t = gm2_swf_tan(t);

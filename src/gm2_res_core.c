@@ -8,10 +8,6 @@
  * back to the clip's result. */
 enum { RES_SHIFT = 3 };
 
-/* Y:0x3D1..0x3D4, the words P:0x000EE9 passes to P:0x0003AF: rail, knee, end and
- * curve shift. */
-static const int32_t k_clip[4] = {0x0FFFFF, 0x080000, 0x180000, 2};
-
 /* One stereo frame, P:0x000EE9..0x000F23, then the chunk's job run once its last
  * frame is done. */
 int gm2_res_core_process_frame(gm2_res_core_state *state, const int32_t coef[GM2_RES_CORE_COEFS],
@@ -37,7 +33,7 @@ int gm2_res_core_process_frame(gm2_res_core_state *state, const int32_t coef[GM2
 
     /* 0x0F10..0x0F13: the soft clip P:0x0003AF with Y:0x3D0's shift, then the
      * 24-bit store of its result, at most the rail word shifted left three. */
-    const int32_t clipped = gm2_store24(gm2_soft_clip(acc, k_clip, RES_SHIFT));
+    const int32_t clipped = gm2_store24(gm2_soft_clip(acc, gm2_soft_clip_words, RES_SHIFT));
 
     /* 0x0F15..0x0F21: the wet word and the clipped sample, the dry word and the
      * frame's input sample, one rounding over the sum. Each doubled product is at

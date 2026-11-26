@@ -14,6 +14,7 @@
 
 #include "gm2_base.h"
 #include "gm2_dsp_math.h"
+#include "gm2_process.h"
 #include "gm2_reverb.h"
 
 /* The walk's offsets after the tank: the two the reset leaves the pointers on,
@@ -74,6 +75,15 @@ static inline int32_t gm2_reverb_kernel_biquad(gm2_reverb_biquad *stage, const i
   stage->low = gm2_lo24(a);
   stage->out[1] = gm2_store24(a);
   return stage->out[1];
+}
+
+/* P:0x0012D7..0x0012E5: the mono input at the write point, where both pointers
+ * start. */
+static inline void gm2_reverb_kernel_input(gm2_reverb_state *state, int32_t in_l, int32_t in_r,
+                                           uint32_t origin) {
+  int64_t b = 2 * (int64_t)GM2_LEVEL_INPUT * in_l;
+  b += 2 * (int64_t)in_r * GM2_LEVEL_INPUT;
+  state->buffer[origin] = gm2_store24(gm2_asr_n(b, 2));
 }
 
 /* P:0x0012E6..0x001363: the input's one-pole, the two diffusers, the seven tank
@@ -220,6 +230,26 @@ static inline int32_t gm2_reverb_kernel_early(const gm2_reverb_state *state,
   const int32_t *const pair = &c[GM2_REVERB_BIQUAD + 5u * GM2_REVERB_EARLY_BIQUADS * channel];
   word = gm2_reverb_kernel_biquad(&biquad[0], pair, word);
   return gm2_reverb_kernel_biquad(&biquad[1], pair + 5u, word);
+}
+
+/* P:0x0013C6..0x0013DE: the Room and Reverb levels, the pre-delay tap's gain on
+ * the word `pre_delay` that tap read, then the Mix pair: the wet word ASL'd on
+ * each channel's sum and the dry word on that channel's input sample, the two
+ * rounded together once. */
+static inline void gm2_reverb_kernel_output(gm2_reverb_state *state, int32_t pre_delay,
+                                            int32_t in_l, int32_t in_r, int32_t out[GM2_CHANNELS]) {
+  const int32_t *c = state->coef;
+  int64_t right = 2 * (int64_t)c[GM2_REVERB_ROOM] * state->early_out[1];
+  int64_t left = 2 * (int64_t)c[GM2_REVERB_ROOM + 1] * state->early_out[0];
+  right += 2 * (int64_t)c[GM2_REVERB_LEVEL] * state->tank_out[1];
+  left += 2 * (int64_t)c[GM2_REVERB_LEVEL + 1] * state->tank_out[0];
+  state->pre_delay = gm2_store24(2 * (int64_t)c[GM2_REVERB_PRE_DELAY] * pre_delay);
+  const int32_t wet = state->wet;
+  const int32_t dry = state->dry;
+  const int64_t wet_l = gm2_asl(2 * (int64_t)wet * gm2_store24(left));
+  const int64_t wet_r = gm2_asl(2 * (int64_t)wet * gm2_store24(right));
+  out[0] = gm2_store24(gm2_round24(wet_l + 2 * (int64_t)in_l * dry));
+  out[1] = gm2_store24(gm2_round24(wet_r + 2 * (int64_t)in_r * dry));
 }
 
 #endif /* GM2_REVERB_KERNEL_H */

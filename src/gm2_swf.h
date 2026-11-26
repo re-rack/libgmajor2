@@ -57,6 +57,14 @@ static const gm2_swf gm2_swf_half = GM2_SWF_CONST(0x400000u, 0x7Fu);
 static const gm2_swf gm2_swf_quarter = GM2_SWF_CONST(0x400000u, 0x7Eu);
 static const gm2_swf gm2_swf_minus_one = GM2_SWF_CONST(0x800000u, 0x7Fu);
 static const gm2_swf gm2_swf_minus_two = GM2_SWF_CONST(0x800000u, 0x80u);
+static const gm2_swf gm2_swf_ten = GM2_SWF_CONST(0x500000u, 0x83u);
+static const gm2_swf gm2_swf_hundred = GM2_SWF_CONST(0x640000u, 0x86u);
+
+/* And the words the firmware rounds to. */
+static const gm2_swf gm2_swf_hundredth = GM2_SWF_CONST(0x51EB85u, 0x79u);  /* 0.01 */
+static const gm2_swf gm2_swf_thousandth = GM2_SWF_CONST(0x418937u, 0x76u); /* 0.001 */
+static const gm2_swf gm2_swf_pi = GM2_SWF_CONST(0x6487EEu, 0x81u);         /* 3.1415930 */
+static const gm2_swf gm2_swf_two_pi = GM2_SWF_CONST(0x6487EEu, 0x82u);     /* 6.2831860 */
 
 /* P:0x000BFD: 24-bit integer in A1 to float. */
 gm2_swf gm2_swf_from_int(int32_t n);

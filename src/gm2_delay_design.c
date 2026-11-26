@@ -57,9 +57,7 @@ enum {
 enum { DELAY_DESIGN_DELAY_MS_MAX = 1800 };
 
 /* The firmware's operands as (mantissa, exponent) words. */
-static const gm2_swf k_cent = GM2_SWF_CONST(0x51EB85u, 0x79u); /* 0.01 */
 static const gm2_swf k_semi = GM2_SWF_CONST(0x51EB85u, 0x78u); /* 0.005 */
-static const gm2_swf k_pi = GM2_SWF_CONST(0x6487EEu, 0x81u);
 static const gm2_swf k_bias = GM2_SWF_CONST(0x400008u, 0x7Fu); /* 0.500000477 */
 
 /* The subtype-1 filter words P:0x094835 leaves in X+16..19. */
@@ -67,8 +65,8 @@ static const int32_t k_dynamic_filter[4] = {-0x0863BA, 0x3BCE23, -0x7FDFD9, 0x7F
 
 void gm2_delay_design_matrix(gm2_delay_design_subtype subtype, int feedback_1, int feedback_2,
                              int32_t coef[8]) {
-  const int32_t fb1 = gm2_swf_to_q23(
-      gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(feedback_1, FEEDBACK_MIN, FEEDBACK_MAX)), k_cent));
+  const int32_t fb1 = gm2_swf_to_q23(gm2_swf_mul(
+      gm2_swf_from_int(gm2_clamp_raw(feedback_1, FEEDBACK_MIN, FEEDBACK_MAX)), gm2_swf_hundredth));
   if (subtype == GM2_DELAY_DESIGN_PINGPONG) {
     const int32_t words0[8] = {0x400000, 0, 0x400000, 0, 0, 0, fb1, fb1};
     for (unsigned i = 0; i < 8u; i++) {
@@ -80,8 +78,9 @@ void gm2_delay_design_matrix(gm2_delay_design_subtype subtype, int feedback_1, i
       coef[i] = words1[i];
     }
   } else {
-    const int32_t fb2 = gm2_swf_to_q23(gm2_swf_mul(
-        gm2_swf_from_int(gm2_clamp_raw(feedback_2, FEEDBACK_MIN, FEEDBACK_MAX)), k_cent));
+    const int32_t fb2 = gm2_swf_to_q23(
+        gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(feedback_2, FEEDBACK_MIN, FEEDBACK_MAX)),
+                    gm2_swf_hundredth));
     const int32_t words23[8] = {0x7FFFFE, 0, 0, 0x7FFFFE, fb2, fb1, 0, 0};
     for (unsigned i = 0; i < 8u; i++) {
       coef[i] = words23[i];
@@ -107,10 +106,10 @@ void gm2_delay_design_output(gm2_delay_design_subtype subtype, int width, int pa
       coef[i] = 0;
     }
   } else {
-    const gm2_swf r1 =
-        gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(pan_1, PAN_MIN, PAN_MAX) + 50), k_cent);
-    const gm2_swf r2 =
-        gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(pan_2, PAN_MIN, PAN_MAX) + 50), k_cent);
+    const gm2_swf r1 = gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(pan_1, PAN_MIN, PAN_MAX) + 50),
+                                   gm2_swf_hundredth);
+    const gm2_swf r2 = gm2_swf_mul(gm2_swf_from_int(gm2_clamp_raw(pan_2, PAN_MIN, PAN_MAX) + 50),
+                                   gm2_swf_hundredth);
     const int32_t w1 = gm2_swf_to_q23(r1);
     const int32_t w2 = gm2_swf_to_q23(r2);
     coef[0] = gm2_store24(gm2_mpyr(w2, wet));
@@ -126,11 +125,11 @@ void gm2_delay_design_filters(const gm2_rate_words *rate, gm2_delay_design_subty
   const gm2_swf f_hi = gm2_swf_hz20(gm2_clamp_raw(fb_hi_cut, FB_HI_CUT_MIN, FB_HI_CUT_MAX));
   const gm2_swf one = gm2_swf_one;
 
-  const gm2_swf t_hi = gm2_swf_tan(gm2_swf_div(gm2_swf_mul(f_hi, k_pi), rate->rate));
+  const gm2_swf t_hi = gm2_swf_tan(gm2_swf_div(gm2_swf_mul(f_hi, gm2_swf_pi), rate->rate));
   const int32_t c12 = gm2_swf_to_q23(gm2_swf_div(gm2_swf_sub(t_hi, one), gm2_swf_add(t_hi, one)));
   const int32_t c13 = gm2_store24(gm2_macr(gm2_word_acc(0x400000), c12, 0x400000));
 
-  const gm2_swf t_lo = gm2_swf_tan(gm2_swf_div(gm2_swf_mul(f_lo, k_pi), rate->rate));
+  const gm2_swf t_lo = gm2_swf_tan(gm2_swf_div(gm2_swf_mul(f_lo, gm2_swf_pi), rate->rate));
   const int32_t c14 = gm2_swf_to_q23(gm2_swf_div(gm2_swf_sub(t_lo, one), gm2_swf_add(one, t_lo)));
   const int32_t c15 = gm2_store24(gm2_macr(gm2_word_acc(0x400000), -c14, 0x400000));
 

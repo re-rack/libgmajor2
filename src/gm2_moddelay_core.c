@@ -242,7 +242,5 @@ void gm2_moddelay_core_state_init(gm2_moddelay_core_state *state,
 
 void gm2_moddelay_core_align(gm2_moddelay_core_state *state, const gm2_moddelay_core_config *config,
                              double beats) {
-  if (config->note != 0u) {
-    state->lfo_phase = gm2_lfo_phase_at(beats, config->note);
-  }
+  gm2_lfo_align(&state->lfo_phase, config->note, beats);
 }

@@ -1,6 +1,6 @@
 /* Decay, Pre-Delay, Shape, Size, Hi Color, Hi Factor, Lo Color, Lo Factor, Room
- * Level, Reverb Level, Diffuse and Mix to the Reverb's words: the Reverb block's
- * updaters, one setup chain for all four subtypes.
+ * Level, Reverb Level, Diffuse, Mix and Out Level to the Reverb's words: the
+ * Reverb block's updaters, one setup chain for all four subtypes.
  *
  *   P:0x09520C  Room Level, Reverb Level, Shape, Size  the Room and Reverb levels
  *   P:0x0952D4  Decay, Hi Color, Hi Factor, Lo Color, Lo Factor  the tank's
@@ -17,9 +17,9 @@
  *                                                      biquads
  *   P:0x095710  (none)                                 the tank's signs
  *
- * Mix is not one of them: the level code P:0x08F763 stages the input, wet and
- * dry words at X:0x099046..0x099048 from the level struct at UI+63, at Out Level
- * 0 dB.
+ * Mix and Out Level are not among them: the level code P:0x08F763 stages the
+ * input, wet and dry words at X:0x099046..0x099048 from the level struct at
+ * UI+63.
  *
  * Spring, Hall, Room and Plate are four factory settings of this one setup.
  */

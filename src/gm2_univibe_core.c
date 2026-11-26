@@ -23,15 +23,15 @@ static const int32_t k_output_clip[6] = {2, 0x200000, 0x1C8521, 0x237ADF, 0x4990
  * the firmware's 2^55 wrap. */
 static inline int64_t univibe_clip(int64_t acc, const int32_t words[6]) {
   int64_t a = acc < 0 ? -acc : acc;
-  if (a > (int64_t)words[2] * 0x1000000) {
-    a -= (int64_t)words[3] * 0x1000000;
+  if (a > gm2_word_acc(words[2])) {
+    a -= gm2_word_acc(words[3]);
     if (a >= 0) {
       a = 0;
     }
     const int32_t over = gm2_store24(a);
     const int32_t square = gm2_store24(-2 * (int64_t)over * over);
     a = 2 * (int64_t)square * words[4];
-    a = a * ((int64_t)1 << ((unsigned)words[5] & 0x3Fu)) + (int64_t)words[1] * 0x1000000;
+    a = a * ((int64_t)1 << ((unsigned)words[5] & 0x3Fu)) + gm2_word_acc(words[1]);
   }
   if (acc < 0) {
     a = -a;
@@ -43,7 +43,7 @@ static inline int64_t univibe_clip(int64_t acc, const int32_t words[6]) {
  * neighbour's and the coefficient, summed with the incoming word. */
 static inline int32_t univibe_stage(int32_t *slot, int32_t next, int32_t pole, int32_t in) {
   const int32_t out =
-      gm2_store24((int64_t)*slot * 0x1000000 + 2 * ((int64_t)next * pole - (int64_t)pole * in));
+      gm2_store24(gm2_word_acc(*slot) + 2 * ((int64_t)next * pole - (int64_t)pole * in));
   *slot = in;
   return out;
 }
@@ -102,15 +102,15 @@ void gm2_univibe_core_process_frame(gm2_univibe_core_state *state,
 
     /* P:0x0010AE..0x0010BF: the depth scale, the waveshaper's linear and square
      * weights Y:0x0474/0x0475, and the ceiling. */
-    const int32_t shaped =
-        gm2_store24(0x400000000000LL + 2 * (int64_t)sine * coef[GM2_UNIVIBE_CORE_DEPTH]);
+    const int32_t shaped = gm2_store24(gm2_word_acc(UNIVIBE_LFO_OFFSET) +
+                                       2 * (int64_t)sine * coef[GM2_UNIVIBE_CORE_DEPTH]);
     const int32_t square = gm2_store24(2 * (int64_t)shaped * shaped);
     int64_t b = 2 * ((int64_t)shaped * config->shaper[0] + (int64_t)square * config->shaper[1]);
     if (b < 0) {
       b = 0;
     }
-    if (b >= 0x0FF000000000LL) {
-      b = 0x0FF000000000LL;
+    if (b >= gm2_word_acc(UNIVIBE_BRIGHTNESS_MAX)) {
+      b = gm2_word_acc(UNIVIBE_BRIGHTNESS_MAX);
     }
     const int32_t brightness = gm2_store24(b);
 
@@ -131,7 +131,7 @@ void gm2_univibe_core_process_frame(gm2_univibe_core_state *state,
      * parabola 1 - coefficient^2 halved towards the live word. */
     for (unsigned k = 0; k < GM2_UNIVIBE_CORE_STAGES; k++) {
       const int32_t base =
-          gm2_store24((int64_t)coef[GM2_UNIVIBE_CORE_CURVES + 2u * k + 1u] * 0x1000000 +
+          gm2_store24(gm2_word_acc(coef[GM2_UNIVIBE_CORE_CURVES + 2u * k + 1u]) +
                       2 * (int64_t)around * coef[GM2_UNIVIBE_CORE_CURVES + 2u * k]);
       const int32_t product = gm2_store24(2 * (int64_t)base * base);
       b = 2 * (0x400000000000LL - 2 * (int64_t)product * base);
@@ -206,7 +206,5 @@ void gm2_univibe_core_state_init(gm2_univibe_core_state *state,
 
 void gm2_univibe_core_align(gm2_univibe_core_state *state, const gm2_univibe_core_config *config,
                             double beats) {
-  if (config->note != 0u) {
-    state->lfo_phase = gm2_lfo_phase_at(beats, config->note);
-  }
+  gm2_lfo_align(&state->lfo_phase, config->note, beats);
 }

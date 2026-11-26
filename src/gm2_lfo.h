@@ -75,4 +75,12 @@ int32_t gm2_lfo_rate_to_speed(gm2_swf hz);
  * firmware has no song position; this is the plugins' addition. */
 int32_t gm2_lfo_phase_at(double beats, unsigned note);
 
+/* An effect's align call: the phase takes the song position's unless `note` is 0,
+ * Tempo at Ignore, where the LFO is left alone. */
+static inline void gm2_lfo_align(int32_t *phase, unsigned note, double beats) {
+  if (note != 0u) {
+    *phase = gm2_lfo_phase_at(beats, note);
+  }
+}
+
 #endif /* GM2_LFO_H */

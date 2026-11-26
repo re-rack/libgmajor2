@@ -12,9 +12,9 @@
 #include "gm2_convert.h"
 
 /* The input word every block's level code stages, and the wet word of a full mix at
- * Out Level 0 dB, which the Gate & EQ, the Noise Gate and the Compressor keep,
- * their device blocks having neither knob. A kernel keeps their multiplies: each
- * word sits at or just below 1.0, and its rounding can move a sample by one LSB. */
+ * Out Level 0 dB, which the EQ, the Noise Gate and the Compressor keep, their
+ * device blocks having neither knob. A kernel keeps their multiplies: each word
+ * sits at or just below 1.0, and its rounding can move a sample by one LSB. */
 #define GM2_LEVEL_INPUT 0x7FFFFF
 #define GM2_LEVEL_WET 0x7FFFFE
 

@@ -12,8 +12,6 @@ enum {
   SWEEP_MAX = 100,
 };
 
-static const gm2_swf k_hundred = GM2_SWF_CONST(0x640000u, 0x86u); /* 100 */
-
 int gm2_wahwah_setup_config(const gm2_context *context, const gm2_wahwah_setup_raw *raw,
                             gm2_wahwah_config *config) {
   const unsigned rate = gm2_context_rate(context);
@@ -24,7 +22,7 @@ int gm2_wahwah_setup_config(const gm2_context *context, const gm2_wahwah_setup_r
 
   config->shift = gm2_wah_design_shift(raw->range);
   /* P:0x09250B: the divide leaves 100 % a hair above one, so the word rails. */
-  config->sweep = gm2_swf_to_q23(gm2_swf_div(gm2_swf_from_int(sweep), k_hundred));
+  config->sweep = gm2_swf_to_q23(gm2_swf_div(gm2_swf_from_int(sweep), gm2_swf_hundred));
   gm2_mix_words(raw->out_level, raw->mix, &config->wet, &config->dry);
   return 0;
 }

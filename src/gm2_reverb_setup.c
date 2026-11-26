@@ -39,9 +39,9 @@
  *               P:0x08F233 and staged as {b0, b2, b1, a2, a1}
  *   P:0x095710  the tank's signs: the fourteen tank feedback matrix signs
  *
- * Mix is not one of them: the level code P:0x08F763 stages the input, wet and
- * dry words at X:0x099046..0x099048 from the level struct at UI+63, at Out Level
- * 0 dB.
+ * Mix and Out Level are not among them: the level code P:0x08F763 stages the
+ * input, wet and dry words at X:0x099046..0x099048 from the level struct at
+ * UI+63.
  */
 #include "gm2_reverb_setup.h"
 
@@ -55,11 +55,8 @@
 #include <stdint.h>
 
 /* The firmware's operands as (mantissa, exponent) words. */
-static const gm2_swf k_ten = GM2_SWF_CONST(0x500000u, 0x83u);       /* 10 */
 static const gm2_swf k_twenty = GM2_SWF_CONST(0x500000u, 0x84u);    /* 20 */
 static const gm2_swf k_fifty = GM2_SWF_CONST(0x640000u, 0x85u);     /* 50 */
-static const gm2_swf k_hundred = GM2_SWF_CONST(0x640000u, 0x86u);   /* 100 */
-static const gm2_swf k_cent = GM2_SWF_CONST(0x51EB85u, 0x79u);      /* 0.01 */
 static const gm2_swf k_rail15 = GM2_SWF_CONST(0x7FFF00u, 0x8Eu); /* 32767.4, the fifteen-bit rail */
 static const gm2_swf k_db_step = GM2_SWF_CONST(0x5E504Du, 0x79u); /* ln(10) / 200 */
 static const gm2_swf k_diff_low = GM2_SWF_CONST(0x6BA29Du, 0x82u); /* 6.72721 */
@@ -119,8 +116,8 @@ static int32_t reverb_scale_product(int32_t a, int32_t b) {
 
 static void reverb_biquad_design(gm2_swf two_pi_over_rate, const int32_t desc[4], int32_t out[5]) {
   /* P:0x08F233 */
-  const gm2_swf gain = gm2_swf_div(gm2_swf_from_int(desc[3]), k_ten);
-  const gm2_swf ratio = gm2_swf_pow(k_ten, gm2_swf_div(gain, k_twenty));
+  const gm2_swf gain = gm2_swf_div(gm2_swf_from_int(desc[3]), gm2_swf_ten);
+  const gm2_swf ratio = gm2_swf_pow(gm2_swf_ten, gm2_swf_div(gain, k_twenty));
   const gm2_swf gain_sqrt = gm2_swf_sqrt(ratio);
   const gm2_swf freq = gm2_swf_from_words((uint32_t)desc[1], (uint32_t)desc[0]);
   const gm2_swf w0 = gm2_swf_mul(freq, two_pi_over_rate);
@@ -156,7 +153,7 @@ static void reverb_levels(int room_level, int reverb_level, int shape, int size,
 /* The Lo and Hi decay multipliers P:0x0952D4 and P:0x0954A4 share: a positive
  * factor moves the table multiplier up by factor/50, the rest by factor/100. */
 static gm2_swf reverb_color_multiplier(int factor, int32_t multiplier) {
-  const gm2_swf divisor = factor > 0 ? k_fifty : k_hundred;
+  const gm2_swf divisor = factor > 0 ? k_fifty : gm2_swf_hundred;
   const gm2_swf scale = gm2_swf_add(gm2_swf_div(gm2_swf_from_int(factor), divisor), gm2_swf_one);
   return gm2_swf_mul(scale, gm2_swf_from_int(multiplier));
 }
@@ -340,10 +337,11 @@ static void reverb_diffusers(int decay, int hi_color, int hi_factor, int lo_colo
   }
   gm2_swf base;
   if (decay_word < 0x47) {
-    base = gm2_swf_div(gm2_swf_mul(gm2_swf_from_int48(decay_word), k_diff_low), k_ten);
+    base = gm2_swf_div(gm2_swf_mul(gm2_swf_from_int48(decay_word), k_diff_low), gm2_swf_ten);
   } else {
-    base = gm2_swf_add(gm2_swf_div(gm2_swf_mul(gm2_swf_from_int48(decay_word), k_diff_high), k_ten),
-                       k_diff_bias);
+    base = gm2_swf_add(
+        gm2_swf_div(gm2_swf_mul(gm2_swf_from_int48(decay_word), k_diff_high), gm2_swf_ten),
+        k_diff_bias);
   }
   gm2_swf amount = gm2_swf_add(gm2_swf_from_int(diffuse), base);
   if (gm2_swf_cmp(amount, gm2_swf_one) < 0) {
@@ -351,7 +349,8 @@ static void reverb_diffusers(int decay, int hi_color, int hi_factor, int lo_colo
   } else if (gm2_swf_cmp(amount, k_diff_max) > 0) {
     amount = k_diff_max;
   }
-  const int32_t gain = gm2_swf_to_q23(gm2_swf_pow(gm2_swf_div(amount, k_hundred), k_cube_root));
+  const int32_t gain =
+      gm2_swf_to_q23(gm2_swf_pow(gm2_swf_div(amount, gm2_swf_hundred), k_cube_root));
   const int32_t complement = gm2_store24(gm2_macr(gm2_word_acc(0x7FFFFF), -gain, gain));
   config->coef[GM2_REVERB_DIFFUSER] = gain;
   config->coef[GM2_REVERB_DIFFUSER + 1] = complement;
@@ -364,7 +363,7 @@ static void reverb_input_lp(const gm2_rate_words *rate, int hi_color, int hi_fac
                             gm2_reverb_config *config) {
   const gm2_swf base = gm2_swf_from_int(gm2_reverb_hicol_table[4 * hi_color + 2]);
   const int factor = hi_factor < 0 ? hi_factor * 2 : hi_factor;
-  const gm2_swf scale = gm2_swf_mac(gm2_swf_one, k_cent, gm2_swf_from_int(factor));
+  const gm2_swf scale = gm2_swf_mac(gm2_swf_one, gm2_swf_hundredth, gm2_swf_from_int(factor));
   const gm2_swf hz = gm2_swf_from_int(gm2_swf_to_int(gm2_swf_mul(scale, base)));
   const int32_t gain = gm2_swf_db_to_lin(gm2_reverb_hicol_table[4 * hi_color + 3]);
   const int32_t cutoff = gm2_swf_to_q23(gm2_swf_exp(gm2_swf_mul(rate->minus_omega, hz)));
@@ -381,10 +380,10 @@ static void reverb_input_lp(const gm2_rate_words *rate, int hi_color, int hi_fac
 static void reverb_early_weights(const gm2_rate_words *rate, int shape, int size, int hi_color,
                                  gm2_reverb_config *config) {
   const int group = 9 * hi_color + 72 * shape;
-  const gm2_swf size_scale =
-      gm2_swf_div(gm2_swf_from_int(gm2_reverb_size_table[5 * size + 45 * shape + 1]), k_hundred);
+  const gm2_swf size_scale = gm2_swf_div(
+      gm2_swf_from_int(gm2_reverb_size_table[5 * size + 45 * shape + 1]), gm2_swf_hundred);
   const gm2_swf color_scale =
-      gm2_swf_div(gm2_swf_from_int(gm2_reverb_color_biquad_table[group]), k_hundred);
+      gm2_swf_div(gm2_swf_from_int(gm2_reverb_color_biquad_table[group]), gm2_swf_hundred);
   const gm2_swf product = gm2_swf_mul(color_scale, size_scale);
   for (unsigned ch = 0; ch < GM2_CHANNELS; ch++) {
     const int32_t *table =

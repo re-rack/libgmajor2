@@ -43,7 +43,6 @@ static const gm2_swf k_db = GM2_SWF_CONST(0x550A96u, 0x77u);            /* log2(
 static const gm2_swf k_three = GM2_SWF_CONST(0x600000u, 0x81u);         /* 3 */
 static const gm2_swf k_headroom = GM2_SWF_CONST(0x879687u, 0x84u);      /* -30.1 */
 static const gm2_swf k_makeup_from = GM2_SWF_CONST(0xB00000u, 0x84u);   /* -20 */
-static const gm2_swf k_millisecond = GM2_SWF_CONST(0x418937u, 0x76u);   /* 0.001 */
 static const gm2_swf k_step_scale = GM2_SWF_CONST(0x457CAFu, 0x83u);    /* 8.69 */
 static const gm2_swf k_attack_slow = GM2_SWF_CONST(0x7D0000u, 0x89u);   /* 1000 */
 static const gm2_swf k_attack_blend = GM2_SWF_CONST(0x710020u, 0x70u);  /* 0.000027 */
@@ -60,8 +59,8 @@ static gm2_swf comp_pole(gm2_swf scale, gm2_swf time) {
 /* P:0x094E18: the eight words Attack and Release stage. */
 static void comp_times(const gm2_rate_words *rate, int attack, int release, int32_t *coef) {
   const gm2_swf chunk_rate = gm2_swf_div(rate->rate, gm2_swf_four);
-  const gm2_swf attack_time = gm2_swf_mul(gm2_time_table[attack], k_millisecond);
-  const gm2_swf release_time = gm2_swf_mul(gm2_time_table[release], k_millisecond);
+  const gm2_swf attack_time = gm2_swf_mul(gm2_time_table[attack], gm2_swf_thousandth);
+  const gm2_swf release_time = gm2_swf_mul(gm2_time_table[release], gm2_swf_thousandth);
 
   const gm2_swf attack_fast = comp_pole(chunk_rate, attack_time);
   const gm2_swf attack_slow = comp_pole(gm2_swf_mul(k_attack_slow, chunk_rate), attack_time);

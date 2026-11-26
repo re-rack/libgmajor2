@@ -10,7 +10,6 @@
 /* 2^22, the low end of a normalized mantissa. */
 #define LFO_MANTISSA_MIN 4194304.0
 
-static const gm2_swf k_millisecond = GM2_SWF_CONST(0x418937u, 0x76u); /* 0.001 */
 static const gm2_swf k_beat_min = GM2_SWF_CONST(0x666666u, 0x7Du);    /* 0.2 s */
 static const gm2_swf k_log10 = GM2_SWF_CONST(0x6F2DECu, 0x7Eu);       /* 1 / ln 10 */
 static const gm2_swf k_decade = GM2_SWF_CONST(0x500000u, 0x86u);      /* 80 steps */
@@ -47,7 +46,7 @@ static gm2_swf lfo_speed_rate(int speed) { return gm2_swf_hz80(speed - GM2_LFO_S
 /* P:0x08F30E: one cycle per note value, on a beat of at least 0.2 s, capped at
  * the fastest Speed. */
 static gm2_swf lfo_tempo_rate(unsigned note, double beat_ms) {
-  gm2_swf beat = gm2_swf_mul(gm2_lfo_beat(beat_ms), k_millisecond);
+  gm2_swf beat = gm2_swf_mul(gm2_lfo_beat(beat_ms), gm2_swf_thousandth);
   if (gm2_swf_cmp(beat, k_beat_min) < 0) {
     beat = k_beat_min;
   }

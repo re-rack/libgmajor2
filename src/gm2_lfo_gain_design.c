@@ -24,7 +24,6 @@ enum {
   TEMPO_MAX = GM2_LFO_NOTE_MAX,
 };
 
-static const gm2_swf k_percent = GM2_SWF_CONST(0x51EB85u, 0x79u);      /* 0.01 */
 static const gm2_swf k_depth_scale = GM2_SWF_CONST(0x7FFCB9u, 0x7Fu);  /* just below 1 */
 static const gm2_swf k_smoother_rate = GM2_SWF_CONST(0x99999Au, 0x7Cu); /* -0.1 per ms */
 
@@ -37,8 +36,8 @@ void gm2_lfo_gain_design(const gm2_rate_words *rate, const gm2_lfo_gain_design_r
   config->note = (unsigned)tempo;
   config->coef[GM2_LFO_GAIN_CORE_STEP] =
       gm2_lfo_step(rate, gm2_lfo_rate(speed, config->note, raw->beat_ms));
-  config->coef[GM2_LFO_GAIN_CORE_DEPTH] =
-      gm2_swf_to_q23(gm2_swf_mul(gm2_swf_mul(gm2_swf_from_int(depth), k_percent), k_depth_scale));
+  config->coef[GM2_LFO_GAIN_CORE_DEPTH] = gm2_swf_to_q23(
+      gm2_swf_mul(gm2_swf_mul(gm2_swf_from_int(depth), gm2_swf_hundredth), k_depth_scale));
 
   const int32_t pole = gm2_swf_to_q23(gm2_swf_exp(gm2_swf_mul(rate->period_ms, k_smoother_rate)));
   config->smooth[0] = pole;

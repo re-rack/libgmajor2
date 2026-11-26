@@ -789,7 +789,7 @@ static inline int64_t pitch_tap(const gm2_pitch_core_state *state, int64_t index
   const int32_t next = state->audio_buf[at + 1u == GM2_PITCH_CORE_AUDIO_WORDS ? 0u : at + 1u];
   /* The gap is under 2^25 and the fraction under 2^23, so the product stays
    * under 2^49. */
-  return gm2_round24((int64_t)word * 0x1000000 + 2 * (int64_t)fraction * (next - word));
+  return gm2_round24(gm2_word_acc(word) + 2 * (int64_t)fraction * (next - word));
 }
 
 /* P:0x000D3C..P:0x000D6E, one voice: the crossfade and the first tap move on, a
@@ -805,12 +805,12 @@ static void pitch_voice(const gm2_pitch_core_state *state, gm2_pitch_core_voice 
    * under 2^49 and the accumulator cannot wrap. The crossfade's step taking it
    * past -1 raises the limit flag, which is what the firmware's splice test reads,
    * even when an earlier store of the frame raised it. */
-  int32_t fade = pitch_store(((int64_t)voice->fade - voice->fade_step) * 0x1000000, limit);
+  int32_t fade = pitch_store(gm2_word_acc(voice->fade - voice->fade_step), limit);
   const int above = voice->offset_max < voice->offset;
   const int ready = depopped != 0 ? fade == GM2_W24_MIN : *limit != 0;
   if (ready && (above || voice->offset_min > voice->offset)) {
-    const int64_t span = (int64_t)voice->span * 0x1000000;
-    const int64_t next = span + (int64_t)voice->offset * 0x1000000;
+    const int64_t span = gm2_word_acc(voice->span);
+    const int64_t next = span + gm2_word_acc(voice->offset);
     voice->jump = pitch_store(above ? -span : span, limit);
     fade = 0;
     voice->offset = pitch_store(above ? next - 2 * span : next, limit);
@@ -819,7 +819,7 @@ static void pitch_voice(const gm2_pitch_core_state *state, gm2_pitch_core_voice 
 
   /* The first tap reads at the offset, which then drifts by the voice's rate. */
   int64_t index = (int64_t)voice->offset * 0x10000;
-  voice->offset = pitch_store(((int64_t)voice->offset - voice->rate) * 0x1000000, limit);
+  voice->offset = pitch_store(gm2_word_acc(voice->offset - voice->rate), limit);
   const int32_t first = pitch_store(pitch_tap(state, index), limit);
 
   /* The second tap, a splice on, and the crossfade from it to the first. */

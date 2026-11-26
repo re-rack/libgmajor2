@@ -16,17 +16,8 @@ enum {
 /* Y:0x40D: the scale the filtered word is multiplied by before the clip. */
 enum { WAH_DAMPING = 0x64F41F };
 
-/* Y:0x40F..Y:0x412 in the soft clip's order (rail, knee, end, curve shift), and
- * the left shift the routine applies after it. */
-enum {
-  WAH_CLIP_RAIL = 0x0FFFFF,
-  WAH_CLIP_KNEE = 0x080000,
-  WAH_CLIP_END = 0x180000,
-  WAH_CLIP_CURVE = 2,
-  WAH_CLIP_SHIFT = 3,
-};
-
-static const int32_t k_wah_clip[4] = {WAH_CLIP_RAIL, WAH_CLIP_KNEE, WAH_CLIP_END, WAH_CLIP_CURVE};
+/* The left shift the routine applies after the soft clip. */
+enum { WAH_CLIP_SHIFT = 3 };
 
 /* The high and low words of the routine's 48-bit long registers L:0x00E..0x011. */
 static inline int32_t wah_high(int64_t value) { return (int32_t)(value >> 24); }
@@ -57,7 +48,7 @@ static int32_t wah_filter(gm2_wah_core_state *state, int32_t scratch, int32_t sh
   const int64_t first = state->svf[channel][0];
   int64_t b = 2 * (int64_t)quarter * wah_low(first);
   b = gm2_dmacss(b, -quarter, wah_high(first));
-  b = b * 4 - state->svf[channel][1] + (int64_t)scratch * 0x1000000;
+  b = b * 4 - state->svf[channel][1] + gm2_word_acc(scratch);
 
   /* 0xF76..0xF7B: the second state's word, taken from the fields of that sum before
    * its 24-bit limit, plus the state the routine loaded before the store. */
@@ -79,7 +70,7 @@ static int32_t wah_filter(gm2_wah_core_state *state, int32_t scratch, int32_t sh
 
   /* 0xF83..0xF95: the filtered word, the inlined soft clip and its shift by 3. */
   const int64_t damped = 2 * (int64_t)WAH_DAMPING * wah_high(limited) * 8;
-  return gm2_store24(gm2_soft_clip(damped, k_wah_clip, WAH_CLIP_SHIFT));
+  return gm2_store24(gm2_soft_clip(damped, gm2_soft_clip_words, WAH_CLIP_SHIFT));
 }
 
 int gm2_wah_core_process_frame(gm2_wah_core_state *state, int32_t shift, int32_t wet, int32_t dry,

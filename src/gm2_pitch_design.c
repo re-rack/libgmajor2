@@ -90,6 +90,7 @@ static const gm2_swf k_one_q23 = GM2_SWF_CONST(0x7FFFFFu, 0x7Fu); /* 1 - 2^-23 *
 static const gm2_swf k_sixteenth = GM2_SWF_CONST(0x400000u, 0x7Cu); /* 1/16 */
 static const gm2_swf k_eighth = GM2_SWF_CONST(0x400000u, 0x7Du); /* 1/8 */
 static const gm2_swf k_third_semitone = GM2_SWF_CONST(0x42AAABu, 0x85u); /* 100/3 cents */
+/* The Pitch block's own word, one unit under gm2_swf_hundredth. */
 static const gm2_swf k_cent = GM2_SWF_CONST(0x51EB84u, 0x79u); /* 0.01 */
 
 /* The eight rows of column `src` copied into column `dst`, columns modulo 12. */

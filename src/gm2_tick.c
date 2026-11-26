@@ -13,7 +13,6 @@ enum {
 };
 
 static const gm2_swf k_level_scale = GM2_SWF_CONST(0x7B4D49u, 0x82u); /* 7.706 */
-static const gm2_swf k_millisecond = GM2_SWF_CONST(0x418937u, 0x76u);  /* 0.001 */
 static const gm2_swf k_minus_23 = GM2_SWF_CONST(0xA40000u, 0x84u);     /* -23 */
 static const gm2_swf k_sense_step = GM2_SWF_CONST(0x5D1746u, 0x7Cu);   /* 1/11 */
 static const gm2_swf k_sense_span = GM2_SWF_CONST(0x4CCCCDu, 0x7Fu);   /* 0.6 */
@@ -58,7 +57,7 @@ gm2_swf gm2_tick_follow(gm2_swf state, gm2_swf level, gm2_swf threshold, gm2_swf
 void gm2_tick_response(int response, gm2_swf *coeff, gm2_swf *threshold) {
   const int speed = gm2_clamp_raw(response, RESPONSE_MIN, RESPONSE_MAX);
 
-  const gm2_swf tick_rate = gm2_swf_div(k_millisecond, gm2_swf_from_int(GM2_TICK_MS));
+  const gm2_swf tick_rate = gm2_swf_div(gm2_swf_thousandth, gm2_swf_from_int(GM2_TICK_MS));
 
   *coeff = gm2_swf_sub(
       gm2_swf_one,

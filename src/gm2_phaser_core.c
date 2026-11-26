@@ -55,7 +55,7 @@ enum {
 /* One of the three Range curves: the base and slope the k'th pair of Y:0x0435..0x043A
  * gives, driven by the LFO's shaped word, then 2 (0.5 - driven^3). */
 static inline int32_t phaser_sweep(const int32_t *c, int32_t shaped, unsigned k) {
-  const int32_t word = gm2_store24((int64_t)c[GM2_PHASER_CORE_SWEEP + 2u * k + 1u] * 0x1000000 +
+  const int32_t word = gm2_store24(gm2_word_acc(c[GM2_PHASER_CORE_SWEEP + 2u * k + 1u]) +
                                    2 * (int64_t)shaped * c[GM2_PHASER_CORE_SWEEP + 2u * k]);
   const int32_t square = gm2_store24(2 * (int64_t)word * word);
   return gm2_store24(0x800000000000LL - 4 * (int64_t)word * square);
@@ -76,9 +76,9 @@ static inline int32_t phaser_sweep(const int32_t *c, int32_t shaped, unsigned k)
 static inline int64_t phaser_section(int32_t g, int32_t in, int32_t a_old, int32_t c_old,
                                      int32_t *b_slot) {
   const int32_t b_old = *b_slot;
-  const int32_t p = gm2_store24(2 * (int64_t)g * (in + b_old) - (int64_t)a_old * 0x1000000);
+  const int32_t p = gm2_store24(2 * (int64_t)g * (in + b_old) - gm2_word_acc(a_old));
   *b_slot = p;
-  return 2 * (int64_t)g * (c_old + p) - (int64_t)b_old * 0x1000000;
+  return 2 * (int64_t)g * (c_old + p) - gm2_word_acc(b_old);
 }
 
 /* The chunk's job run: the step and the depth ramp, the other words ride a
@@ -127,7 +127,7 @@ void gm2_phaser_core_process_frame(gm2_phaser_core_state *state,
 
   /* Depth scales the table's [0, 1] onto [(1 - depth)/2, (1 + depth)/2]. */
   const int32_t shaped =
-      gm2_store24(gm2_asr_n((int64_t)(GM2_W24_MAX - c[GM2_PHASER_CORE_DEPTH]) * 0x1000000, 1) +
+      gm2_store24(gm2_asr_n(gm2_word_acc(GM2_W24_MAX - c[GM2_PHASER_CORE_DEPTH]), 1) +
                   2 * (int64_t)lfo * c[GM2_PHASER_CORE_DEPTH]);
 
   /* The three range curves: a base and a slope a pair of the Range table's words
@@ -152,12 +152,12 @@ void gm2_phaser_core_process_frame(gm2_phaser_core_state *state,
 
   /* The clip P:0x0003AF inlined: past the knee the excess is held at zero, and the
    * parabola bends whatever is left. */
-  int64_t clip = (poles < 0 ? -poles : poles) - (int64_t)PHASER_CLIP_KNEE * 0x1000000;
+  int64_t clip = (poles < 0 ? -poles : poles) - gm2_word_acc(PHASER_CLIP_KNEE);
   if (clip > 0) {
     clip = 0;
   }
   const int32_t excess = gm2_store24(clip);
-  clip = 2 * ((int64_t)PHASER_CLIP_BASE * 0x1000000 - 2 * (int64_t)excess * excess);
+  clip = 2 * (gm2_word_acc(PHASER_CLIP_BASE) - 2 * (int64_t)excess * excess);
   if (poles < 0) {
     clip = -clip;
   }
@@ -225,7 +225,7 @@ void gm2_phaser_core_process_frame(gm2_phaser_core_state *state,
                   (int64_t)gm2_store24(2 * ((int64_t)c[GM2_PHASER_CORE_TAP_RIGHT] * r1 +
                                             (int64_t)c[GM2_PHASER_CORE_TAP_RIGHT + 1u] * r3)) *
                   c[GM2_PHASER_CORE_RIGHT_GAIN]);
-  state->feedback = gm2_store24((int64_t)mono * 0x1000000 + left);
+  state->feedback = gm2_store24(gm2_word_acc(mono) + left);
   const int32_t wet_l = gm2_store24(2 * (int64_t)gm2_store24(left) * PHASER_TAP_GAIN);
 
   /* Each channel: the wet word on its chain and the dry word on the frame's input,
@@ -276,7 +276,5 @@ void gm2_phaser_core_state_init(gm2_phaser_core_state *state,
 
 void gm2_phaser_core_align(gm2_phaser_core_state *state, const gm2_phaser_core_config *config,
                            double beats) {
-  if (config->note != 0u) {
-    state->lfo_phase = gm2_lfo_phase_at(beats, config->note);
-  }
+  gm2_lfo_align(&state->lfo_phase, config->note, beats);
 }

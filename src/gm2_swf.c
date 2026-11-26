@@ -563,15 +563,13 @@ gm2_swf gm2_swf_tan(gm2_swf a) { /* P:0x09726D */
 }
 
 gm2_swf gm2_swf_hz20(int raw) { /* P:0x08F0DF */
-  static const gm2_swf k_ten = GM2_SWF_CONST(0x500000u, 0x83u); /* 10 */
   static const gm2_swf k_step = GM2_SWF_CONST(0x666666u, 0x7Bu); /* 1/20 */
-  return gm2_swf_pow(k_ten, gm2_swf_mac(gm2_swf_one, gm2_swf_from_int(raw + 6), k_step));
+  return gm2_swf_pow(gm2_swf_ten, gm2_swf_mac(gm2_swf_one, gm2_swf_from_int(raw + 6), k_step));
 }
 
 gm2_swf gm2_swf_hz80(int raw) { /* P:0x08F0F8 */
-  static const gm2_swf k_ten = GM2_SWF_CONST(0x500000u, 0x83u); /* 10 */
   static const gm2_swf k_step = GM2_SWF_CONST(0x666666u, 0x79u); /* 1/80 */
-  return gm2_swf_pow(k_ten, gm2_swf_mac(gm2_swf_one, gm2_swf_from_int(raw + 24), k_step));
+  return gm2_swf_pow(gm2_swf_ten, gm2_swf_mac(gm2_swf_one, gm2_swf_from_int(raw + 24), k_step));
 }
 
 /* P:0x0974D5: sin (quad_offset = 0) and cos (quad_offset = 1 on |a|). */

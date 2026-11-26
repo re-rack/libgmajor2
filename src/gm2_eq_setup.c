@@ -43,8 +43,6 @@ enum {
 /* The Width's zero and its steps an octave. */
 enum { EQ_SETUP_WIDTH_OCTAVE = 10 };
 
-static const gm2_swf k_two_pi = GM2_SWF_CONST(0x6487EEu, 0x82u);     /* 2 pi */
-static const gm2_swf k_pi = GM2_SWF_CONST(0x6487EEu, 0x81u);         /* pi */
 static const gm2_swf k_pi_squared = GM2_SWF_CONST(0x4EF4F4u, 0x83u); /* pi^2 */
 static const gm2_swf k_third = GM2_SWF_CONST(0x555556u, 0x7Eu);      /* 1/3 */
 
@@ -59,7 +57,7 @@ static int eq_chain(const gm2_rate_words *rate, gm2_swf gain, gm2_swf freq, gm2_
   if (gm2_swf_cmp(turns, gm2_swf_half) >= 0) {
     return -1;
   }
-  const gm2_swf omega = gm2_swf_mul(turns, k_two_pi);
+  const gm2_swf omega = gm2_swf_mul(turns, gm2_swf_two_pi);
 
   /* 95C6F..95C89: dw */
   gm2_swf dw = gm2_swf_mul(gm2_swf_ln(gm2_swf_two), width);
@@ -77,7 +75,7 @@ static int eq_chain(const gm2_rate_words *rate, gm2_swf gain, gm2_swf freq, gm2_
   /* 95CC5..95D1F: G1 */
   gm2_swf curve = gm2_swf_sub(gm2_swf_mul(omega, omega), k_pi_squared);
   curve = gm2_swf_mul(curve, curve);
-  const gm2_swf factor[4] = {k_pi, k_pi, dw, dw};
+  const gm2_swf factor[4] = {gm2_swf_pi, gm2_swf_pi, dw, dw};
   gm2_swf top = gm2_swf_mul(g_sq, gb_one);
   gm2_swf bottom = gb_one;
   for (unsigned i = 0; i < 4u; i++) {

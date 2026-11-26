@@ -56,15 +56,12 @@ static void reverb_alt_own_frame(gm2_reverb_alt_state *state, const gm2_reverb_a
                                  const int32_t in[GM2_CHANNELS], int32_t out[GM2_CHANNELS]) {
   gm2_reverb_state *own = &state->own;
   const int64_t share = state->fade != 0u ? reverb_alt_share(state->fade) : 0;
-  const int32_t *c = own->coef;
   const int32_t *o = state->play.offsets;
   const uint32_t origin = own->write;
 
   const int32_t in_l = gm2_s24((uint32_t)in[0]);
   const int32_t in_r = gm2_s24((uint32_t)in[1]);
-  int64_t b = 2 * (int64_t)GM2_LEVEL_INPUT * in_l;
-  b += 2 * (int64_t)in_r * GM2_LEVEL_INPUT;
-  own->buffer[origin] = gm2_store24(gm2_asr_n(b, 2));
+  gm2_reverb_kernel_input(own, in_l, in_r, origin);
 
   gm2_reverb_kernel_tank(own, o, config->tank_signs, origin);
 
@@ -90,17 +87,7 @@ static void reverb_alt_own_frame(gm2_reverb_alt_state *state, const gm2_reverb_a
   }
   own->write = (origin + 1u) & (GM2_REVERB_BUFFER_WORDS - 1u);
 
-  int64_t right = 2 * (int64_t)c[GM2_REVERB_ROOM] * own->early_out[1];
-  int64_t left = 2 * (int64_t)c[GM2_REVERB_ROOM + 1] * own->early_out[0];
-  right += 2 * (int64_t)c[GM2_REVERB_LEVEL] * own->tank_out[1];
-  left += 2 * (int64_t)c[GM2_REVERB_LEVEL + 1] * own->tank_out[0];
-  own->pre_delay = gm2_store24(2 * (int64_t)c[GM2_REVERB_PRE_DELAY] * pre_delay);
-  const int32_t wet = own->wet;
-  const int32_t dry = own->dry;
-  const int64_t wet_l = gm2_asl(2 * (int64_t)wet * gm2_store24(left));
-  const int64_t wet_r = gm2_asl(2 * (int64_t)wet * gm2_store24(right));
-  out[0] = gm2_store24(gm2_round24(wet_l + 2 * (int64_t)in_l * dry));
-  out[1] = gm2_store24(gm2_round24(wet_r + 2 * (int64_t)in_r * dry));
+  gm2_reverb_kernel_output(own, pre_delay, in_l, in_r, out);
 
   /* The fade's frame count; on its last frame the incoming set plays alone, so
    * that its own state carries the identical arithmetic on from there. */

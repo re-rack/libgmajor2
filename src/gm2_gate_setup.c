@@ -33,7 +33,6 @@ static const gm2_swf k_mode_base = GM2_SWF_CONST(0x600000u, 0x7Du);  /* 0.1875 *
 static const gm2_swf k_mode_step = GM2_SWF_CONST(0x700000u, 0x7Eu);  /* 0.4375 */
 static const gm2_swf k_db = GM2_SWF_CONST(0x550A96u, 0x77u);         /* log2(gain)/64 per dB */
 static const gm2_swf k_db_down = GM2_SWF_CONST(0xAAF56Au, 0x77u);    /* the same, negated */
-static const gm2_swf k_ten = GM2_SWF_CONST(0x500000u, 0x83u);        /* 10 */
 static const gm2_swf k_fast_time = GM2_SWF_CONST(0x68DB8Cu, 0x72u);  /* 0.0001 */
 static const gm2_swf k_blend_span = GM2_SWF_CONST(0x6A4D3Cu, 0x7Fu); /* 0.83 */
 
@@ -43,9 +42,9 @@ static void gate_release(const gm2_rate_words *rate, int release, int32_t out[4]
   const gm2_swf chunk_rate = gm2_swf_div(rate->rate, gm2_swf_four);
   const gm2_swf step = gm2_swf_div(gm2_swf_mul(speed, k_db), chunk_rate);
   gm2_swf slow = gm2_swf_exp(gm2_swf_div(gm2_swf_minus_one, chunk_rate));
-  if (gm2_swf_cmp(speed, k_ten) > 0) {
+  if (gm2_swf_cmp(speed, gm2_swf_ten) > 0) {
     const gm2_swf time =
-        gm2_swf_div(gm2_swf_mul(gm2_swf_div(k_ten, speed), rate->rate), gm2_swf_four);
+        gm2_swf_div(gm2_swf_mul(gm2_swf_div(gm2_swf_ten, speed), rate->rate), gm2_swf_four);
     slow = gm2_swf_exp(gm2_swf_div(gm2_swf_minus_one, time));
   }
   const gm2_swf fast = gm2_swf_exp(gm2_swf_div(

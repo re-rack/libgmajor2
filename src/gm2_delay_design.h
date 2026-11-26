@@ -2,7 +2,7 @@
  *
  *   P:0x094574  Feedback: the input and feedback matrices
  *   P:0x094643  Width, Pan: the output matrix
- *   P:0x08F763  Mix: the wet and dry words the output stage multiplies by
+ *   P:0x08F763  Mix, Out Level: the wet and dry words the output stage multiplies by
  *   P:0x094835  Feedback Hi-Cut, Feedback Lo-Cut: the lines' filters
  *   P:0x094735  Delay, Tempo: a line's delay time
  *   P:0x09479E  a delay time's tap offset
@@ -12,7 +12,6 @@
 
 #include <stdint.h>
 
-#include "gm2_delay_core.h"
 #include "gm2_rate.h"
 
 /* The Delay block's subtype numbers. */

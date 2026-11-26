@@ -51,14 +51,13 @@
 #include <stdint.h>
 
 /* The firmware's operands as (mantissa, exponent) words. */
-static const gm2_swf k_cent = GM2_SWF_CONST(0x51EB85u, 0x79u);       /* 0.01 */
 static const gm2_swf k_semi = GM2_SWF_CONST(0x51EB85u, 0x78u);       /* 0.005 */
 static const gm2_swf k_gold_step = GM2_SWF_CONST(0x666667u, 0x7Bu);  /* 0.05 */
 static const gm2_swf k_gold_floor = GM2_SWF_CONST(0x7AE148u, 0x7Au); /* 0.03 */
 static const gm2_swf k_depth_step = GM2_SWF_CONST(0x68DB8Cu, 0x72u); /* 0.0001 */
 static const gm2_swf k_delay_step = GM2_SWF_CONST(0x666666u, 0x7Cu); /* 0.1 ms */
 static const gm2_swf k_delay_5ms = GM2_SWF_CONST(0x500000u, 0x82u); /* 5 */
-static const gm2_swf k_delay_10ms = GM2_SWF_CONST(0x500000u, 0x83u);
+static const gm2_swf k_delay_10ms = GM2_SWF_CONST(0x500000u, 0x83u); /* 10 */
 static const gm2_swf k_feedback_hz = GM2_SWF_CONST(0x640000u, 0x87u); /* 200 Hz */
 
 enum {
@@ -212,7 +211,7 @@ void gm2_moddelay_design(const gm2_rate_words *rate, gm2_moddelay_design_subtype
       config->depth[voice] = gm2_swf_to_q23(word);
     }
   } else {
-    gm2_swf scaled = gm2_swf_mul(gm2_swf_mul(gm2_swf_from_int(depth), k_cent), gold);
+    gm2_swf scaled = gm2_swf_mul(gm2_swf_mul(gm2_swf_from_int(depth), gm2_swf_hundredth), gold);
     int32_t word = gm2_swf_to_q23(scaled);
     if (subtype == GM2_MODDELAY_DESIGN_VIBRATO) {
       word = gm2_store24(gm2_mpyr(MODDELAY_DESIGN_VIBRATO_DEPTH_WORD, word));
@@ -266,7 +265,7 @@ void gm2_moddelay_design(const gm2_rate_words *rate, gm2_moddelay_design_subtype
 
   /* P:0x093EA1: the feedback word. */
   if (flanger) {
-    const gm2_swf step = tz_flanger ? k_semi : k_cent;
+    const gm2_swf step = tz_flanger ? k_semi : gm2_swf_hundredth;
     config->coef[GM2_MODDELAY_CORE_FEEDBACK] =
         gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(feedback), step));
   } else {

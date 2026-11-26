@@ -29,7 +29,6 @@ enum {
   PULSE_MAX = 999,
 };
 
-static const gm2_swf k_thousandth = GM2_SWF_CONST(0x418937u, 0x76u); /* 0.001 */
 static const gm2_swf k_slope = GM2_SWF_CONST(0x400000u, 0x76u);      /* 2^-10 */
 
 int gm2_tremolo_setup_config(const gm2_context *context, const gm2_tremolo_setup_raw *raw,
@@ -60,7 +59,7 @@ int gm2_tremolo_setup_config(const gm2_context *context, const gm2_tremolo_setup
   } else if (thousandths > PULSE_MAX) {
     thousandths = PULSE_MAX;
   }
-  const gm2_swf pulse = gm2_swf_mul(gm2_swf_from_int(thousandths), k_thousandth);
+  const gm2_swf pulse = gm2_swf_mul(gm2_swf_from_int(thousandths), gm2_swf_thousandth);
   config->coef[GM2_LFO_GAIN_CORE_PULSE] = gm2_swf_to_q23(pulse);
   config->coef[GM2_LFO_GAIN_CORE_RISE] = gm2_swf_to_q23(gm2_swf_div(k_slope, pulse));
   config->coef[GM2_LFO_GAIN_CORE_FALL] =

@@ -84,7 +84,5 @@ void gm2_autowah_state_init(gm2_autowah_state *state, const gm2_autowah_config *
 GM2_PROCESS_DEFINE(autowah, autowah_frame)
 
 void gm2_autowah_align(gm2_autowah_state *state, const gm2_autowah_config *config, double beats) {
-  if (config->note != 0u) {
-    state->lfo_phase = gm2_lfo_phase_at(beats, config->note);
-  }
+  gm2_lfo_align(&state->lfo_phase, config->note, beats);
 }

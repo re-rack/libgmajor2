@@ -8,7 +8,7 @@
  *   P:0x092EDA  Speed, Tempo: the phase step
  *   P:0x092E54  the tap weights, by subtype
  *   P:0x092F2B  Phase Reverse: the right output's gain
- *   P:0x08F763  Mix: the wet and dry words the output stage multiplies by
+ *   P:0x08F763  Mix, Out Level: the wet and dry words the output stage multiplies by
  */
 #ifndef GM2_PHASER_DESIGN_H
 #define GM2_PHASER_DESIGN_H

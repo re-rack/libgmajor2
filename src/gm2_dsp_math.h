@@ -193,22 +193,12 @@ static inline int gm2_clamp_raw(int raw, int lo, int hi) {
   return word > hi ? hi : (int)word;
 }
 
-/* CMPM: compares magnitudes, so the LT condition after `cmpm word,acc` means the
- * accumulator is the smaller one. */
-static inline int gm2_cmpm_lt(int64_t acc, int32_t word) {
-  return gm2_abs56(acc) < gm2_abs56(gm2_word_acc(word));
-}
-
 /* The magnitude of a 56-bit accumulator, which the most negative value needs a
  * width more than int64 holds. */
 static inline uint64_t gm2_mag56(int64_t acc) {
   uint64_t u = (uint64_t)acc & 0xFFFFFFFFFFFFFFULL;
   return (u & 0x80000000000000ULL) != 0 ? 0x100000000000000ULL - u : u;
 }
-
-/* MAXM: the destination takes the operand with the larger magnitude and keeps its
- * own on a tie. */
-static inline int64_t gm2_maxm(int64_t a, int64_t b) { return gm2_mag56(a) > gm2_mag56(b) ? a : b; }
 
 /* The 24-bit limit on a word that already sits at the A1 position. */
 static inline int32_t gm2_limit24(int32_t word) {
@@ -251,6 +241,10 @@ static inline int64_t gm2_soft_clip(int64_t acc, const int32_t words[4], unsigne
   return gm2_asl_n(a, shift);
 }
 
+/* The words the wah routine (Y:0x40F..0x412) and the resonance filter routine
+ * (Y:0x3D1..0x3D4) pass it. */
+static const int32_t gm2_soft_clip_words[4] = {0x0FFFFF, 0x080000, 0x180000, 2};
+
 /* `move b,l:(r1)+`, limited to 48 bits. */
 static inline int64_t gm2_store48(int64_t acc) {
   if (acc > 0x7FFFFFFFFFFFLL) {
@@ -259,12 +253,9 @@ static inline int64_t gm2_store48(int64_t acc) {
   return acc < -0x800000000000LL ? -0x800000000000LL : acc;
 }
 
-/* `move b1,y0; move b2,y1` after loading a 24-bit word into B: sign-extends
- * the 24-bit word into a 48-bit integer in bits 47..0. */
-static inline int64_t gm2_sext48(int32_t word) {
-  int64_t v = gm2_s24((uint32_t)word);
-  return v < 0 ? (v & 0xFFFFFFLL) | (-1LL * (1LL << 24)) : (v & 0xFFFFFFLL);
-}
+/* `move b1,y0; move b2,y1` after loading a 24-bit word into B: the word as the
+ * signed 48-bit integer the pair holds. */
+static inline int64_t gm2_sext48(int32_t word) { return (int64_t)gm2_s24((uint32_t)word); }
 
 /* `move a0,a`: the low 24-bit field of a 48-bit or 56-bit accumulator, sign
  * extended as a 24-bit word. */

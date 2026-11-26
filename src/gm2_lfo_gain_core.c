@@ -156,7 +156,5 @@ void gm2_lfo_gain_core_state_init(gm2_lfo_gain_core_state *state,
 
 void gm2_lfo_gain_core_align(gm2_lfo_gain_core_state *state, const gm2_lfo_gain_core_config *config,
                              double beats) {
-  if (config->note != 0u) {
-    state->phase = gm2_lfo_phase_at(beats, config->note);
-  }
+  gm2_lfo_align(&state->phase, config->note, beats);
 }

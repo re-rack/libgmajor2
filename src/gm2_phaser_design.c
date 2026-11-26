@@ -19,9 +19,8 @@
  *               (subtype 9), the twelve-stage taps for Smooth (subtype 10)
  *   P:0x092F2B  right gain = 0x7FFFFF, or 0x800001 with the phase reversed
  *
- * Mix is not one of them: the level code P:0x08F763 stages the pair the output
- * stage multiplies each chain's output and the frame's input by, at Out Level
- * 0 dB.
+ * Mix and Out Level are not among them: the level code P:0x08F763 stages the pair
+ * the output stage multiplies each chain's output and the frame's input by.
  */
 #include "gm2_phaser_design.h"
 
@@ -61,7 +60,6 @@ static const gm2_swf k_low_pass_rate = GM2_SWF_CONST(0xA7A489u, 0x8Cu);   /* -56
 static const gm2_swf k_low_pass_top = GM2_SWF_CONST(0x425076u, 0x80u);    /* 1.036161 */
 static const gm2_swf k_low_pass_bottom = GM2_SWF_CONST(0x8A1BA0u, 0x7Cu); /* -0.115129 */
 static const gm2_swf k_feedback_step = GM2_SWF_CONST(0x4C2F83u, 0x79u);   /* 0.0093 */
-static const gm2_swf k_percent = GM2_SWF_CONST(0x51EB85u, 0x79u);         /* 0.01 */
 
 /* P:0x092D04: the cube root the Range table's words go through. */
 static gm2_swf phaser_curve(gm2_swf x) {
@@ -106,7 +104,8 @@ void gm2_phaser_design(const gm2_rate_words *rate, gm2_phaser_design_subtype sub
   config->coef[GM2_PHASER_CORE_FEEDBACK] =
       gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(feedback), k_feedback_step));
 
-  const int32_t depth_word = gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(depth), k_percent));
+  const int32_t depth_word =
+      gm2_swf_to_q23(gm2_swf_mul(gm2_swf_from_int(depth), gm2_swf_hundredth));
   config->coef[GM2_PHASER_CORE_DEPTH] =
       depth_word > PHASER_DESIGN_DEPTH_WORD_MAX ? PHASER_DESIGN_DEPTH_WORD_MAX : depth_word;
 
