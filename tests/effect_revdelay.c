@@ -33,11 +33,6 @@ static void revdelay_raw(const int32_t *values, gm2_revdelay_setup_raw *raw) {
   };
 }
 
-static void revdelay_mix(const gm2_revdelay_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 static void revdelay_words(const gm2_revdelay_config *config, int32_t *words) {
   for (unsigned word = 0; word < GM2_DELAY_CORE_COEFS; word++) {
     words[word] = config->coef[word];
@@ -47,7 +42,7 @@ static void revdelay_words(const gm2_revdelay_config *config, int32_t *words) {
   words[GM2_DELAY_CORE_COEFS + 2u] = config->dry;
 }
 
-GM2_EFFECT_DEFINE_MIX(revdelay, revdelay, k_knobs, revdelay_raw, revdelay_words, revdelay_mix,
+GM2_EFFECT_DEFINE_MIX(revdelay, revdelay, k_knobs, revdelay_raw, revdelay_words,
                       REVDELAY_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(revdelay_alt, revdelay_alt, k_knobs, revdelay_raw, revdelay_words,
-                      revdelay_mix, REVDELAY_SETUP_WORDS)
+                      REVDELAY_SETUP_WORDS)

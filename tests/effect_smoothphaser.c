@@ -36,10 +36,5 @@ static void smoothphaser_words(const gm2_smoothphaser_config *config, int32_t *w
   }
 }
 
-static void smoothphaser_mix(const gm2_smoothphaser_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 GM2_EFFECT_DEFINE_LFO_MIX(smoothphaser, smoothphaser, k_knobs, smoothphaser_raw, smoothphaser_words,
-                          smoothphaser_mix, GM2_PHASER_CORE_COEFS)
+                          GM2_PHASER_CORE_COEFS)

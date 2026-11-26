@@ -26,10 +26,5 @@ static void detune_raw(const int32_t *values, gm2_detune_setup_raw *raw) {
   };
 }
 
-static void detune_mix(const gm2_detune_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(detune, detune, k_knobs, detune_raw, gm2_effect_pitch_words, detune_mix,
+GM2_EFFECT_DEFINE_MIX(detune, detune, k_knobs, detune_raw, gm2_effect_pitch_words,
                       GM2_EFFECT_PITCH_WORDS)

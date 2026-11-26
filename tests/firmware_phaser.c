@@ -238,12 +238,7 @@ static int phaser_prepare(gm2_firmware *self) {
   return phaser_settle_levels(self);
 }
 
-static void phaser_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(phaser_close)
 
 static gm2_firmware *phaser_open(const gm2_effect *effect, const phaser_block *block) {
   gm2_firmware *self = calloc(1, sizeof *self);

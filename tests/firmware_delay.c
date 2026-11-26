@@ -376,12 +376,7 @@ static int delay_gate(gm2_firmware *self) {
   return 0;
 }
 
-static void delay_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(delay_close)
 
 static gm2_firmware *delay_open(const gm2_effect *effect, unsigned subtype, const uint8_t *index,
                                 unsigned count, words_kind words) {

@@ -545,12 +545,7 @@ static int moddelay_frame(gm2_firmware *self, int32_t left, int32_t right, int32
   return moddelay_run_list(self);
 }
 
-static void moddelay_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(moddelay_close)
 
 #define MODDELAY_OPS(name, index)                                                                  \
   static gm2_firmware *name##_open(void) { return moddelay_open(&k_blocks[index]); }               \

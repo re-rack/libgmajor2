@@ -40,12 +40,7 @@ static void pitch_raw(const int32_t *values, gm2_pitch_setup_raw *raw) {
   };
 }
 
-static void pitch_mix(const gm2_pitch_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(pitch, pitch, k_knobs, pitch_raw, gm2_effect_pitch_words, pitch_mix,
+GM2_EFFECT_DEFINE_MIX(pitch, pitch, k_knobs, pitch_raw, gm2_effect_pitch_words,
                       GM2_EFFECT_PITCH_WORDS)
-GM2_EFFECT_DEFINE_MIX(pitch_alt, pitch_alt, k_knobs, pitch_raw, gm2_effect_pitch_words, pitch_mix,
+GM2_EFFECT_DEFINE_MIX(pitch_alt, pitch_alt, k_knobs, pitch_raw, gm2_effect_pitch_words,
                       GM2_EFFECT_PITCH_WORDS)

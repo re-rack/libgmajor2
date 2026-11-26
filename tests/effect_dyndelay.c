@@ -40,11 +40,6 @@ static void dyndelay_raw(const int32_t *values, gm2_dyndelay_setup_raw *raw) {
   };
 }
 
-static void dyndelay_mix(const gm2_dyndelay_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 static void dyndelay_words(const gm2_dyndelay_config *config, int32_t *words) {
   unsigned word = 0;
   for (unsigned i = 0; i < GM2_DELAY_CORE_COEFS; i++) {
@@ -61,5 +56,5 @@ static void dyndelay_words(const gm2_dyndelay_config *config, int32_t *words) {
   words[word++] = config->dry;
 }
 
-GM2_EFFECT_DEFINE_MIX(dyndelay, dyndelay, k_knobs, dyndelay_raw, dyndelay_words, dyndelay_mix,
+GM2_EFFECT_DEFINE_MIX(dyndelay, dyndelay, k_knobs, dyndelay_raw, dyndelay_words,
                       DYNDELAY_SETUP_WORDS)

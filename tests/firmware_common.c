@@ -226,9 +226,10 @@ int gm2_firmware_run_jobs(gm2_emu *emu, const char *who, unsigned cap) {
   return gm2_firmware_run_list(emu, record, count);
 }
 
-int gm2_firmware_live_words(const gm2_emu *emu, const char *who,
-                            uint32_t live[GM2_FIRMWARE_JOBS_MAX][GM2_FIRMWARE_RECORD_WORDS],
-                            unsigned cap) {
+/* Every live Y word the records name, zero elsewhere in the fixed-size table. */
+static int gm2_firmware_live_words(const gm2_emu *emu, const char *who,
+                                   uint32_t live[GM2_FIRMWARE_JOBS_MAX][GM2_FIRMWARE_RECORD_WORDS],
+                                   unsigned cap) {
   uint32_t record[GM2_FIRMWARE_JOBS_MAX];
   if (cap > GM2_FIRMWARE_JOBS_MAX) {
     fprintf(stderr, "%s: job capacity %u is over the common maximum\n", who, cap);

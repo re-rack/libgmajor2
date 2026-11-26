@@ -7,6 +7,7 @@
 #include "gm2_emu.h"
 #include "gm2_fixture.h"
 #include "gm2_record.h"
+#include "gm2_signal.h"
 #include "gm2_swf.h"
 
 #include <dsp56300.h>
@@ -232,12 +233,7 @@ static unsigned boundary_inputs(gm2_swf *out, unsigned cap) {
 
 static uint32_t rng_state = 0x2545F491u;
 
-static uint32_t rng(void) {
-  rng_state ^= rng_state << 13;
-  rng_state ^= rng_state >> 17;
-  rng_state ^= rng_state << 5;
-  return rng_state;
-}
+static uint32_t rng(void) { return gm2_signal_xorshift(&rng_state); }
 
 static gm2_swf random_swf(int exp_lo, int exp_hi) {
   gm2_swf value;

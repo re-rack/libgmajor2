@@ -231,12 +231,7 @@ static int univibe_prepare(gm2_firmware *self) {
   return univibe_settle_levels(self);
 }
 
-static void univibe_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(univibe_close)
 
 static gm2_firmware *univibe_open(const gm2_effect *effect, const univibe_block *block) {
   gm2_firmware *self = calloc(1, sizeof *self);

@@ -23,10 +23,5 @@ static void tzflanger_pos_raw(const int32_t *values, gm2_tzflanger_pos_setup_raw
   };
 }
 
-static void tzflanger_pos_mix(const gm2_tzflanger_pos_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 GM2_EFFECT_DEFINE_LFO_MIX(tzflanger_pos, tzflanger_pos, k_knobs, tzflanger_pos_raw,
-                          gm2_effect_moddelay_words, tzflanger_pos_mix, GM2_EFFECT_MODDELAY_WORDS)
+                          gm2_effect_moddelay_words, GM2_EFFECT_MODDELAY_WORDS)

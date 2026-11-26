@@ -41,12 +41,7 @@ static void ipitch_raw(const int32_t *values, gm2_ipitch_setup_raw *raw) {
   };
 }
 
-static void ipitch_mix(const gm2_ipitch_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(ipitch, ipitch, k_knobs, ipitch_raw, gm2_effect_pitch_words, ipitch_mix,
+GM2_EFFECT_DEFINE_MIX(ipitch, ipitch, k_knobs, ipitch_raw, gm2_effect_pitch_words,
                       GM2_EFFECT_PITCH_WORDS)
 GM2_EFFECT_DEFINE_MIX(ipitch_alt, ipitch_alt, k_knobs, ipitch_raw, gm2_effect_pitch_words,
-                      ipitch_mix, GM2_EFFECT_PITCH_WORDS)
+                      GM2_EFFECT_PITCH_WORDS)

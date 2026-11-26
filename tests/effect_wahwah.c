@@ -31,10 +31,4 @@ static void wahwah_words(const gm2_wahwah_config *config, int32_t *words) {
   words[3] = config->dry;
 }
 
-static void wahwah_mix(const gm2_wahwah_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(wahwah, wahwah, k_knobs, wahwah_raw, wahwah_words, wahwah_mix,
-                      WAHWAH_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(wahwah, wahwah, k_knobs, wahwah_raw, wahwah_words, WAHWAH_SETUP_WORDS)

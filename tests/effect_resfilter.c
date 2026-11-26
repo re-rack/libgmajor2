@@ -33,12 +33,7 @@ static void resfilter_words(const gm2_resfilter_config *config, int32_t *words) 
   words[GM2_RES_CORE_COEFS + 1u] = config->dry;
 }
 
-static void resfilter_mix(const gm2_resfilter_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(resfilter, resfilter, k_knobs, resfilter_raw, resfilter_words, resfilter_mix,
+GM2_EFFECT_DEFINE_MIX(resfilter, resfilter, k_knobs, resfilter_raw, resfilter_words,
                       RESFILTER_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(resfilter_alt, resfilter_alt, k_knobs, resfilter_raw, resfilter_words,
-                      resfilter_mix, RESFILTER_SETUP_WORDS)
+                      RESFILTER_SETUP_WORDS)

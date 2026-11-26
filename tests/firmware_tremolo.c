@@ -305,12 +305,7 @@ static int tremolo_frame(gm2_firmware *self, int32_t left, int32_t right, int32_
   return 0;
 }
 
-static void tremolo_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(tremolo_close)
 
 static gm2_firmware *tremolo_shared_open(const gm2_effect *effect, unsigned subtype,
                                          const unsigned *index, const char *who) {

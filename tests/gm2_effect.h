@@ -74,34 +74,31 @@ typedef struct {
  *   void words(const gm2_<module>_config *config, int32_t *words)
  *       the config's setup words, in the order the firmware adapter reads them
  *
- * GM2_EFFECT_DEFINE_LFO is the same for a module with an align call and
- * GM2_EFFECT_DEFINE_MIX for one whose Mix or Out Level knob sets its level words;
- * GM2_EFFECT_DEFINE_LFO_MIX takes both. The two Mix variants name the pair with
- * one more function:
- *
- *   void mix(const gm2_<module>_config *config, int32_t *wet, int32_t *dry)
- *       where the config keeps it, in its own fields or in its core's
+ * GM2_EFFECT_DEFINE_MIX is the same for a module whose Mix or Out Level knob sets
+ * its level words, the config's `wet` and `dry`, and GM2_EFFECT_DEFINE_LFO_MIX for
+ * one that also has an align call; GM2_EFFECT_DEFINE_LFO_WET is the latter for a
+ * config that keeps only `wet`, its dry word being 0.
  */
 #define GM2_EFFECT_DEFINE(fixture, module, knob_table, raw, words, word_count)                     \
   GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
   GM2_EFFECT_LEVELS_FIXED_(fixture)                                                                \
   GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, NULL, fixture##_levels_fixed)
 
-#define GM2_EFFECT_DEFINE_LFO(fixture, module, knob_table, raw, words, word_count)                 \
+#define GM2_EFFECT_DEFINE_MIX(fixture, module, knob_table, raw, words, word_count)                 \
   GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
-  GM2_EFFECT_ALIGN_(fixture, module)                                                               \
-  GM2_EFFECT_LEVELS_FIXED_(fixture)                                                                \
-  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, fixture##_align, fixture##_levels_fixed)
-
-#define GM2_EFFECT_DEFINE_MIX(fixture, module, knob_table, raw, words, mix, word_count)            \
-  GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
-  GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                                     \
+  GM2_EFFECT_LEVELS_MIX_(fixture, module, config.dry)                                              \
   GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, NULL, fixture##_levels_mix)
 
-#define GM2_EFFECT_DEFINE_LFO_MIX(fixture, module, knob_table, raw, words, mix, word_count)        \
+#define GM2_EFFECT_DEFINE_LFO_MIX(fixture, module, knob_table, raw, words, word_count)             \
   GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
   GM2_EFFECT_ALIGN_(fixture, module)                                                               \
-  GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                                     \
+  GM2_EFFECT_LEVELS_MIX_(fixture, module, config.dry)                                              \
+  GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, fixture##_align, fixture##_levels_mix)
+
+#define GM2_EFFECT_DEFINE_LFO_WET(fixture, module, knob_table, raw, words, word_count)             \
+  GM2_EFFECT_ADAPTER_(fixture, module, knob_table, raw, words)                                     \
+  GM2_EFFECT_ALIGN_(fixture, module)                                                               \
+  GM2_EFFECT_LEVELS_MIX_(fixture, module, 0)                                                       \
   GM2_EFFECT_OBJECT_(fixture, knob_table, word_count, fixture##_align, fixture##_levels_mix)
 
 #define GM2_EFFECT_KNOBS_(knob_table) (sizeof(knob_table) / sizeof(knob_table)[0])
@@ -227,10 +224,9 @@ typedef struct {
     return 0;                                                                                      \
   }
 
-/* An effect whose Mix or Out Level knob sets its level words: the effect names
- * the pair, and a setup that refuses is a broken adapter, never a fall back to a
- * full mix. */
-#define GM2_EFFECT_LEVELS_MIX_(fixture, module, mix)                                               \
+/* An effect whose Mix or Out Level knob sets its level words: the config's pair, and
+ * a setup that refuses is a broken adapter, never a fall back to a full mix. */
+#define GM2_EFFECT_LEVELS_MIX_(fixture, module, dry_word)                                          \
   static int fixture##_levels_mix(const int32_t *values, int32_t level[3]) {                       \
     gm2_context context;                                                                           \
     gm2_##module##_config config;                                                                  \
@@ -239,7 +235,8 @@ typedef struct {
       return -1;                                                                                   \
     }                                                                                              \
     level[0] = GM2_LEVEL_INPUT;                                                                    \
-    mix(&config, &level[1], &level[2]);                                                            \
+    level[1] = config.wet;                                                                         \
+    level[2] = (dry_word);                                                                         \
     return 0;                                                                                      \
   }
 

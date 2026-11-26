@@ -42,10 +42,5 @@ static void touchwah_words(const gm2_touchwah_config *config, int32_t *words) {
   words[11] = config->dry;
 }
 
-static void touchwah_mix(const gm2_touchwah_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(touchwah, touchwah, k_knobs, touchwah_raw, touchwah_words, touchwah_mix,
+GM2_EFFECT_DEFINE_MIX(touchwah, touchwah, k_knobs, touchwah_raw, touchwah_words,
                       TOUCHWAH_SETUP_WORDS)

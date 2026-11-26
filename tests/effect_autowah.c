@@ -40,10 +40,5 @@ static void autowah_words(const gm2_autowah_config *config, int32_t *words) {
   words[4] = config->dry;
 }
 
-static void autowah_mix(const gm2_autowah_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_LFO_MIX(autowah, autowah, k_knobs, autowah_raw, autowah_words, autowah_mix,
+GM2_EFFECT_DEFINE_LFO_MIX(autowah, autowah, k_knobs, autowah_raw, autowah_words,
                           AUTOWAH_SETUP_WORDS)

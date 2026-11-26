@@ -42,10 +42,5 @@ static void tremolo_words(const gm2_tremolo_config *config, int32_t *words) {
   }
 }
 
-static void tremolo_mix(const gm2_tremolo_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = 0;
-}
-
-GM2_EFFECT_DEFINE_LFO_MIX(tremolo, tremolo, k_knobs, tremolo_raw, tremolo_words, tremolo_mix,
+GM2_EFFECT_DEFINE_LFO_WET(tremolo, tremolo, k_knobs, tremolo_raw, tremolo_words,
                           TREMOLO_SETUP_WORDS)

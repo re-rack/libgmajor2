@@ -23,10 +23,5 @@ static void tzflanger_neg_raw(const int32_t *values, gm2_tzflanger_neg_setup_raw
   };
 }
 
-static void tzflanger_neg_mix(const gm2_tzflanger_neg_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 GM2_EFFECT_DEFINE_LFO_MIX(tzflanger_neg, tzflanger_neg, k_knobs, tzflanger_neg_raw,
-                          gm2_effect_moddelay_words, tzflanger_neg_mix, GM2_EFFECT_MODDELAY_WORDS)
+                          gm2_effect_moddelay_words, GM2_EFFECT_MODDELAY_WORDS)

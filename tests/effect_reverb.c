@@ -47,11 +47,6 @@ static void reverb_raw(const int32_t *values, gm2_reverb_setup_raw *raw) {
   };
 }
 
-static void reverb_mix(const gm2_reverb_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 /* The firmware adapter's order: the eighty staged words, the forty-two offset
  * deltas, the fourteen matrix signs and the two tap sets. */
 static void reverb_words(const gm2_reverb_config *config, int32_t *words) {
@@ -72,19 +67,19 @@ static void reverb_words(const gm2_reverb_config *config, int32_t *words) {
   }
 }
 
-GM2_EFFECT_DEFINE_MIX(reverb_spring, reverb, k_spring_knobs, reverb_raw, reverb_words, reverb_mix,
+GM2_EFFECT_DEFINE_MIX(reverb_spring, reverb, k_spring_knobs, reverb_raw, reverb_words,
                       REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_spring_alt, reverb_alt, k_spring_knobs, reverb_raw, reverb_words,
-                      reverb_mix, REVERB_SETUP_WORDS)
-GM2_EFFECT_DEFINE_MIX(reverb_hall, reverb, k_hall_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_hall, reverb, k_hall_knobs, reverb_raw, reverb_words,
                       REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_hall_alt, reverb_alt, k_hall_knobs, reverb_raw, reverb_words,
-                      reverb_mix, REVERB_SETUP_WORDS)
-GM2_EFFECT_DEFINE_MIX(reverb_room, reverb, k_room_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_room, reverb, k_room_knobs, reverb_raw, reverb_words,
                       REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_room_alt, reverb_alt, k_room_knobs, reverb_raw, reverb_words,
-                      reverb_mix, REVERB_SETUP_WORDS)
-GM2_EFFECT_DEFINE_MIX(reverb_plate, reverb, k_plate_knobs, reverb_raw, reverb_words, reverb_mix,
+                      REVERB_SETUP_WORDS)
+GM2_EFFECT_DEFINE_MIX(reverb_plate, reverb, k_plate_knobs, reverb_raw, reverb_words,
                       REVERB_SETUP_WORDS)
 GM2_EFFECT_DEFINE_MIX(reverb_plate_alt, reverb_alt, k_plate_knobs, reverb_raw, reverb_words,
-                      reverb_mix, REVERB_SETUP_WORDS)
+                      REVERB_SETUP_WORDS)

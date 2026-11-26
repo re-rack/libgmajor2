@@ -41,11 +41,6 @@ static void dualdelay_raw(const int32_t *values, gm2_dualdelay_setup_raw *raw) {
   };
 }
 
-static void dualdelay_mix(const gm2_dualdelay_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 static void dualdelay_words(const gm2_dualdelay_config *config, int32_t *words) {
   for (unsigned word = 0; word < GM2_DELAY_CORE_COEFS; word++) {
     words[word] = config->coef[word];
@@ -56,5 +51,5 @@ static void dualdelay_words(const gm2_dualdelay_config *config, int32_t *words) 
   words[GM2_DELAY_CORE_COEFS + 3u] = config->dry;
 }
 
-GM2_EFFECT_DEFINE_MIX(dualdelay, dualdelay, k_knobs, dualdelay_raw, dualdelay_words, dualdelay_mix,
+GM2_EFFECT_DEFINE_MIX(dualdelay, dualdelay, k_knobs, dualdelay_raw, dualdelay_words,
                       DUALDELAY_SETUP_WORDS)

@@ -120,7 +120,10 @@ static void bench_run(void *instance, const gm2_effect *effect, const int32_t *i
                       const int32_t *in_r, int32_t *out_l, int32_t *out_r, size_t frames,
                       size_t *at) {
   while (frames != 0u) {
-    const size_t chunk = frames < BENCH_BUFFER ? frames : BENCH_BUFFER;
+    size_t chunk = frames < BENCH_BUFFER ? frames : BENCH_BUFFER;
+    if (chunk > (size_t)BENCH_SIGNAL_FRAMES - *at) {
+      chunk = (size_t)BENCH_SIGNAL_FRAMES - *at;
+    }
     effect->split(instance, in_l + *at, in_r + *at, out_l, out_r, chunk);
     *at = (*at + chunk) % (size_t)BENCH_SIGNAL_FRAMES;
     frames -= chunk;
@@ -201,7 +204,7 @@ int main(int argc, char **argv) {
       return 1;
     }
     const double share = ns * 100.0 / (1e9 / (double)GM2_EFFECT_RATE);
-    printf("%-15s %9.1f ns/frame   %6.2f %% of real time\n", effect->name, ns, share);
+    printf("%-17s %9.1f ns/frame   %6.2f %% of real time\n", effect->name, ns, share);
   }
   free(in_l);
   free(in_r);

@@ -236,12 +236,7 @@ static int reverb_frame(gm2_firmware *self, int32_t left, int32_t right, int32_t
   return 0;
 }
 
-static void reverb_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(reverb_close)
 
 /* The rest state the native open() starts in: every group on its staged word and
  * the three level words glided up from their power-on zero by the block's own

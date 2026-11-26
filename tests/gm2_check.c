@@ -135,7 +135,7 @@ static unsigned check_setup(const gm2_effect *effect, const gm2_fixture *fixture
   const void *records = gm2_fixture_records(fixture, GM2_FIX_SETUP, &count, &size);
   unsigned knobs = effect->knobs;
   unsigned words = effect->setup_words;
-  if (records == NULL || size != 4u * (knobs + words)) {
+  if (records == NULL || count == 0u || size != 4u * (knobs + words)) {
     detail("the fixture holds no usable setup records");
     failed();
     return 0;
@@ -325,7 +325,8 @@ static size_t check_audio(const gm2_effect *effect, const gm2_fixture *fixture) 
   const void *segment_records =
       gm2_fixture_records(fixture, GM2_FIX_SEGMENT, &segments, &segment_size);
   const void *outputs = gm2_fixture_records(fixture, GM2_FIX_OUTPUT, &output_count, &output_size);
-  if (segment_records == NULL || outputs == NULL || output_size != GM2_FIX_OUTPUT_SIZE) {
+  if (segment_records == NULL || outputs == NULL || segments == 0u || output_count == 0u ||
+      output_size != GM2_FIX_OUTPUT_SIZE) {
     detail("the fixture holds no audio run");
     failed();
     return 0;

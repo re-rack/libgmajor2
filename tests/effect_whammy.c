@@ -22,10 +22,5 @@ static void whammy_raw(const int32_t *values, gm2_whammy_setup_raw *raw) {
   };
 }
 
-static void whammy_mix(const gm2_whammy_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(whammy, whammy, k_knobs, whammy_raw, gm2_effect_pitch_words, whammy_mix,
+GM2_EFFECT_DEFINE_MIX(whammy, whammy, k_knobs, whammy_raw, gm2_effect_pitch_words,
                       GM2_EFFECT_PITCH_WORDS)

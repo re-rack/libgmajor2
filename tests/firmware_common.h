@@ -92,14 +92,18 @@ int gm2_firmware_run_job(gm2_emu *emu, uint32_t record);
 /* Every record, run once, with at most `cap` records accepted. */
 int gm2_firmware_run_jobs(gm2_emu *emu, const char *who, unsigned cap);
 
-/* Every live Y word the records name, zero elsewhere in the fixed-size table. */
-int gm2_firmware_live_words(const gm2_emu *emu, const char *who,
-                            uint32_t live[GM2_FIRMWARE_JOBS_MAX][GM2_FIRMWARE_RECORD_WORDS],
-                            unsigned cap);
-
 /* Run the jobs until none of those words moves, the rest state a native instance
  * starts in. */
 int gm2_firmware_settle_words(gm2_emu *emu, const char *who, unsigned cap);
+
+/* An adapter's close(): its struct is its own, and holds its emulator as `emu`. */
+#define GM2_FIRMWARE_CLOSE(name)                                                                   \
+  static void name(gm2_firmware *self) {                                                           \
+    if (self != NULL) {                                                                            \
+      gm2_destroy(self->emu);                                                                      \
+      free(self);                                                                                  \
+    }                                                                                              \
+  }
 
 /* The audio continuations' common register state, before their task pointer and
  * record are installed. */

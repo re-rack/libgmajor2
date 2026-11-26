@@ -22,10 +22,5 @@ static void vibrato_raw(const int32_t *values, gm2_vibrato_setup_raw *raw) {
   };
 }
 
-static void vibrato_mix(const gm2_vibrato_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 GM2_EFFECT_DEFINE_LFO_MIX(vibrato, vibrato, k_knobs, vibrato_raw, gm2_effect_moddelay_words,
-                          vibrato_mix, GM2_EFFECT_MODDELAY_WORDS)
+                          GM2_EFFECT_MODDELAY_WORDS)

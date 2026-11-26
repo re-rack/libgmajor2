@@ -12,12 +12,7 @@ static uint32_t hz_step(unsigned hz) { return (uint32_t)(((uint64_t)hz << 32) / 
 
 /* Uniform over the whole 24-bit range. */
 static int32_t noise_sample(uint32_t *state) {
-  uint32_t x = *state;
-  x ^= x << 13;
-  x ^= x >> 17;
-  x ^= x << 5;
-  *state = x;
-  return (int32_t)(x >> 8) - 0x800000;
+  return (int32_t)(gm2_signal_xorshift(state) >> 8) - 0x800000;
 }
 
 static int32_t saw_sample(uint32_t *phase, uint32_t step) {

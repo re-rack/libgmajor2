@@ -104,12 +104,7 @@ struct gm2_firmware {
   int audio_dirty;
 };
 
-static void pitch_block_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(pitch_block_close)
 
 /* One routine of the block, entered as the device's own callers enter it. */
 static int pitch_call(gm2_emu *emu, uint32_t entry, uint32_t record) {

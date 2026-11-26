@@ -26,11 +26,5 @@ static void trichorus_asym_raw(const int32_t *values, gm2_trichorus_asym_setup_r
   };
 }
 
-static void trichorus_asym_mix(const gm2_trichorus_asym_config *config, int32_t *wet,
-                               int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 GM2_EFFECT_DEFINE_LFO_MIX(trichorus_asym, trichorus_asym, k_knobs, trichorus_asym_raw,
-                          gm2_effect_moddelay_words, trichorus_asym_mix, GM2_EFFECT_MODDELAY_WORDS)
+                          gm2_effect_moddelay_words, GM2_EFFECT_MODDELAY_WORDS)

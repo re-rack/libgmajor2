@@ -166,12 +166,7 @@ static int comp_frame(gm2_firmware *self, int32_t left, int32_t right, int32_t *
   return 0;
 }
 
-static void comp_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
-}
+GM2_FIRMWARE_CLOSE(comp_close)
 
 static gm2_firmware *comp_open(void) {
   gm2_firmware *self = calloc(1, sizeof *self);

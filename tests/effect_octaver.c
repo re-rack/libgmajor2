@@ -22,10 +22,5 @@ static void octaver_raw(const int32_t *values, gm2_octaver_setup_raw *raw) {
   };
 }
 
-static void octaver_mix(const gm2_octaver_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(octaver, octaver, k_knobs, octaver_raw, gm2_effect_pitch_words, octaver_mix,
+GM2_EFFECT_DEFINE_MIX(octaver, octaver, k_knobs, octaver_raw, gm2_effect_pitch_words,
                       GM2_EFFECT_PITCH_WORDS)

@@ -4,7 +4,8 @@
 #   make install                        libgm2.a, the headers and gm2.pc under PREFIX (/usr/local),
 #                                       DESTDIR-aware; make uninstall removes them
 #   make check-install                  build a C and a C++ host against a staged install
-#   make check                          every fixture (36 effects, swf, tables) and the host checks
+#   make check                          every fixture (36 effects, swf, tables), the de-popped
+#                                       variants and the host checks
 #   make check-fixture FIXTURE=<name>   one fixture, or several names in quotes
 #   make check-swf                      the swf fixture
 #   make check-tables                   the tables fixture
@@ -225,8 +226,8 @@ firmware:
 
 record-all-fixtures: $(BUILD)/gm2_record firmware
 	@mkdir -p tests/fixtures
-	@$(BUILD)/gm2_record --list | \
-	  xargs -P $(JOBS) -I{} $(BUILD)/gm2_record {} tests/fixtures/{}.bin
+	@names=$$($(BUILD)/gm2_record --list) && \
+	  printf '%s\n' $$names | xargs -P $(JOBS) -I{} $(BUILD)/gm2_record {} tests/fixtures/{}.bin
 
 record-fixture: $(BUILD)/gm2_record firmware
 	@if [ -z "$(FIXTURE)" ]; then echo 'usage: make record-fixture FIXTURE=<name>' >&2; exit 1; fi
@@ -361,9 +362,6 @@ coverage:
 
 clean:
 	rm -rf build
-	find $(C_DIRS) -type f \
-	  \( -name '*.o' -o -name '*.d' -o -name '*.a' -o -name '*.gcda' -o -name '*.gcno' \
-	  -o -name '*.gcov' -o -name '*.plist' \) -delete
 
 $(BUILD)/gm2_check: $(CHECK_OBJECTS) $(BUILD)/libgm2.a
 	$(CC) $(STRICT) $(CFLAGS) -o $@ $^ -lm

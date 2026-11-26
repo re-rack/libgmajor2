@@ -468,7 +468,7 @@ static int res_start(gm2_firmware *self) {
   return res_settle(self);
 }
 
-static void res_close(gm2_firmware *self);
+GM2_FIRMWARE_CLOSE(res_close)
 
 static gm2_firmware *res_open(const gm2_effect *effect, unsigned subtype,
                               const unsigned *descriptor, unsigned count) {
@@ -532,13 +532,6 @@ static int res_frame(gm2_firmware *self, int32_t left, int32_t right, int32_t *o
   *out_left = out[0];
   *out_right = out[1];
   return 0;
-}
-
-static void res_close(gm2_firmware *self) {
-  if (self != NULL) {
-    gm2_destroy(self->emu);
-    free(self);
-  }
 }
 
 /* The pair the level code staged for the live words at Y:0x3EE. */

@@ -53,10 +53,5 @@ static void touchres_words(const gm2_touchres_config *config, int32_t *words) {
   words[GM2_RES_CORE_COEFS + 13u] = config->dry;
 }
 
-static void touchres_mix(const gm2_touchres_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
-GM2_EFFECT_DEFINE_MIX(touchres, touchres, k_knobs, touchres_raw, touchres_words, touchres_mix,
+GM2_EFFECT_DEFINE_MIX(touchres, touchres, k_knobs, touchres_raw, touchres_words,
                       TOUCHRES_SETUP_WORDS)

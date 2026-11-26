@@ -36,10 +36,5 @@ static void vintphaser_words(const gm2_vintphaser_config *config, int32_t *words
   }
 }
 
-static void vintphaser_mix(const gm2_vintphaser_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 GM2_EFFECT_DEFINE_LFO_MIX(vintphaser, vintphaser, k_knobs, vintphaser_raw, vintphaser_words,
-                          vintphaser_mix, GM2_PHASER_CORE_COEFS)
+                          GM2_PHASER_CORE_COEFS)

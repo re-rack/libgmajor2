@@ -43,10 +43,5 @@ static void vintunivibe_words(const gm2_vintunivibe_config *config, int32_t *wor
   words[GM2_UNIVIBE_CORE_COEFS + 2u] = config->shaper[1];
 }
 
-static void vintunivibe_mix(const gm2_vintunivibe_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = 0;
-}
-
-GM2_EFFECT_DEFINE_LFO_MIX(vintunivibe, vintunivibe, k_knobs, vintunivibe_raw, vintunivibe_words,
-                          vintunivibe_mix, VINTUNIVIBE_SETUP_WORDS)
+GM2_EFFECT_DEFINE_LFO_WET(vintunivibe, vintunivibe, k_knobs, vintunivibe_raw, vintunivibe_words,
+                          VINTUNIVIBE_SETUP_WORDS)

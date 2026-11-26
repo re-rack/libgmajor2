@@ -21,6 +21,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* One step of the xorshift generator behind the noise and the recorder's random
+ * operands. */
+static inline uint32_t gm2_signal_xorshift(uint32_t *state) {
+  uint32_t x = *state;
+  x ^= x << 13;
+  x ^= x >> 17;
+  x ^= x << 5;
+  *state = x;
+  return x;
+}
+
 typedef struct {
   uint32_t noise[2];
   uint32_t saw[2];

@@ -43,10 +43,5 @@ static void modunivibe_words(const gm2_modunivibe_config *config, int32_t *words
   words[GM2_UNIVIBE_CORE_COEFS + 2u] = config->shaper[1];
 }
 
-static void modunivibe_mix(const gm2_modunivibe_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = 0;
-}
-
-GM2_EFFECT_DEFINE_LFO_MIX(modunivibe, modunivibe, k_knobs, modunivibe_raw, modunivibe_words,
-                          modunivibe_mix, MODUNIVIBE_SETUP_WORDS)
+GM2_EFFECT_DEFINE_LFO_WET(modunivibe, modunivibe, k_knobs, modunivibe_raw, modunivibe_words,
+                          MODUNIVIBE_SETUP_WORDS)

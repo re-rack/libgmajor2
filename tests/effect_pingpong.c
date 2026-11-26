@@ -33,11 +33,6 @@ static void pingpong_raw(const int32_t *values, gm2_pingpong_setup_raw *raw) {
   };
 }
 
-static void pingpong_mix(const gm2_pingpong_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = config->dry;
-}
-
 static void pingpong_words(const gm2_pingpong_config *config, int32_t *words) {
   for (unsigned word = 0; word < GM2_DELAY_CORE_COEFS; word++) {
     words[word] = config->coef[word];
@@ -48,5 +43,5 @@ static void pingpong_words(const gm2_pingpong_config *config, int32_t *words) {
   words[GM2_DELAY_CORE_COEFS + 3u] = config->dry;
 }
 
-GM2_EFFECT_DEFINE_MIX(pingpong, pingpong, k_knobs, pingpong_raw, pingpong_words, pingpong_mix,
+GM2_EFFECT_DEFINE_MIX(pingpong, pingpong, k_knobs, pingpong_raw, pingpong_words,
                       PINGPONG_SETUP_WORDS)

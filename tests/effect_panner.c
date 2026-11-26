@@ -38,10 +38,4 @@ static void panner_words(const gm2_panner_config *config, int32_t *words) {
   }
 }
 
-static void panner_mix(const gm2_panner_config *config, int32_t *wet, int32_t *dry) {
-  *wet = config->wet;
-  *dry = 0;
-}
-
-GM2_EFFECT_DEFINE_LFO_MIX(panner, panner, k_knobs, panner_raw, panner_words, panner_mix,
-                          PANNER_SETUP_WORDS)
+GM2_EFFECT_DEFINE_LFO_WET(panner, panner, k_knobs, panner_raw, panner_words, PANNER_SETUP_WORDS)
