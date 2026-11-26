@@ -10,6 +10,14 @@ settings it produces the same output samples as the original hardware.
 - tempo sync to the host's beat and LFO alignment to the song position
 - SIMD float conversion: AVX-512, AVX2, SSE2, NEON, RISC-V V, fallsback to scalar
 
+This repository only provides a static library. In order to use it in a DAW you have to write your own plugin wrapper around it. All the job for the plugin is already done, only attention point is that if the DAW is set to >48kHz sample rate than the plugin should either downsample it to 44.1kHz or 48kHz. Choose whichever is a perfect integer division.
+
+## Disclaimer
+
+The code is *not* a clean-room reverse engineering of the original firmware. Bit-exactness was my aim and that is simply not possible without translating the tables and algorithms verbatim. Many other projects go around this by emulating the whole hardware and pushing the responsibility of finding the firmware to the user. That however was a no-go for me due to very high CPU cost. I think we should be able to conserve vintage hardware sound without needing a beefy computer. This library is very light on resources. Most effects are 100x faster than realtime on my 7800X3D.
+
+Depending on where you live this might be considered a copyright infringement. Eventhough algorithms and math can't be copyrighted, a 1-on-1 translation is still not allowed by many authorities. Methods can be patented though and I have no idea if any of the effects use any kind of patented method.
+
 ## Effects
 
 | Family | Effects |
